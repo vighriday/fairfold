@@ -2,6 +2,13 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-09 — H2.3 atomic capture persistence
+
+- Added the application capture store using a merchant-scoped order row lock and one checked-out PostgreSQL connection for buyer/order writes, ledger savepoint and pg-boss enqueue. No schema or shared DTO changed.
+- Matched actual order/capture money and source identifiers against the stored order; incomplete captures, foreign merchants, invalid transitions and conflicting capture IDs fail without partial effects.
+- Made repeated/concurrent callbacks no-ops after the first committed capture, preserving later fulfillment/refund states. The ledger/job contain only the approved minimal fields.
+- Verified 25 new real PostgreSQL cases, including eight concurrent callbacks and rollback after an actual queue insert. All 42 database checks and 150 offline tests passed; typecheck, lint and formatting passed. Recorded scope and remaining H2/H1 gates in the capture persistence evidence.
+
 ## 2026-11-09 — H2.3 approved capture retention mapper
 
 - Recorded Hriday’s explicit approval of the concrete capture policy; Ishaan’s review and Q3’s other payload boundaries remain open.

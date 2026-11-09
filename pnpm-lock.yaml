@@ -211,6 +211,9 @@ importers:
       '@fairfold/intelligence':
         specifier: workspace:*
         version: link:../../packages/intelligence
+      '@fairfold/jobs':
+        specifier: workspace:*
+        version: link:../../packages/jobs
       '@fairfold/ledger':
         specifier: workspace:*
         version: link:../../packages/ledger
@@ -232,6 +235,9 @@ importers:
       dotenv:
         specifier: 18.0.10
         version: 18.0.10
+      drizzle-orm:
+        specifier: 0.45.4
+        version: 0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(pg@8.23.1)
       fastify:
         specifier: 5.12.8
         version: 5.12.8
