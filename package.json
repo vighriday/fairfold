@@ -9,7 +9,7 @@
     "pnpm": ">=9"
   },
   "scripts": {
-    "dev": "pnpm --filter @fairfold/api dev",
+    "dev": "concurrently -k --names api,worker \"pnpm --filter @fairfold/api dev\" \"pnpm --filter @fairfold/worker dev\"",
     "build": "pnpm typecheck",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",

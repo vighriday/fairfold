@@ -14,6 +14,7 @@ At the user's request, the unpublished H1 commit `d1f3055` is being replaced by 
 | C4   | Canonical hashing, transactional ledger, normalized images, byte-preserving PDFs and storage tests | Locked installed dependencies verified/reused, typecheck, lint and source formatting PASS; 8 offline tests; 10 PostgreSQL tests PASS  |
 | C5   | Named queues, payload validation, scheduling, debounce and transaction tests                       | Locked installed dependencies verified/reused, typecheck, lint and source formatting PASS; 8 offline tests; 15 PostgreSQL tests PASS  |
 | C6   | Fastify, demo authentication, ownership hooks, limits, safe errors/logging and API tests           | Locked installed dependencies verified/reused, typecheck, lint and source formatting PASS; 15 offline tests; 15 PostgreSQL tests PASS |
+| C7   | Explicit stub worker startup and API/worker development command                                    | Locked installed dependencies verified/reused, typecheck, lint and source formatting PASS; 15 offline tests; 15 PostgreSQL tests PASS |
 
 ## 2026-11-09 — Research and documentation baseline
 
