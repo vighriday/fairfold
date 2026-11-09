@@ -44,7 +44,7 @@ The 33-hour estimates are inherited from the architecture. They exclude the pre-
 
 ## Immediate next action
 
-The full-client pass now includes dispute reads plus all six action/upload bindings. [Action evidence](evidence/2026-11-09-h2-dispute-actions.md) records 86 targeted action/order/transport passes and typecheck/lint. Q2's return-address branches remain explicit pre-OAuth review failures. Webhook methods and complete ForMerchant composition are the remaining local H2 client work; H3 handlers/polling remain unstarted.
+The full-client pass now includes dispute reads plus all six action/upload bindings. [Action evidence](evidence/2026-11-09-h2-dispute-actions.md) records 86 targeted action/order/transport passes and typecheck/lint. Q2's return-address branches remain explicit pre-OAuth review failures. Webhook verify/register now pass their [client checks](evidence/2026-11-09-h2-webhook-client.md); complete ForMerchant composition is the final local client step. H3 handlers/polling remain unstarted.
 
 H2's complete local path is ready: database-priced creation, minimized atomic capture/ledger/job writes, authoritative recovery, scoped order reads, seven HTTP routes, /dev, minimal merchant setup, opt-in sanitized recording and a read-only A4 audit. Follow the [sandbox rehearsal guide](sandbox-rehearsal.md) from setup to evidence. Current local validation is **201 offline and 126 PostgreSQL/HTTP passes**, typecheck/lint/formatting, actual normal-server demo-on/off startup and actual rehearsal CLI startup with isolated synthetic credentials. See [rehearsal evidence](evidence/2026-11-09-h2-sandbox-rehearsal.md). Runtime intelligence remains explicitly stub.
 

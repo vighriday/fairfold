@@ -12,7 +12,7 @@ The original architecture section 3 defines PayPalClient/ForMerchant, and sectio
 | Carriers        | toDisputeCarrier                                                                                | Implemented; current dispute schema confirms seed carriers                                       |
 | Disputes reads  | list, get                                                                                       | Implemented and tested in this increment                                                         |
 | Disputes writes | provideEvidence, makeOffer, acceptClaim, sendMessage, sandboxAdjudicate, sandboxRequireEvidence | Implemented and locally tested; both Q2 return-address branches fail before OAuth pending review |
-| Webhooks        | verify, register                                                                                | Next local bindings; no H3 handler or event persistence                                          |
+| Webhooks        | verify, register                                                                                | Implemented and locally tested; exact-body postback; no H3 handler or persistence                |
 | Composition     | ForMerchant returning all existing groups                                                       | Pending completion of the above; no casts/placeholders                                           |
 
 ## Dispute reads and cursors

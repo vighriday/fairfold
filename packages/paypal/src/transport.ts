@@ -27,6 +27,8 @@ export type PayPalRequest =
       path: string;
       body?: unknown;
       multipart?: PayPalMultipart;
+      /** Only the signature postback may embed an unchanged raw webhook JSON value. */
+      rawJson?: string;
       opts: PostOpts;
       // Set true only when the operation documents server-side idempotency.
       retrySafe: boolean;
@@ -278,7 +280,23 @@ export function createMerchantTransportFactory(options: PayPalTransportOptions) 
       let body: string | ArrayBuffer | undefined;
       let contentType = 'application/json';
       try {
-        if (input.method === 'POST' && input.multipart !== undefined) {
+        if (
+          input.method === 'POST' &&
+          [input.body, input.multipart, input.rawJson].filter((value) => value !== undefined)
+            .length > 1
+        )
+          throw new Error();
+        if (input.method === 'POST' && input.rawJson !== undefined) {
+          if (
+            url.pathname !== '/v1/notifications/verify-webhook-signature' ||
+            typeof input.rawJson !== 'string' ||
+            Buffer.byteLength(input.rawJson) > 2 * 1024 * 1024
+          )
+            throw new Error();
+          const parsed = JSON.parse(input.rawJson);
+          if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error();
+          body = input.rawJson;
+        } else if (input.method === 'POST' && input.multipart !== undefined) {
           if (input.body !== undefined) throw new Error();
           const encoded = encodeMultipart(input.multipart);
           body = encoded.body;

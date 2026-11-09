@@ -2,6 +2,12 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-09 — H2 exact-body webhook client
+
+- Implemented verify/register methods, preserving raw event formatting in signature postback and requiring the exact provider verification result. Added scoped raw-JSON transport, header/certificate/input checks, explicit registration snapshots and returned-resource validation.
+- All 80 targeted webhook/action/transport checks, typecheck and lint passed. No real webhook was registered/verified, no simulator bypass exists and no H3 handler/poll/persistence was added.
+- Recorded signature, registration-retry and raw-retention boundaries; complete ForMerchant composition is the next local client step.
+
 ## 2026-11-09 — H2 dispute action and evidence bindings
 
 - Implemented the six source dispute action methods and stable, binary-preserving multipart evidence transport. Added exact amount/type rules, JSON/file guards and precise Q2 errors for unrepresentable return-address branches without changing contracts.
