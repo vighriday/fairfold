@@ -2,6 +2,13 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-09 — H1 Render deployment preflight
+
+- Recorded the user's choice to connect Render and finish H1 before H2. Render account connection is still pending; no hosted resources were created.
+- Validated `render.yaml` against Render's official current JSON Schema and recorded the schema digest. The existing blueprint passed without changes.
+- Ran `pnpm build` and local Render-mode API/worker smoke checks. Injected port handling, loopback/non-loopback HTTP readiness, Swagger/OpenAPI and explicit stub worker readiness passed. Temporary test processes were stopped.
+- Recorded actual checks and remaining hosted acceptance gates in `docs/hriday/evidence/2026-11-09-render-preflight.md`. Application files, architecture and existing test results are unchanged.
+
 ## 2026-11-09 — Hriday branch publication
 
 - Published the ten reviewed incremental commits to `origin/Hriday` at the user's request and set the local branch to track it. The first published tip was `52f7c84d4a83423c3fcda8b3998a2bb01e7f0834`, verified with `git ls-remote`.

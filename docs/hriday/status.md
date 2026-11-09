@@ -2,6 +2,8 @@
 
 Updated 9 November 2026 IST. The research-first pass is complete. The user subsequently confirmed that PayPal sandbox accounts do not exist and instructed building around them. H1's local foundation is implemented and tested; its first Render deployment is pending. H2–H8 have not started.
 
+The user has explicitly chosen connecting Render and completing H1's first deployment. The [Render preflight](evidence/2026-11-09-render-preflight.md) passed schema/build and local Render-mode startup checks. Account connection is still awaiting completion; no hosted resources exist yet.
+
 ## Current checkout
 
 | Item                      | Observed state                                                                                                    |
@@ -42,7 +44,7 @@ The 33-hour estimates are inherited from the architecture. They exclude the pre-
 
 ## Immediate next action
 
-Use the [H1 foundation guide](h1-foundation.md) for local setup and handoff. Enable the Render integration or supply the intended deployment workspace through an authorized connection to complete H1's first deployment. No Render service or billing action has been taken.
+Use the [H1 foundation guide](h1-foundation.md) for local setup and handoff. Finish adding Render and signing in so the account's actual workspaces/projects can be inspected. Use a personal/default workspace and a new Fairfold project if that is the connected account's intended location. Complete H1's first deployment and verify hosted health, Swagger and worker readiness before starting H2. No Render service or billing action has been taken.
 
 The [sandbox spike](sandbox-spike.md) remains deferred. Resume it when accounts exist; H1's local tests do not satisfy any PayPal-dependent gate. Review Q1–Q13 with Ishaan before affected tasks; the Figma frontend remains outside H1.
 
