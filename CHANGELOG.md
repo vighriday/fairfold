@@ -2,6 +2,12 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-09 — Render installation confirmed
+
+- Confirmed Render is installed after the user reported adding it and signing in. Cloud account/workspace access is not yet independently verified because Render's deployment tools are absent from this conversation.
+- Attempted the signed-in browser fallback; its local helper failed during initialization. The native fallback also could not initialize. No resource, billing, environment or deployment change was made.
+- After explicit Render selection, its deployment skills loaded, but account-management tools are still absent. Updated status, the H1 guide and evidence to use the initial Dashboard Blueprint flow instead of repeating installation or selection. This documentation increment does not change application files or the earlier preflight result.
+
 ## 2026-11-09 — H1 Render deployment preflight
 
 - Recorded the user's choice to connect Render and finish H1 before H2. Render account connection is still pending; no hosted resources were created.

@@ -2,23 +2,23 @@
 
 Updated 9 November 2026 IST. The research-first pass is complete. The user subsequently confirmed that PayPal sandbox accounts do not exist and instructed building around them. H1's local foundation is implemented and tested; its first Render deployment is pending. H2–H8 have not started.
 
-The user has explicitly chosen connecting Render and completing H1's first deployment. The [Render preflight](evidence/2026-11-09-render-preflight.md) passed schema/build and local Render-mode startup checks. Account connection is still awaiting completion; no hosted resources exist yet.
+The user has explicitly chosen connecting Render and completing H1's first deployment. The [Render preflight](evidence/2026-11-09-render-preflight.md) passed schema/build and local Render-mode startup checks. Render installation is confirmed and the user reports signing in. Explicit Render selection loaded its deployment skills; this conversation still has no Render account-management tools, so account/workspace access remains unverified. No hosted resources have been created by this work.
 
 ## Current checkout
 
-| Item                      | Observed state                                                                                                    |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Working branch            | `Hriday`, created locally for this work                                                                           |
-| Remote                    | `https://github.com/vighriday/fairfold.git`; local `Hriday` now tracks published `origin/Hriday`                  |
-| Initial local files       | Internal README and two DOCX source documents; no existing Git checkout/application                               |
-| Source audit              | Both documents fully read; six embedded diagrams inspected; originals unchanged                                   |
-| Private source protection | `docs/internal/` and `.work/` ignored; no originals included in deliverables                                      |
-| Runtime inventory         | Node 22.16.0, pnpm 12.4.2; isolated PostgreSQL 16.15 under ignored `.work/`; Docker absent                        |
-| Sandbox app/buyer access  | User confirmed accounts do not exist; real spike deferred by user                                                 |
-| Render/frontend access    | Render integration suggested but connection unconfirmed; no services purchased or Figma UI created                |
-| Application               | Local H1 API/worker, 25-table schema, contracts, jobs, ledger/blob storage and demo auth; intelligence stubs only |
-| Local API                 | http://localhost:3110/docs/ and /healthz verified over HTTP against real PostgreSQL 16                            |
-| Git publication           | Incremental history published to `origin/Hriday` on 9 November; no main merge or submission performed             |
+| Item                      | Observed state                                                                                                       |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Working branch            | `Hriday`, created locally for this work                                                                              |
+| Remote                    | `https://github.com/vighriday/fairfold.git`; local `Hriday` now tracks published `origin/Hriday`                     |
+| Initial local files       | Internal README and two DOCX source documents; no existing Git checkout/application                                  |
+| Source audit              | Both documents fully read; six embedded diagrams inspected; originals unchanged                                      |
+| Private source protection | `docs/internal/` and `.work/` ignored; no originals included in deliverables                                         |
+| Runtime inventory         | Node 22.16.0, pnpm 12.4.2; isolated PostgreSQL 16.15 under ignored `.work/`; Docker absent                           |
+| Sandbox app/buyer access  | User confirmed accounts do not exist; real spike deferred by user                                                    |
+| Render/frontend access    | Render skills loaded; sign-in reported; account tools absent in this chat; no services purchased or Figma UI created |
+| Application               | Local H1 API/worker, 25-table schema, contracts, jobs, ledger/blob storage and demo auth; intelligence stubs only    |
+| Local API                 | http://localhost:3110/docs/ and /healthz verified over HTTP against real PostgreSQL 16                               |
+| Git publication           | Incremental history published to `origin/Hriday` on 9 November; no main merge or submission performed                |
 
 The local checkout was initialized for the requested branch; no remote history was overwritten. Sandboxed shell refresh failed after initialization, so read/verification commands used reviewed execution with a per-command safe-directory setting. No global Git trust or author configuration was changed.
 
@@ -44,7 +44,7 @@ The 33-hour estimates are inherited from the architecture. They exclude the pre-
 
 ## Immediate next action
 
-Use the [H1 foundation guide](h1-foundation.md) for local setup and handoff. Finish adding Render and signing in so the account's actual workspaces/projects can be inspected. Use a personal/default workspace and a new Fairfold project if that is the connected account's intended location. Complete H1's first deployment and verify hosted health, Swagger and worker readiness before starting H2. No Render service or billing action has been taken.
+Use the [H1 foundation guide](h1-foundation.md) for local setup and handoff. Render is already installed and selected; do not repeat those steps. Its deployment skill uses the Dashboard for initial multi-service Blueprint application. Prepare the published `Hriday` blueprint and required environment values, then apply it in the intended personal/default workspace. Complete H1's first deployment and verify hosted health, Swagger and worker readiness before starting H2. No Render service or billing action has been taken. Browser fallback initialization failed with a local helper error; this is not an application build failure.
 
 The [sandbox spike](sandbox-spike.md) remains deferred. Resume it when accounts exist; H1's local tests do not satisfy any PayPal-dependent gate. Review Q1–Q13 with Ishaan before affected tasks; the Figma frontend remains outside H1.
 

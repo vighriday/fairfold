@@ -32,3 +32,11 @@ At this preflight, Render was available to add but was not confirmed installed o
 After access exists, inspect the actual workspace/resources, connect the published `Hriday` source, supply the deployment environment values through Render, deploy the prescribed API/worker/Postgres arrangement and verify hosted `/healthz`, `/docs/`, OpenAPI and worker readiness. Record actual resource IDs, deployed commit and URLs before marking H1 complete. Local startup and schema validation do not satisfy that gate.
 
 The real PayPal spike remains deferred because its accounts do not exist. No PayPal call, model evaluation or external deployment is claimed. Ignored `.work/h1-deploy-preflight/` contains the downloaded schema and local inspection logs; none is staged.
+
+## Subsequent installation verification
+
+On 9 November 2026 IST, the user reported “Render added and signed in.” A fresh plugin-status check independently confirmed `installed=true`. The available tool inventory still contained no Render deployment/workspace commands, so the user's cloud account, workspace and existing resources could not be inspected. Installation is confirmed; account-resource access is unverified.
+
+Browser fallback initialization failed with `windows sandbox failed: helper_unknown_error: setup refresh had errors`. The native fallback likewise reported that its trusted Node process exited unexpectedly. Neither fallback reached the Render dashboard. The Render CLI was not installed and no Render-named environment variables were present; no credential values were printed or requested. No cloud mutation was attempted.
+
+The user subsequently selected Render explicitly and its deployment skills became available. Account-management commands still were not exposed. The multi-service deployment therefore follows the skill's initial Dashboard Blueprint flow; installation and app selection must not be repeated. This is an access/capability limitation, not evidence of a hosted deployment or permission to begin H2 before H1's required verification.
