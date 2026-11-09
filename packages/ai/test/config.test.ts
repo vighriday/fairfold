@@ -1,22 +1,31 @@
 import { describe, expect, it, vi } from 'vitest';
-import { getModel, hasModelConfig, readAiConfig } from '../src/config.ts';
-import { embed } from '../src/embed.ts';
-import { mockEmbedder } from './helpers.ts';
+import { getModel, hasModelConfig, readAiConfig } from '../src/config.js';
+import { embed } from '../src/embed.js';
+import { mockEmbedder } from './helpers.js';
 
 const xaiEnv = {
-  AI_PROVIDER: 'xai', XAI_API_KEY: 'test-key',
-  AI_MODEL_VISION: 'grok-vision-test', AI_MODEL_TEXT: 'grok-text-test',
+  AI_PROVIDER: 'xai',
+  XAI_API_KEY: 'test-key',
+  AI_MODEL_VISION: 'grok-vision-test',
+  AI_MODEL_TEXT: 'grok-text-test',
 };
 
 describe('readAiConfig', () => {
   it('reads provider and model ids from the environment', () => {
     expect(readAiConfig(xaiEnv)).toMatchObject({
-      provider: 'xai', models: { vision: 'grok-vision-test', text: 'grok-text-test' }, embeddingProvider: 'xai',
+      provider: 'xai',
+      models: { vision: 'grok-vision-test', text: 'grok-text-test' },
+      embeddingProvider: 'xai',
     });
   });
 
   it('embedding provider defaults to AI_PROVIDER and can be overridden', () => {
-    const cfg = readAiConfig({ ...xaiEnv, AI_EMBEDDING_PROVIDER: 'openai', AI_MODEL_EMBEDDING: 'text-embedding-3-small', OPENAI_API_KEY: 'k' });
+    const cfg = readAiConfig({
+      ...xaiEnv,
+      AI_EMBEDDING_PROVIDER: 'openai',
+      AI_MODEL_EMBEDDING: 'text-embedding-3-small',
+      OPENAI_API_KEY: 'k',
+    });
     expect(cfg.embeddingProvider).toBe('openai');
     expect(cfg.models.embedding).toBe('text-embedding-3-small');
   });
@@ -36,15 +45,24 @@ describe('getModel', () => {
   });
 
   it('throws a clear error when the model id is missing', () => {
-    expect(() => getModel('text', { AI_PROVIDER: 'xai', XAI_API_KEY: 'k' })).toThrow(/AI_MODEL_TEXT/);
+    expect(() => getModel('text', { AI_PROVIDER: 'xai', XAI_API_KEY: 'k' })).toThrow(
+      /AI_MODEL_TEXT/,
+    );
   });
 
   it('refuses embeddings from a provider without an embedding model (xai)', () => {
-    expect(() => getModel('embedding', { ...xaiEnv, AI_MODEL_EMBEDDING: 'anything' })).toThrow(/EMBEDDING_PROVIDER_UNSUPPORTED/);
+    expect(() => getModel('embedding', { ...xaiEnv, AI_MODEL_EMBEDDING: 'anything' })).toThrow(
+      /EMBEDDING_PROVIDER_UNSUPPORTED/,
+    );
   });
 
   it('builds an OpenAI embedding model when AI_EMBEDDING_PROVIDER=openai', () => {
-    const m = getModel('embedding', { ...xaiEnv, AI_EMBEDDING_PROVIDER: 'openai', AI_MODEL_EMBEDDING: 'text-embedding-3-small', OPENAI_API_KEY: 'k' });
+    const m = getModel('embedding', {
+      ...xaiEnv,
+      AI_EMBEDDING_PROVIDER: 'openai',
+      AI_MODEL_EMBEDDING: 'text-embedding-3-small',
+      OPENAI_API_KEY: 'k',
+    });
     expect(m.modelId).toBe('text-embedding-3-small');
   });
 });
@@ -59,7 +77,14 @@ describe('hasModelConfig', () => {
   });
   it('checks the embedding provider and its key for embeddings', () => {
     expect(hasModelConfig('embedding', { ...xaiEnv, AI_MODEL_EMBEDDING: 'e' })).toBe(false);
-    expect(hasModelConfig('embedding', { ...xaiEnv, AI_EMBEDDING_PROVIDER: 'openai', AI_MODEL_EMBEDDING: 'e', OPENAI_API_KEY: 'k' })).toBe(true);
+    expect(
+      hasModelConfig('embedding', {
+        ...xaiEnv,
+        AI_EMBEDDING_PROVIDER: 'openai',
+        AI_MODEL_EMBEDDING: 'e',
+        OPENAI_API_KEY: 'k',
+      }),
+    ).toBe(true);
   });
 });
 

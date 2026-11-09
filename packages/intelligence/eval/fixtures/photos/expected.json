@@ -26,18 +26,8 @@
       "size": "XL"
     }
   },
-  "files": [
-    "item.jpg",
-    "size_label.jpg",
-    "batch_label.jpg",
-    "sealed_parcel.jpg"
-  ],
-  "labels": [
-    "item",
-    "size_label",
-    "batch_label",
-    "sealed_parcel"
-  ],
+  "files": ["item.jpg", "size_label.jpg", "batch_label.jpg", "sealed_parcel.jpg"],
+  "labels": ["item", "size_label", "batch_label", "sealed_parcel"],
   "sets": [
     {
       "id": "set-01",

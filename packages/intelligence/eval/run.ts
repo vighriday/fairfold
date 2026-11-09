@@ -1,7 +1,7 @@
 // pnpm --filter intelligence eval — prints the section 10 eval table as Markdown for the README.
 // Each phase registers its eval here as it lands; rows without one print "not run".
-import { photoEvalConfigured, runPhotoEval } from './photos.ts';
-import { renderEvalTable, type EvalRowId } from './table.ts';
+import { photoEvalConfigured, runPhotoEval } from './photos.js';
+import { renderEvalTable, type EvalRowId } from './table.js';
 
 type EvalFn = () => Promise<string>;
 

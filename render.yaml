@@ -1,0 +1,53 @@
+databases:
+  - name: fairfold-db
+    databaseName: fairfold
+    user: fairfold
+    postgresMajorVersion: '16'
+    plan: 0.1c-256mb
+    ipAllowList: []
+
+services:
+  - type: web
+    name: fairfold-api
+    runtime: node
+    plan: starter
+    repo: https://github.com/vighriday/fairfold
+    branch: Hriday
+    autoDeployTrigger: off
+    buildCommand: pnpm install --frozen-lockfile --prod=false && pnpm build
+    preDeployCommand: pnpm db:migrate
+    startCommand: pnpm --filter @fairfold/api start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: '22'
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fairfold-db
+          property: connectionString
+      - key: APP_ENCRYPTION_KEY
+        sync: false
+      - key: DEMO_TOKEN_SECRET
+        generateValue: true
+      - key: DEMO_MODE
+        value: 'true'
+      - key: PAYPAL_API_BASE
+        value: https://api-m.sandbox.paypal.com
+  - type: worker
+    name: fairfold-worker
+    runtime: node
+    plan: starter
+    repo: https://github.com/vighriday/fairfold
+    branch: Hriday
+    autoDeployTrigger: off
+    buildCommand: pnpm install --frozen-lockfile --prod=false && pnpm build
+    startCommand: pnpm --filter @fairfold/worker start
+    envVars:
+      - key: NODE_VERSION
+        value: '22'
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fairfold-db
+          property: connectionString
+      - key: PAYPAL_API_BASE
+        value: https://api-m.sandbox.paypal.com

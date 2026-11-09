@@ -1,5 +1,5 @@
 // Code-side matching for the Evidence Agent (section 10): the model describes, code decides.
-import type { AttestationResult, AttestInput } from '../contracts.ts';
+import type { AttestationResult, AttestInput } from '@fairfold/contracts';
 
 export type AttestationStatus = 'match' | 'mismatch' | 'could_not_verify';
 
@@ -9,7 +9,16 @@ export const MIN_ITEM_CONFIDENCE = 0.7;
 const COLOUR_SYNONYMS: Record<string, string[]> = {
   navy: ['navy blue', 'dark blue', 'midnight blue', 'navy'],
   indigo: ['indigo', 'blue violet', 'blue-violet'],
-  ochre: ['mustard yellow', 'yellow ochre', 'golden yellow', 'dark yellow', 'mustard', 'ochre', 'ocher', 'gold'],
+  ochre: [
+    'mustard yellow',
+    'yellow ochre',
+    'golden yellow',
+    'dark yellow',
+    'mustard',
+    'ochre',
+    'ocher',
+    'gold',
+  ],
   white: ['off white', 'off-white', 'ivory', 'cream', 'white'],
   grey: ['charcoal', 'grey', 'gray'],
   black: ['jet black', 'black'],
@@ -23,7 +32,11 @@ const COLOUR_LOOKUP: Array<[string, string]> = Object.entries(COLOUR_SYNONYMS)
   .sort((a, b) => b[0].length - a[0].length);
 
 export function normaliseColour(s: string): string {
-  const text = ` ${s.toLowerCase().replace(/[^a-z\s-]/g, ' ').replace(/\s+/g, ' ').trim()} `;
+  const text = ` ${s
+    .toLowerCase()
+    .replace(/[^a-z\s-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()} `;
   // The garment's main colour is the first one named ("navy with light blue print" → navy);
   // at the same position the longest phrase wins ("navy blue" over "navy").
   let best: { at: number; canonical: string } | null = null;
@@ -35,13 +48,32 @@ export function normaliseColour(s: string): string {
 }
 
 const SIZE_WORDS: Record<string, string> = {
-  'EXTRA SMALL': 'XS', 'X-SMALL': 'XS', XS: 'XS', SMALL: 'S', S: 'S', MEDIUM: 'M', M: 'M', LARGE: 'L', L: 'L',
-  'EXTRA LARGE': 'XL', 'X-LARGE': 'XL', XL: 'XL', XXL: 'XXL', '2XL': 'XXL', 'XX-LARGE': 'XXL', XXXL: 'XXXL', '3XL': 'XXXL',
+  'EXTRA SMALL': 'XS',
+  'X-SMALL': 'XS',
+  XS: 'XS',
+  SMALL: 'S',
+  S: 'S',
+  MEDIUM: 'M',
+  M: 'M',
+  LARGE: 'L',
+  L: 'L',
+  'EXTRA LARGE': 'XL',
+  'X-LARGE': 'XL',
+  XL: 'XL',
+  XXL: 'XXL',
+  '2XL': 'XXL',
+  'XX-LARGE': 'XXL',
+  XXXL: 'XXXL',
+  '3XL': 'XXXL',
 };
 
 export function normaliseSize(s: string | null): string | null {
   if (s === null) return null;
-  const t = s.toUpperCase().replace(/^\s*SIZE\s*/, '').replace(/\s+/g, ' ').trim();
+  const t = s
+    .toUpperCase()
+    .replace(/^\s*SIZE\s*/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
   if (t === '') return null;
   return SIZE_WORDS[t] ?? t;
 }
@@ -52,17 +84,25 @@ export function normaliseSize(s: string | null): string | null {
  */
 export function applyItemMatching(input: AttestInput, raw: AttestationResult): AttestationResult {
   const couldNotVerify = [...raw.couldNotVerify];
-  const note = (entry: string) => { if (!couldNotVerify.includes(entry)) couldNotVerify.push(entry); };
+  const note = (entry: string) => {
+    if (!couldNotVerify.includes(entry)) couldNotVerify.push(entry);
+  };
 
   const items = input.items.map((expected) => {
     const seenItem = raw.items.find((i) => i.orderItemId === expected.orderItemId);
     if (!seenItem) {
       note(`item:${expected.orderItemId}`);
-      return { orderItemId: expected.orderItemId, seen: { itemType: 'not reported', colour: '', sizeLabel: null, quantity: 0 },
-        matches: false, confidence: 0, notes: 'The model did not report this order item.' };
+      return {
+        orderItemId: expected.orderItemId,
+        seen: { itemType: 'not reported', colour: '', sizeLabel: null, quantity: 0 },
+        matches: false,
+        confidence: 0,
+        notes: 'The model did not report this order item.',
+      };
     }
     const { seen } = seenItem;
-    const colourOk = expected.colour === null || normaliseColour(seen.colour) === normaliseColour(expected.colour);
+    const colourOk =
+      expected.colour === null || normaliseColour(seen.colour) === normaliseColour(expected.colour);
     let sizeOk = true;
     if (expected.size !== null && seen.quantity > 0) {
       const seenSize = normaliseSize(seen.sizeLabel);
@@ -82,10 +122,13 @@ export function applyItemMatching(input: AttestInput, raw: AttestationResult): A
 
 /** Status per section 10. A definite contradiction or a functional/safety defect outranks an unreadable field. */
 export function deriveStatus(r: AttestationResult): AttestationStatus {
-  const seriousDefect = r.defects.some((d) => d.severity === 'functional' || d.severity === 'safety');
+  const seriousDefect = r.defects.some(
+    (d) => d.severity === 'functional' || d.severity === 'safety',
+  );
   const unreadableFor = (id: string) => r.couldNotVerify.some((c) => c.endsWith(`:${id}`));
   const definiteMismatch = r.items.some((i) => !i.matches && !unreadableFor(i.orderItemId));
   if (seriousDefect || definiteMismatch) return 'mismatch';
-  if (r.couldNotVerify.length > 0 || r.items.some((i) => i.confidence < MIN_ITEM_CONFIDENCE)) return 'could_not_verify';
+  if (r.couldNotVerify.length > 0 || r.items.some((i) => i.confidence < MIN_ITEM_CONFIDENCE))
+    return 'could_not_verify';
   return 'match';
 }

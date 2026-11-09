@@ -52,7 +52,9 @@ export function mockEmbedder(dimensions = 3) {
     provider: 'mock',
     modelId: 'mock-embed',
     doEmbed: async ({ values }) => ({
-      embeddings: values.map((v, i) => Array.from({ length: dimensions }, (_, d) => (v.length + i + d) / 10)),
+      embeddings: values.map((v, i) =>
+        Array.from({ length: dimensions }, (_, d) => (v.length + i + d) / 10),
+      ),
       warnings: [],
     }),
   });

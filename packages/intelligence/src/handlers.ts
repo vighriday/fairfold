@@ -1,16 +1,19 @@
-import type { JobName } from './contracts.ts';
-import { createEvidenceHandlers, type EvidenceDeps } from './evidence/handlers.ts';
+// The intelligence job handlers Hriday's worker registers (section 8 jobs, section 15 contract).
+import type { HandlerMap } from '@fairfold/contracts';
+import { createEvidenceHandlers } from './evidence/handlers.js';
+import { dbEvidenceStore } from './evidence/store.js';
+import { getIntelRuntime, type IntelRuntime } from './runtime.js';
 
-export type JobHandler = (payload: unknown) => Promise<void>;
-
-/** Everything the intelligence handlers need from the platform (Hriday's packages), injected by the worker. */
-export interface IntelligenceDeps {
-  evidence: EvidenceDeps;
-}
-
-/** The job handlers Hriday's worker registers (section 15), keyed by the section 8 job names. */
-export function createHandlers(deps: IntelligenceDeps): Partial<Record<JobName, JobHandler>> {
+/** Builds the handler map; `runtime` is resolved per job so the worker can import before the environment loads. */
+export function createHandlers(runtime: () => IntelRuntime): HandlerMap {
+  const evidence = () => {
+    const rt = runtime();
+    return createEvidenceHandlers({ store: dbEvidenceStore(rt), model: rt.models.vision });
+  };
   return {
-    ...createEvidenceHandlers(deps.evidence),
+    'pack.photos_uploaded': (payload) => evidence()['pack.photos_uploaded'](payload),
+    'inspection.uploaded': (payload) => evidence()['inspection.uploaded'](payload),
   };
 }
+
+export const handlers: HandlerMap = createHandlers(getIntelRuntime);

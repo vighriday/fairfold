@@ -6,22 +6,13 @@
   "exports": {
     ".": "./src/index.ts"
   },
-  "scripts": {
-    "test": "vitest run",
-    "typecheck": "tsc --noEmit"
-  },
-  "devDependencies": {
-    "@types/node": "^26.6.6",
-    "typescript": "^7.0.2",
-    "vitest": "^5.1.0"
-  },
   "dependencies": {
-    "@ai-sdk/anthropic": "^4.0.99",
-    "@ai-sdk/google": "^4.0.114",
-    "@ai-sdk/openai": "^4.0.111",
-    "@ai-sdk/xai": "^5.0.40",
-    "ai": "^7.0.165",
-    "zod": "^4.6.7",
-    "@ai-sdk/provider": "^4.0.37"
+    "@ai-sdk/anthropic": "4.0.99",
+    "@ai-sdk/google": "4.0.114",
+    "@ai-sdk/openai": "4.0.111",
+    "@ai-sdk/provider": "4.0.37",
+    "@ai-sdk/xai": "5.0.40",
+    "ai": "7.0.165",
+    "zod": "4.6.7"
   }
 }
