@@ -2,6 +2,12 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-10 — H3 atomic capture imports and event processing
+
+- Shared the approved capture mapper/store between checkout and the worker. Known/unknown capture reconciliation, catalogue snapshots, buyer/ledger/job effects and the event success marker now share one PostgreSQL transaction; cross-event imports serialize by PayPal order ID.
+- Added SKU-first/name-fallback matching, exact catalogue/money/merchant guards, safe refund observation and explicit H4/reversal boundaries without financial POSTs or raw retention. Browser checkout retains its strict source checks.
+- All 288 offline and 172 PostgreSQL/HTTP cases passed, including 24 new reconciliation cases and real pg-boss delivery; typecheck/lint passed. Corrected three initial ledger-array test assertions before the final run. Real provider acceptance remains NOT RUN; polling and runtime closeout follow.
+
 ## 2026-11-10 — H3 registration and durable verified ingress
 
 - Recorded Hriday's explicit H3 phase exception and event-policy approval. Added merchant-locked seven-event registration and endpoint 37 with isolated original-byte parsing and the approved nested allowlist.

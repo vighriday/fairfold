@@ -1,19 +1,19 @@
 # H3 acceptance and human handoff
 
-Status: **PREPARED; NOT RUN**, 10 November 2026 IST. H3 implementation and the event policy are pending approval. The steps below define the required run after implementation; they are not claims that a registration script, route or handler already exists. Follow the [implementation plan](h3-webhooks.md) and [event policy review](webhook-persistence-review.md).
+Status: **REAL ACCEPTANCE NOT RUN**, 10 November 2026 IST. H3 and the event policy are approved. Registration, ingress and transactional event reconciliation are implemented; polling/runtime closeout is in progress. The real-run steps below remain unexecuted. Follow the [implementation plan](h3-webhooks.md) and [approved event policy](webhook-persistence-review.md).
 
 ## What Hriday needs to supply
 
 1. Create the real Neel merchant sandbox REST app and Maya personal sandbox account. Use the existing [H2 rehearsal](sandbox-rehearsal.md) to store credentials locally/encrypted and verify setup; never paste secrets into chat, documents or Git.
 2. Make the first existing-architecture Render deployment available, or explicitly assign the prepared [deployment handoff](ishaan-deployment-handoff.md) to Ishaan. The handoff is currently unsent. Use the actual HTTPS API origin; no invented URL, free-plan substitution or card entry is authorized.
-3. Approve the concrete event retention policy and the H3 phase-gate exception. H4 dispute/message/action retention is separate. Later, jointly review the return-address contract (Q2) and bind Maya's verified payer ID before private buyer-history acceptance.
+3. The event retention policy and H3 phase exception are already approved; do not request them again. H4 dispute/message/action retention is separate. Later, jointly review the return-address contract (Q2) and bind Maya's verified payer ID before private buyer-history acceptance.
 4. Complete the real buyer approval/purchase in PayPal. Neither a saved research instruction nor running a setup command is approval for a financial/dispute action.
 
 ## Registration rehearsal after implementation
 
 - Check the exact `Hriday` revision, database connectivity, normal API/worker health and the source merchant's non-simulated status. Confirm the public endpoint path and the app's sandbox identity before registration.
 - Inspect the merchant's current `paypal_webhook_id` and the corresponding app's Dashboard webhooks. A stored ID must not cause a second registration. If a previous attempt timed out or returned an ID that was not saved, reconcile the existing Dashboard registration first; an empty local column alone does not prove no remote registration exists.
-- Run the future source-prescribed `scripts/register-webhook.ts <merchantSlug>` only when credentials and hosting are ready. Confirm the actual returned ID was saved on that same merchant and all seven source events target the exact public URL. Do not use `*`, a simulator webhook ID or another app's registration.
+- Run `pnpm exec tsx scripts/register-webhook.ts <merchantSlug>` only when credentials and hosting are ready. Confirm the actual returned ID was saved on that same merchant and all seven source events target the exact public URL. Do not use `*`, a simulator webhook ID or another app's registration.
 - If the vendor call fails ambiguously, stop automatic retries. Record only a fixed error code, operation/time and safe IDs; inspect the app's existing registrations before another mutation. If the database write fails after a known response, preserve the returned ID privately for reconciliation.
 
 ## Real capture and A5

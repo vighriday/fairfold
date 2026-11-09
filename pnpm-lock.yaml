@@ -349,6 +349,9 @@ importers:
       '@fairfold/jobs':
         specifier: workspace:*
         version: link:../jobs
+      '@fairfold/ledger':
+        specifier: workspace:*
+        version: link:../ledger
       drizzle-orm:
         specifier: 0.45.4
         version: 0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(pg@8.23.1)

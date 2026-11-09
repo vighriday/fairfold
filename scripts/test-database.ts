@@ -23,6 +23,7 @@ const result = spawnSync(
     'credentials.integration.test.ts',
     'registration.integration.test.ts',
     'webhooks.integration.test.ts',
+    'event-handler.integration.test.ts',
     'capture-store.integration.test.ts',
     'create-order.integration.test.ts',
     'order-reads.integration.test.ts',

@@ -101,7 +101,7 @@ function fullName(input: unknown): string | null {
   );
 }
 
-function parseCaptured(body: unknown, expectedId: string): CaptureResult {
+export function parseCaptured(body: unknown, expectedId: string): CaptureResult {
   const order = object(body);
   if (order.id !== expectedId) return invalidResponse();
   const units = array(order.purchase_units);
