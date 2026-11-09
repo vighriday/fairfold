@@ -25,6 +25,7 @@ const result = spawnSync(
     'create-order.integration.test.ts',
     'order-reads.integration.test.ts',
     'checkout-service.integration.test.ts',
+    'core-routes.integration.test.ts',
   ],
   { stdio: 'inherit', env: { ...process.env, FAIRFOLD_RUN_DB_TESTS: 'true' } },
 );

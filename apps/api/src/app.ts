@@ -47,6 +47,7 @@ export async function createApi(options: {
   clock?: Clock;
   logger?: FastifyServerOptions['logger'];
   routes?: FastifyPluginAsync;
+  phase?: 'H1' | 'H2';
 }) {
   const { config } = options;
   const app = Fastify({
@@ -129,7 +130,9 @@ export async function createApi(options: {
       info: {
         title: 'Fairfold API',
         description:
-          'H1 foundation. PayPal checkout and intelligence endpoints are not implemented yet.',
+          options.phase === 'H2'
+            ? 'H2 sandbox checkout and owner-scoped orders. Intelligence remains the existing labelled stub.'
+            : 'H1 foundation. PayPal checkout and intelligence endpoints are not implemented yet.',
         version: '0.1.0',
       },
       components: {
@@ -178,7 +181,7 @@ export async function createApi(options: {
           200: z.object({
             status: z.literal('ok'),
             database: z.literal('ready'),
-            phase: z.literal('H1'),
+            phase: z.enum(['H1', 'H2']),
             intelligence: z.literal('stub'),
           }),
           503: ErrorEnvelopeSchema,
@@ -200,7 +203,7 @@ export async function createApi(options: {
       return {
         status: 'ok' as const,
         database: 'ready' as const,
-        phase: 'H1' as const,
+        phase: options.phase ?? 'H1',
         intelligence: 'stub' as const,
       };
     },

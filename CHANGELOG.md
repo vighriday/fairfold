@@ -2,6 +2,14 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-09 — H2.4 checkout/order HTTP and runtime wiring
+
+- Implemented source endpoints 2/3/4/7/8/30/31 with unchanged request/response fields, generated OpenAPI, shared safe errors, role guards and SQL ownership. Creation returns 201; capture accepts no body or an empty object.
+- Wired database credentials, the real checkout client, approved stores, order reads, intelligence seam and pg-boss into API startup/shutdown. Runtime health identifies H2 with the existing labelled intelligence stub.
+- All 102 PostgreSQL/HTTP checks passed, including eight new route cases; 161 offline tests passed. Corrected the initial optional-body schema failure before committing. Typecheck/lint/format checks passed.
+- The actual server bootstrap passed a temporary loopback HTTP smoke check for queue/database readiness, all seven documented routes and protected private access. No external PayPal request or Render deployment occurred.
+- Added the concrete checkout integration/handoff guide; /dev and real sandbox acceptance remain next.
+
 ## 2026-11-09 — H2.3 checkout capture recovery
 
 - Added a real checkout client factory and authoritative captured-order GET parser inside packages/paypal, preserving the complete shared PayPalClient/ForMerchant contracts as unfinished rather than adding placeholders.
