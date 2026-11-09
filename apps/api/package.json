@@ -24,6 +24,7 @@
     "dotenv": "18.0.10",
     "@fairfold/ledger": "workspace:*",
     "@fairfold/jobs": "workspace:*",
-    "drizzle-orm": "0.45.4"
+    "drizzle-orm": "0.45.4",
+    "@fairfold/paypal": "workspace:*"
   }
 }

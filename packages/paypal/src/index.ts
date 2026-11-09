@@ -5,3 +5,4 @@ export { createOrderOperations } from './orders.js';
 export { carriers } from './carriers.js';
 export { createPaymentOperations } from './payments.js';
 export { createReportingOperations } from './reporting.js';
+export { createCheckoutClientFactory, type CheckoutClient } from './checkout.js';

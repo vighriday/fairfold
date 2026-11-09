@@ -4,13 +4,13 @@ Sources: original architecture sections 3, 8 F1/F6, 11–12 and 16 H2. D1, D3–
 
 ## Increment order
 
-| Increment | Deliverable                                                                                                                        | Current gate                                                                                           |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| H2.1      | Merchant credential lookup/decryption, per-merchant OAuth cache, sandbox-only HTTP transport, bounded retries and sanitized errors | IMPLEMENTED AND LOCALLY VERIFIED; no endpoint or full `ForMerchant` client claimed                     |
-| H2.2      | Real Orders create/capture/get/tracking bindings, exact decimal-string totals, refund/reporting helpers and seed-carrier mapping   | IMPLEMENTED AND LOCALLY VERIFIED in three focused commits; real sandbox fixtures remain NOT RUN        |
-| H2.3      | Database-priced checkout creation and capture persistence, exactly-once ledger/job behavior, order reads and auth/ownership        | Creation/capture stores and owner-scoped reads locally verified; capture orchestration remains pending |
-| H2.4      | Numbered endpoints 2–4, 7–8, 30–31 and unstyled `/dev` using sandbox JS SDK v6 with client ID only                                 | Connect source contracts and existing intelligence stubs; no Figma replacement                         |
-| H2.5      | Real sandbox A4, Maya purchase, sanitized recorded create/capture fixtures and deployment integration                              | Requires sandbox merchant/buyer accounts and H1 hosted verification; retain failures honestly          |
+| Increment | Deliverable                                                                                                                        | Current gate                                                                                    |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| H2.1      | Merchant credential lookup/decryption, per-merchant OAuth cache, sandbox-only HTTP transport, bounded retries and sanitized errors | IMPLEMENTED AND LOCALLY VERIFIED; no endpoint or full `ForMerchant` client claimed              |
+| H2.2      | Real Orders create/capture/get/tracking bindings, exact decimal-string totals, refund/reporting helpers and seed-carrier mapping   | IMPLEMENTED AND LOCALLY VERIFIED in three focused commits; real sandbox fixtures remain NOT RUN |
+| H2.3      | Database-priced checkout creation and capture persistence, exactly-once ledger/job behavior, order reads and auth/ownership        | Creation/capture/read services and capture recovery locally verified; HTTP wiring next          |
+| H2.4      | Numbered endpoints 2–4, 7–8, 30–31 and unstyled `/dev` using sandbox JS SDK v6 with client ID only                                 | Connect source contracts and existing intelligence stubs; no Figma replacement                  |
+| H2.5      | Real sandbox A4, Maya purchase, sanitized recorded create/capture fixtures and deployment integration                              | Requires sandbox merchant/buyer accounts and H1 hosted verification; retain failures honestly   |
 
 Each implementation increment has its own task-prefixed commit, tests, typecheck, changelog and evidence. Preserve the source task order; H3 is not started by this exception. Packages owned by Ishaan are unchanged.
 
@@ -83,3 +83,11 @@ Lists and details filter by the authenticated merchant_id or buyer_id in SQL. No
 Buyer details keep required DTO fields with neutral values for merchant-only content: buyerSignal=null, hold=null, sharedCauses=[], item batchCode=null and buyer payerAccountStatus=null. Merchant summaries use the latest matching merchant/order/buyer signal row, first three stored reason labels, unacknowledged alerts and unresolved disputes. Details report the real ledger verifier result and never return ledger payloads or contact/address hashes.
 
 Merchant detail calls the source computeBuyerSignal function only after authorization; the API bootstrap will inject the existing intelligence export. Current output is labelled INTELLIGENCE_STUB; no new score/model implementation or private features JSON layout is assumed. Buyer reads never call it. See O18 and [read evidence](evidence/2026-11-09-h2-order-reads.md). Public HTTP wiring is the following increment.
+
+## H2.3e Checkout recovery orchestration
+
+createCheckoutClientFactory exposes only implemented checkout methods and authoritative readCapture; it does not pretend to be the full ForMerchant contract. The recovery GET requests payment_source, parses existing captures through the same mapper, preserves PENDING/DECLINED, and fails closed on ambiguous shapes. No raw vendor data is persisted by the client.
+
+The application resolves the PayPal order to its stored merchant before credential access. An existing local committed capture returns its current minimal summary, preserving later states. Otherwise it re-fetches PayPal first, captures only if no capture exists and the local state allows it, and writes through the approved atomic store. An ambiguous capture POST or ORDER_ALREADY_CAPTURED error permits one read-only reconciliation, never another application POST. Concurrent callbacks coalesce within the process; stable IDs and the database transaction remain the cross-instance protections. See O19 and [recovery evidence](evidence/2026-11-09-h2-capture-recovery.md).
+
+Guest checkout retains the original public exception and returns OrderSummary only. It does not grant private order reads. A known order’s authenticated buyer must match its stored buyer ID; browser token subjects are never used to manufacture PayPal identity. Maya’s seeded buyer row must be linked to her actual verified payer ID when accounts exist, before demonstrating authenticated buyer history. Configuration exposes only clientId/merchantId/currency and rejects missing/simulated setup or a catalogue without one unambiguous currency. HTTP routes and /dev are still next.

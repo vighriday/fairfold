@@ -154,6 +154,32 @@ function parseCaptured(body: unknown, expectedId: string): CaptureResult {
   };
 }
 
+/** Authoritative checkout recovery; the raw GET response remains transient. */
+export function readCapturedOrder(
+  transport: PayPalTransport,
+  id: string,
+): Promise<CaptureResult | null> {
+  orderId(id);
+  return transport.requestValidated(
+    { method: 'GET', path: `/v2/checkout/orders/${id}?fields=payment_source` },
+    (body) => {
+      const order = object(body);
+      if (order.id !== id) return invalidResponse();
+      const status = responseText(order.status);
+      const units = array(order.purchase_units);
+      if (units.length !== 1) return invalidResponse();
+      const payments = optionalObject(object(units[0]).payments);
+      const captures = payments.captures === undefined ? [] : array(payments.captures);
+      if (!captures.length) {
+        if (!['CREATED', 'SAVED', 'APPROVED', 'PAYER_ACTION_REQUIRED'].includes(status))
+          return invalidResponse();
+        return null;
+      }
+      return parseCaptured(body, id);
+    },
+  );
+}
+
 export function createOrderOperations(transport: PayPalTransport): Orders {
   return {
     addTracking: createTrackingOperation(transport),

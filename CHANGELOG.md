@@ -2,6 +2,13 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-09 — H2.3 checkout capture recovery
+
+- Added a real checkout client factory and authoritative captured-order GET parser inside packages/paypal, preserving the complete shared PayPalClient/ForMerchant contracts as unfinished rather than adding placeholders.
+- Added application orchestration using the stored order’s merchant, stable ff-capture ID, local callback coalescing and the existing minimized atomic capture store. Existing/uncertain/racing captures are re-fetched without an application-level second POST.
+- Added honest public configuration from stored merchant/catalogue fields and kept actual PayPal payer identity separate from browser demo subjects. Public capture returns only OrderSummary; private reads retain ownership requirements.
+- All 94 PostgreSQL checks and 161 offline tests passed, including 17 new workflow and 11 recovery-parser cases. Typecheck/lint/format results and source limits are recorded in the recovery evidence; no external PayPal request or hosted success is claimed.
+
 ## 2026-11-09 — H2.3 owner-scoped order reads
 
 - Added merchant/buyer SQL ownership filters for lists and details, repeatable-read snapshots, status filtering and stable time/UUID pagination. Missing and foreign private orders share the same 404; admin/agent roles receive no implicit bypass.

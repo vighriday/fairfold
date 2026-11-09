@@ -217,6 +217,9 @@ importers:
       '@fairfold/ledger':
         specifier: workspace:*
         version: link:../../packages/ledger
+      '@fairfold/paypal':
+        specifier: workspace:*
+        version: link:../../packages/paypal
       '@fastify/cors':
         specifier: 11.4.1
         version: 11.4.1
