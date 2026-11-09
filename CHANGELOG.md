@@ -2,6 +2,13 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-09 — H2 executable local rehearsal and A4 audit
+
+- Replaced the sandbox-command placeholder with read-only check, opt-in recorded rehearsal server and read-only capture verification. Normal and rehearsal servers share the existing H2 application composition; no payment starts automatically.
+- Added source merchant/item/amount checks, filled protection/account fields, first captured ledger identity/details/hash verification and matching sanitized create/capture observations. Maya/SDK claims remain separate human evidence steps.
+- All 126 PostgreSQL/HTTP cases and 201 offline cases passed; typecheck/lint/formatting passed. Actual normal-server demo-on/off checks and rehearsal CLI startup passed using isolated synthetic setup, without vendor calls.
+- Added the complete setup-to-evidence operator guide and recovery/handoff gates. Actual absent-account commands skip/block honestly; real A4, Maya, fixtures and H1 hosting remain pending. H3–H8 remain unstarted.
+
 ## 2026-11-09 — H2 sanitized sandbox response recording
 
 - Added opt-in recording after the real create/capture/recovery parsers, with in-memory allowlisting and synthetic replacements for buyer/shipping fields. OAuth/raw bodies never reach a recording sink; recording failures preserve payment semantics.

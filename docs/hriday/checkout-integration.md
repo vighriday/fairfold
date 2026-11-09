@@ -40,6 +40,8 @@ Merchant detail calls the documented computeBuyerSignal seam only after authoriz
 
 ## Verify and unblock
 
+The complete executable sequence is now in [sandbox rehearsal](sandbox-rehearsal.md): setup:sandbox, test:sandbox, test:sandbox serve, test:sandbox verify and recorded-sandbox parser tests. It includes the account/approval boundary, sanitized fixture workflow and same-order recovery. This supersedes the earlier setup/tooling gaps below; real accounts and their acceptance observations remain pending.
+
 Run pnpm typecheck, pnpm test, pnpm test:db, pnpm lint and pnpm format:check. The database command requires the isolated loopback fairfold_*test database. HTTP checks use real PostgreSQL, pg-boss and PayPal client/transport code with only sandbox HTTP responses injected. They do not satisfy real PayPal acceptance. See [HTTP evidence](evidence/2026-11-09-h2-http.md) and [capture recovery evidence](evidence/2026-11-09-h2-capture-recovery.md).
 
 The source unstyled /dev harness is now implemented and locally verified; its actual SDK browser session remains unverified. Next is actual account/credential setup and real A4/Maya/recorded-fixture checks when available. H3 has not started. The separate [Render handoff](ishaan-deployment-handoff.md) remains prepared but unsent; no plan/payment change or quota recovery is assumed.

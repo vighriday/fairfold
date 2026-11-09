@@ -109,3 +109,7 @@ Twelve synthetic browser VM/asset checks and actual API demo-on/off runs passed;
 ## H2.5a Minimal account-backed setup
 
 `pnpm setup:sandbox` reads credentials only from the local environment, requires the exact sandbox API origin, demo mode and a loopback Fairfold database, then creates Neel and the source USD38 hoodie in one transaction. An existing compatible listing/secret is preserved. Different merchant identity, credentials, price or currency requires explicit review rather than overwrite. This is the H2 prerequisite only; the H8 B17 seed and verified Maya identity mapping remain separate. See [setup evidence](evidence/2026-11-09-h2-sandbox-setup.md).
+
+## H2.5b Complete local rehearsal path
+
+The [sandbox rehearsal guide](sandbox-rehearsal.md) provides setup → read-only preflight → actual /dev approval → sanitized recording → A4 database/ledger audit → recorded parser verification, including exact commands and same-order recovery. Normal and recorded rehearsal servers share runtime composition. The audit performs no repairs and does not infer Maya identity/SDK success; GET-only recovery is not a capture POST fixture. Current checks are 201 offline and 121 PostgreSQL/HTTP passes, plus actual normal/rehearsal startup checks. See [rehearsal evidence](evidence/2026-11-09-h2-sandbox-rehearsal.md). Real account-backed gates remain pending; no H3 work is included.

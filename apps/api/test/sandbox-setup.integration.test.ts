@@ -5,6 +5,7 @@ import { decryptSecret } from '@fairfold/contracts';
 import { createDatabase, merchants, products, migrateDatabase } from '@fairfold/db';
 import { testDatabaseUrl } from '../../../packages/db/test/environment.js';
 import { provisionSandboxCheckout, SandboxHoodie } from '../src/checkout/setup-sandbox.js';
+import { inspectSandboxCheckout } from '../src/checkout/verify-sandbox.js';
 
 const integrationUrl = testDatabaseUrl();
 describe.skipIf(!integrationUrl)('minimal H2 sandbox catalogue setup', () => {
@@ -73,6 +74,38 @@ describe.skipIf(!integrationUrl)('minimal H2 sandbox catalogue setup', () => {
     const results = await Promise.all(Array.from({ length: 4 }, setup));
     expect(results.every((result) => !result.merchantCreated && !result.productCreated)).toBe(true);
     expect(await rows()).toEqual(before);
+  });
+  it('preflights stored credentials and catalogue without exposing secret values', async () => {
+    expect((await inspectSandboxCheckout({ database: database.db, ...credentials })).status).toBe(
+      'LOCAL_SETUP_READY',
+    );
+    const wrongKey = await inspectSandboxCheckout({
+      database: database.db,
+      ...credentials,
+      encryptionKey: randomBytes(32),
+    });
+    expect(wrongKey.status).toBe('BLOCKED');
+    expect(wrongKey.checks.credentialsMatch).toBe(false);
+    expect(JSON.stringify(wrongKey)).not.toContain(credentials.clientSecret);
+    const [other] = await database.db
+      .insert(products)
+      .values({
+        merchant_id: source.merchantId,
+        sku: 'SYNTHETIC-EUR-PREFLIGHT',
+        name: 'Synthetic EUR item',
+        description: 'Synthetic test only',
+        unit_value: '1.00',
+        currency: 'EUR',
+      })
+      .returning();
+    try {
+      expect(
+        (await inspectSandboxCheckout({ database: database.db, ...credentials })).checks
+          .oneCurrency,
+      ).toBe(false);
+    } finally {
+      await database.db.delete(products).where(eq(products.id, other!.id));
+    }
   });
   it.each(['client', 'secret', 'key', 'simulated', 'price', 'currency', 'slug'])(
     'rejects a conflicting %s without changing the existing setup',
