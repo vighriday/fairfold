@@ -30,7 +30,7 @@ Source estimate: 6 hours. Sources: architecture 7, 10–12, 14–16. Status: IN 
 
 ## H2 PayPal client and checkout
 
-Source estimate: 5 hours. Sources: architecture 3, 8 F1/F6, 11–12, 16 H2. Status: LOCAL PREPARATION under user instruction O15; H1 hosting remains pending.
+Source estimate: 5 hours. Sources: architecture 3, 8 F1/F6, 11–12, 16 H2. Status: IN PROGRESS under user instruction O15; H2.1's local authentication/HTTP transport is implemented and verified. Checkout operation bindings are next; H1 hosting and real H2 sandbox checks remain pending. See [H2.1 evidence](evidence/2026-11-09-h2-transport.md).
 
 1. Implement `forMerchant(merchantId)` with credential lookup/decryption and per-merchant in-memory token caching until 60 seconds before returned expiry. Reject non-sandbox configuration. Use the source's typed interface.
 2. Implement HTTP error normalization, bounded three retries on 429/5xx with backoff, deterministic operation request IDs, representation preference and PayPal debug-ID error logging. Protect against ambiguous retry outcomes; do not assume every endpoint honors the header identically.

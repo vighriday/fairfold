@@ -20,6 +20,7 @@ const result = spawnSync(
     'schema.integration.test.ts',
     'storage.integration.test.ts',
     'jobs.integration.test.ts',
+    'credentials.integration.test.ts',
   ],
   { stdio: 'inherit', env: { ...process.env, FAIRFOLD_RUN_DB_TESTS: 'true' } },
 );

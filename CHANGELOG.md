@@ -2,6 +2,15 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-09 — H2.1 sandbox authentication and HTTP transport
+
+- Implemented merchant-scoped encrypted credential lookup and sandbox-only OAuth/HTTP transport inside `packages/paypal`, using existing shared crypto, clock, PostOpts and error helpers. No shared contract, schema, API route, worker or Ishaan-owned package changed.
+- Added per-merchant/version in-memory token caching with early refresh, concurrent-grant coalescing, rotation/removal handling and rejected-token invalidation. Credentials and tokens are not logged or persisted by the transport.
+- Added bounded exponential retries with stable POST bodies/request IDs, explicit operation idempotency for 5xx replay, no ambiguous network replay, redirect rejection and safe debug-ID/symbolic-error diagnostics.
+- Added 30 synthetic offline transport cases and two real PostgreSQL credential-provider cases. The full offline suite passed 49 tests with 17 DB checks skipped; the explicit isolated database suite passed all 17 tests. Typecheck, lint and formatting passed.
+- Resolved the new workspace importer with the existing dependency versions and policies. Offline install encountered an absent cached tarball; the normal install passed policy checks. The lockfile changes only the new package importer.
+- Recorded exact scope and results in the H2 guide/status/evidence. Checkout operation bindings, full ForMerchant, persistence/privacy review, routes, `/dev`, real sandbox A4 and H1 hosting remain pending.
+
 ## 2026-11-09 — Continue locally while hosting is pending
 
 - Recorded the user's instruction to wait for Render synchronization and continue the next local pieces, retaining H1's hosted gate and H2's sandbox acceptance gate.

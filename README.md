@@ -8,6 +8,8 @@ Hriday and Ishaan are preparing this project for the PayPal AI Hackathon. The do
 
 The user authorized proceeding around the absent sandbox accounts. The real dispute spike is deferred, and PayPal-dependent checks remain not run. H1's first Render deployment is still pending.
 
+While hosting is pending, H2 has begun locally: `packages/paypal` now provides encrypted merchant credential lookup and sandbox OAuth/HTTP transport, verified with synthetic offline responses and isolated PostgreSQL tests. Checkout bindings, routes and `/dev` remain pending. This package does not yet expose the complete `PayPalClient`/`ForMerchant` interface. Follow the [H2 increments](docs/hriday/h2-paypal.md); the [conditional deployment handoff](docs/hriday/ishaan-deployment-handoff.md) is ready if hosting moves to Ishaan.
+
 ## Run the local foundation
 
 Prerequisites: Node.js 22.16 or newer, the pinned pnpm 12.4.2, and PostgreSQL 16. Docker Compose supplies PostgreSQL when Docker is available.

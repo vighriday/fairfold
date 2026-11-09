@@ -1,12 +1,12 @@
 # H2 PayPal client and checkout increments
 
-Sources: original architecture sections 3, 8 F1/F6, 11–12 and 16 H2. D1, D3–D6 and the existing `PayPalClient`, `ForMerchant`, `CaptureResult`, Money and HTTP contracts remain fixed. O15 records the user's instruction to continue locally while H1 hosting is pending. H2 is not complete; A4, real create/capture fixtures and Maya's `/dev` purchase are NOT RUN.
+Sources: original architecture sections 3, 8 F1/F6, 11–12 and 16 H2. D1, D3–D6 and the existing `PayPalClient`, `ForMerchant`, `CaptureResult`, Money and HTTP contracts remain fixed. O15 records the user's instruction to continue locally while H1 hosting is pending. H2.1's transport is implemented and locally verified; H2 is not complete. A4, real create/capture fixtures and Maya's `/dev` purchase are NOT RUN.
 
 ## Increment order
 
 | Increment | Deliverable                                                                                                                        | Current gate                                                                                                                  |
 | --------- | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| H2.1      | Merchant credential lookup/decryption, per-merchant OAuth cache, sandbox-only HTTP transport, bounded retries and sanitized errors | Next local implementation; no endpoint or full `ForMerchant` client claimed                                                   |
+| H2.1      | Merchant credential lookup/decryption, per-merchant OAuth cache, sandbox-only HTTP transport, bounded retries and sanitized errors | IMPLEMENTED AND LOCALLY VERIFIED; no endpoint or full `ForMerchant` client claimed                                            |
 | H2.2      | Real Orders create/capture/get/tracking bindings, exact decimal-string totals, refund/reporting helpers and seed-carrier mapping   | Use the unchanged interfaces and current primary API specifications; synthetic parsing tests do not replace recorded fixtures |
 | H2.3      | Database-priced checkout creation and capture persistence, exactly-once ledger/job behavior, order reads and auth/ownership        | Resolve Q3 before storing vendor payloads; establish durable retry/reconciliation behavior, never trust browser totals        |
 | H2.4      | Numbered endpoints 2–4, 7–8, 30–31 and unstyled `/dev` using sandbox JS SDK v6 with client ID only                                 | Connect source contracts and existing intelligence stubs; no Figma replacement                                                |
@@ -23,6 +23,16 @@ Cache OAuth tokens only in process memory per merchant and credential version, u
 Every application POST requires the existing `PostOpts.requestId`; reuse it and the serialized body across retries. Send `Prefer: return=representation`. Retry HTTP 429 and retry-safe 5xx at most three times with exponential backoff. An unconfirmed mutation must not inherit permission to replay a 5xx or ambiguous network outcome merely because a request ID was present. This preserves Q12; each operation binding must declare whether PayPal documents server idempotency. Log PayPal debug IDs and safe status/symbolic codes on every failed attempt, without request bodies, tokens, credentials, payer data or vendor free-text messages.
 
 This transport is internal groundwork, not a partial object cast to the full `PayPalClient`. Publish `ForMerchant` only when its actual operations are implemented; do not add throwing placeholders or alter shared interfaces to make unfinished work look complete.
+
+## H2.1 implementation and verification
+
+`packages/paypal` exports `databaseCredentials(db)` and `createMerchantTransportFactory(options)`. The provider reads only the selected merchant's client ID, encrypted secret and simulation flag. The factory takes the existing decoded encryption key and a logger. It performs credential lookup for each request, decrypts inside this package, keeps per-merchant/version tokens only in memory, and notices credential rotation/removal even through an existing transport. Tokens refresh 60 seconds early; simultaneous grants are coalesced. A rejected resource token is cleared without automatically replaying the failed request.
+
+The transport permits only the exact sandbox API origin and relative `/v1/` or `/v2/` resource paths, rejects redirects, and applies a 15-second timeout per HTTP attempt. GETs retry 429/5xx; POSTs require PostOpts and a declared `retrySafe` value. POST 429 responses can retry; 5xx replay requires documented operation idempotency. There are at most three retries with 500/1,000/2,000 ms backoff and unchanged body/request ID. Ambiguous network failures and malformed successful responses are not replayed. `PayPalError.outcomeUnknown` keeps ambiguity visible for the future operation/reconciliation layer.
+
+Diagnostics contain merchant ID, phase/method, attempt, upstream status, validated debug ID and bounded symbolic error codes. Vendor descriptions, request/response bodies, tokens, credentials and payer fields are excluded. The shared contracts and existing API/worker are unchanged; no operation binding or complete `ForMerchant` client is exported yet.
+
+The [verification record](evidence/2026-11-09-h2-transport.md) records 49 offline passes, 17 isolated PostgreSQL integration passes, typecheck/lint/formatting and the dependency-install observations. All vendor responses are labelled synthetic; no PayPal request or persistent buyer payload was used. H2.2 is the next increment.
 
 ## Persistence review still needed
 
