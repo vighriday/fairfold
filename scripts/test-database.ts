@@ -24,6 +24,7 @@ const result = spawnSync(
     'registration.integration.test.ts',
     'webhooks.integration.test.ts',
     'event-handler.integration.test.ts',
+    'poll-schedules.integration.test.ts',
     'capture-store.integration.test.ts',
     'create-order.integration.test.ts',
     'order-reads.integration.test.ts',

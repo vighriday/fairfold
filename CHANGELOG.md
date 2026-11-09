@@ -2,6 +2,12 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-10 — H3 bounded polling and merchant schedules
+
+- Added complete-page dispute polling with ID-only H4 dispatch, per-merchant coalescing, unchanged page filters and bounded cursor/page checks. Watermarks advance only after success with overlap; a restart safely replays supported history.
+- Added actual keyed one-minute UTC pg-boss schedules for configured real merchants, excluding simulated/unconfigured rows and removing stale schedules.
+- Nine new polling cases and all 175 PostgreSQL/HTTP cases passed; typecheck/lint passed. Real scope/list behavior remains NOT RUN; worker lifecycle wiring and final acceptance tooling follow.
+
 ## 2026-11-10 — H3 atomic capture imports and event processing
 
 - Shared the approved capture mapper/store between checkout and the worker. Known/unknown capture reconciliation, catalogue snapshots, buyer/ledger/job effects and the event success marker now share one PostgreSQL transaction; cross-event imports serialize by PayPal order ID.

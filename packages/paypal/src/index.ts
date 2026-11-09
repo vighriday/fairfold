@@ -13,6 +13,7 @@ export { createOrderOperations } from './orders.js';
 export { parseCaptured as parseCaptureResult } from './orders.js';
 export { createCaptureStore } from './capture-store.js';
 export { minimizeCapture } from './capture-policy.js';
+export { createDisputesPoller, syncDisputePollSchedules } from './disputes-poll.js';
 export { carriers } from './carriers.js';
 export { createPaymentOperations } from './payments.js';
 export { createReportingOperations } from './reporting.js';
