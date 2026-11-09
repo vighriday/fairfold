@@ -3,6 +3,7 @@
 import { runBuyerEval } from './buyers.js';
 import { runDisputeEval } from './disputes.js';
 import { photoEvalConfigured, runPhotoEval } from './photos.js';
+import { runB17Eval, runNullEval } from './sharedCause.js';
 import { renderEvalTable, type EvalRowId } from './table.js';
 
 type EvalFn = () => Promise<string>;
@@ -12,6 +13,8 @@ const NOT_CONFIGURED = 'not run (set AI_PROVIDER, AI_MODEL_VISION and the provid
 const evals: Partial<Record<EvalRowId, EvalFn>> = {
   buyers: async () => (await runBuyerEval()).summary,
   disputes: async () => (await runDisputeEval()).summary,
+  b17_seed: runB17Eval,
+  null_seed: runNullEval,
   photos: async () => (photoEvalConfigured() ? (await runPhotoEval()).summary : NOT_CONFIGURED),
 };
 
