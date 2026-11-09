@@ -3,3 +3,5 @@ export * from './errors.js';
 export * from './transport.js';
 export { createOrderOperations } from './orders.js';
 export { carriers } from './carriers.js';
+export { createPaymentOperations } from './payments.js';
+export { createReportingOperations } from './reporting.js';

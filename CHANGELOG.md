@@ -2,6 +2,13 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-09 — H2.2c refund and bounded reporting helpers
+
+- Implemented the unchanged payment/refund and Transaction Search method groups. Full refunds send an empty object; partial amounts use exact decimal/currency checks. Refund IDs and actual statuses are returned without assuming PENDING means completed.
+- Added explicit RFC3339 millisecond/offset date validation, maximum 31-day windows, fields=all, fixed local pagination with 500 rows/page, stable metadata/count checks and a documented local 100-page budget. Incomplete or changing results fail instead of returning partial history; duplicate transaction IDs are preserved.
+- Verified official Payments 2.12 and Transaction Search 1.10 specifications. Refund retries use the documented request-ID support; no vendor pagination links are followed. No dependency or shared interface changed.
+- Added 25 synthetic refund/reporting cases. The complete offline suite passed 136 tests with 17 database checks skipped; typecheck and lint passed. Actual refunds/history calls, ownership/approval/balance guards in future callers, Q3 capture persistence, public routes and real sandbox checks remain pending.
+
 ## 2026-11-09 — H2.2b tracking and carrier mapping
 
 - Completed the existing Orders method group with flat-body addTracking, explicit notification choice, validated returned tracker selection and unchanged request IDs. No seal, tracking job or notification was executed.
