@@ -22,7 +22,12 @@ export function operationFixture() {
       url,
       method: init!.method!,
       headers: new Headers(init!.headers),
-      body: typeof init?.body === 'string' ? JSON.parse(init.body) : undefined,
+      body:
+        typeof init?.body === 'string'
+          ? JSON.parse(init.body)
+          : init?.body instanceof ArrayBuffer
+            ? Buffer.from(init.body)
+            : undefined,
     });
     const response = responses.shift();
     if (!response) throw new Error('No synthetic operation response queued');

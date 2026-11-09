@@ -16,6 +16,7 @@ import {
   type PayPalDiagnostic,
   type PayPalLogger,
 } from './errors.js';
+import { encodeMultipart, type PayPalMultipart } from './multipart.js';
 
 export const PAYPAL_SANDBOX_API = 'https://api-m.sandbox.paypal.com';
 
@@ -25,6 +26,7 @@ export type PayPalRequest =
       method: 'POST';
       path: string;
       body?: unknown;
+      multipart?: PayPalMultipart;
       opts: PostOpts;
       // Set true only when the operation documents server-side idempotency.
       retrySafe: boolean;
@@ -50,7 +52,7 @@ interface Exchange {
   method: 'GET' | 'POST';
   url: URL;
   headers: Headers;
-  body?: string;
+  body?: string | ArrayBuffer;
   retrySafe: boolean;
 }
 interface ExchangeResult {
@@ -273,11 +275,18 @@ export function createMerchantTransportFactory(options: PayPalTransportOptions) 
           !/^[\x21-\x7e]+$/.test(input.opts.requestId))
       )
         throw new AppError('INVALID_PAYPAL_REQUEST_ID', 'A valid PayPal request ID is required');
-      let body: string | undefined;
+      let body: string | ArrayBuffer | undefined;
+      let contentType = 'application/json';
       try {
-        body = input.method === 'POST' ? JSON.stringify(input.body ?? {}) : undefined;
+        if (input.method === 'POST' && input.multipart !== undefined) {
+          if (input.body !== undefined) throw new Error();
+          const encoded = encodeMultipart(input.multipart);
+          body = encoded.body;
+          contentType = encoded.contentType;
+        } else body = input.method === 'POST' ? JSON.stringify(input.body ?? {}) : undefined;
         if (input.method === 'POST' && body === undefined) throw new Error();
-      } catch {
+      } catch (error) {
+        if (error instanceof AppError) throw error;
         throw new AppError('INVALID_PAYPAL_BODY', 'The PayPal request must be JSON serializable');
       }
       const lease = await getToken(merchantId);
@@ -287,7 +296,7 @@ export function createMerchantTransportFactory(options: PayPalTransportOptions) 
         Prefer: 'return=representation',
       });
       if (input.method === 'POST') {
-        headers.set('Content-Type', 'application/json');
+        headers.set('Content-Type', contentType);
         headers.set('PayPal-Request-Id', input.opts.requestId);
       }
       try {

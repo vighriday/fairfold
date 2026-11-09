@@ -4,16 +4,16 @@ The original architecture section 3 defines PayPalClient/ForMerchant, and sectio
 
 ## Method inventory
 
-| Group           | Source operations                                                                               | Local state                                                        |
-| --------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| Orders          | create, capture, get, addTracking                                                               | Implemented and tested                                             |
-| Payments        | refund                                                                                          | Implemented and tested; no action route or actual refund           |
-| Reporting       | searchTransactions                                                                              | Implemented and tested; results transient                          |
-| Carriers        | toDisputeCarrier                                                                                | Implemented; current dispute schema confirms seed carriers         |
-| Disputes reads  | list, get                                                                                       | Implemented and tested in this increment                           |
-| Disputes writes | provideEvidence, makeOffer, acceptClaim, sendMessage, sandboxAdjudicate, sandboxRequireEvidence | Next local bindings; Q2 return-address branch remains review-gated |
-| Webhooks        | verify, register                                                                                | Next local bindings; no H3 handler or event persistence            |
-| Composition     | ForMerchant returning all existing groups                                                       | Pending completion of the above; no casts/placeholders             |
+| Group           | Source operations                                                                               | Local state                                                                                      |
+| --------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Orders          | create, capture, get, addTracking                                                               | Implemented and tested                                                                           |
+| Payments        | refund                                                                                          | Implemented and tested; no action route or actual refund                                         |
+| Reporting       | searchTransactions                                                                              | Implemented and tested; results transient                                                        |
+| Carriers        | toDisputeCarrier                                                                                | Implemented; current dispute schema confirms seed carriers                                       |
+| Disputes reads  | list, get                                                                                       | Implemented and tested in this increment                                                         |
+| Disputes writes | provideEvidence, makeOffer, acceptClaim, sendMessage, sandboxAdjudicate, sandboxRequireEvidence | Implemented and locally tested; both Q2 return-address branches fail before OAuth pending review |
+| Webhooks        | verify, register                                                                                | Next local bindings; no H3 handler or event persistence                                          |
+| Composition     | ForMerchant returning all existing groups                                                       | Pending completion of the above; no casts/placeholders                                           |
 
 ## Dispute reads and cursors
 

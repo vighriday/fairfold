@@ -2,6 +2,12 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-09 — H2 dispute action and evidence bindings
+
+- Implemented the six source dispute action methods and stable, binary-preserving multipart evidence transport. Added exact amount/type rules, JSON/file guards and precise Q2 errors for unrepresentable return-address branches without changing contracts.
+- All 86 targeted action/order/transport checks, typecheck and lint passed. Raw payloads remain transient, no H4 action workflow is exposed and no actual vendor action ran.
+- Preserved bounded 429 retries and refused unsafe 5xx/network replays; documented current JSON-example/schema differences, file ceilings and real-test/review gates.
+
 ## 2026-11-09 — H2 full-client dispute reads
 
 - Implemented dispute list/get bindings, UTC/date/state/page validation and both legacy-token and current page-number pagination through the unchanged opaque cursor field. Vendor links are validated for cursor extraction and never followed.
