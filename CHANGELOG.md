@@ -2,6 +2,12 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-09 — H2 minimal sandbox merchant setup
+
+- Added setup:sandbox for the source Neel merchant and USD38 hoodie only, with encrypted credentials, local/demo/sandbox guards and transactional repeat/concurrency safety. Conflicting setup fails without overwriting existing data.
+- Nine new PostgreSQL cases passed (111 total) and eleven offline environment/error cases passed. Typecheck passed. The actual command skipped absent sandbox credentials without making database/vendor calls.
+- Full B17 seeding, Maya identity mapping and real PayPal acceptance remain pending; see the setup evidence.
+
 ## 2026-11-09 — H2.4 unstyled sandbox checkout harness
 
 - Added /dev and its plain JavaScript asset behind DEMO_MODE. The source hoodie defaults, client-ID-only sandbox SDK, eligibility check and one-time payment session use the implemented API; no Figma/product UI or frontend scaffold was added.
