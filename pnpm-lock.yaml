@@ -274,6 +274,15 @@ importers:
         specifier: workspace:*
         version: link:../contracts
 
+  packages/jobs:
+    dependencies:
+      '@fairfold/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      pg-boss:
+        specifier: 12.38.1
+        version: 12.38.1(@opentelemetry/api@1.10.0)
+
   packages/ledger:
     dependencies:
       '@fairfold/contracts':
