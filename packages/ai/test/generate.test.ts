@@ -21,7 +21,7 @@ describe('generateStructured', () => {
   it('returns parsed object at temperature 0', async () => {
     const { model, calls } = mockModel(['{"colour":"navy","confidence":0.9}']);
     const out = await generateStructured({ schema, system: 'Describe.', user: 'Look.', fallback, model, component: 'test' });
-    expect(out).toEqual({ value: { colour: 'navy', confidence: 0.9 }, usedFallback: false });
+    expect(out).toEqual({ value: { colour: 'navy', confidence: 0.9 }, usedFallback: false, model: 'mock-model' });
     expect(calls).toHaveLength(1);
     expect(calls[0]?.temperature).toBe(0);
     expect(calls[0]?.abortSignal).toBeDefined();
@@ -30,14 +30,14 @@ describe('generateStructured', () => {
   it('retries once on schema failure then uses fallback', async () => {
     const { model, calls } = mockModel(['{"colour":"navy"}', 'not json']);
     const out = await generateStructured({ schema, system: 's', user: 'u', fallback, model, component: 'test' });
-    expect(out).toEqual({ value: { colour: 'unknown', confidence: 0 }, usedFallback: true });
+    expect(out).toEqual({ value: { colour: 'unknown', confidence: 0 }, usedFallback: true, model: 'fallback' });
     expect(calls).toHaveLength(2);
   });
 
   it('succeeds on the retry when the second answer is valid', async () => {
     const { model, calls } = mockModel(['oops', '{"colour":"red","confidence":0.5}']);
     const out = await generateStructured({ schema, system: 's', user: 'u', fallback, model, component: 'test' });
-    expect(out).toEqual({ value: { colour: 'red', confidence: 0.5 }, usedFallback: false });
+    expect(out).toEqual({ value: { colour: 'red', confidence: 0.5 }, usedFallback: false, model: 'mock-model' });
     expect(calls).toHaveLength(2);
   });
 

@@ -10,11 +10,13 @@
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "eval": "tsx eval/run.ts",
+    "eval": "tsx --env-file-if-exists=../../.env eval/run.ts",
     "photos:synthetic": "tsx eval/synthetic-photos.ts"
   },
   "devDependencies": {
+    "@ai-sdk/provider": "^4.0.37",
     "@types/node": "^26.6.6",
+    "ai": "^7.0.165",
     "sharp": "^0.35.5",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",

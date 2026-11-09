@@ -44,6 +44,19 @@ export function readAiConfig(env: Env = process.env): AiConfig {
   };
 }
 
+/** True when `kind` can be built from `env`: a known provider, its model id and its API key (and, for embeddings, a capable provider). */
+export function hasModelConfig(kind: ModelKind, env: Env = process.env): boolean {
+  let cfg: AiConfig;
+  try {
+    cfg = readAiConfig(env);
+  } catch {
+    return false;
+  }
+  const provider = kind === 'embedding' ? cfg.embeddingProvider : cfg.provider;
+  if (kind === 'embedding' && !EMBEDDING_CAPABLE.has(provider)) return false;
+  return Boolean(cfg.models[kind]) && Boolean(env[KEY_VARS[provider]]);
+}
+
 function providerFactory(provider: Provider, env: Env) {
   const apiKey = env[KEY_VARS[provider]];
   switch (provider) {

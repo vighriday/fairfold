@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { closeSync, openSync, readFileSync, readSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 function load<T>(rel: string): T {
@@ -128,9 +128,13 @@ describe('photos/expected.json', () => {
     ];
     expect(paths).toHaveLength(81);
     for (const rel of paths) {
-      const bytes = readFileSync(fileURLToPath(new URL(rel, import.meta.url)));
-      expect([bytes[0], bytes[1]], rel).toEqual([0xff, 0xd8]);
-      expect(bytes.length, rel).toBeLessThan(12 * 1024 * 1024);
+      const path = fileURLToPath(new URL(rel, import.meta.url));
+      const head = Buffer.alloc(2);
+      const fd = openSync(path, 'r');
+      readSync(fd, head, 0, 2, 0);
+      closeSync(fd);
+      expect([head[0], head[1]], rel).toEqual([0xff, 0xd8]);
+      expect(statSync(path).size, rel).toBeLessThan(12 * 1024 * 1024);
     }
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { getModel, readAiConfig } from '../src/config.ts';
+import { getModel, hasModelConfig, readAiConfig } from '../src/config.ts';
 import { embed } from '../src/embed.ts';
 import { mockEmbedder } from './helpers.ts';
 
@@ -46,6 +46,20 @@ describe('getModel', () => {
   it('builds an OpenAI embedding model when AI_EMBEDDING_PROVIDER=openai', () => {
     const m = getModel('embedding', { ...xaiEnv, AI_EMBEDDING_PROVIDER: 'openai', AI_MODEL_EMBEDDING: 'text-embedding-3-small', OPENAI_API_KEY: 'k' });
     expect(m.modelId).toBe('text-embedding-3-small');
+  });
+});
+
+describe('hasModelConfig', () => {
+  it('needs the provider, the model id and the provider key', () => {
+    expect(hasModelConfig('vision', xaiEnv)).toBe(true);
+    expect(hasModelConfig('vision', { ...xaiEnv, XAI_API_KEY: undefined })).toBe(false);
+    expect(hasModelConfig('vision', { ...xaiEnv, AI_MODEL_VISION: undefined })).toBe(false);
+    expect(hasModelConfig('text', {})).toBe(false);
+    expect(hasModelConfig('vision', { AI_PROVIDER: 'acme' })).toBe(false);
+  });
+  it('checks the embedding provider and its key for embeddings', () => {
+    expect(hasModelConfig('embedding', { ...xaiEnv, AI_MODEL_EMBEDDING: 'e' })).toBe(false);
+    expect(hasModelConfig('embedding', { ...xaiEnv, AI_EMBEDDING_PROVIDER: 'openai', AI_MODEL_EMBEDDING: 'e', OPENAI_API_KEY: 'k' })).toBe(true);
   });
 });
 
