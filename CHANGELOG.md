@@ -6,13 +6,14 @@ All authored work in this checkout is on `Hriday`. Entries distinguish documenta
 
 At the user's request, the unpublished H1 commit `d1f3055` is being replaced by focused dependency-ordered commits. The original research commit `b48f674` remains intact. This is a reorganization of previously implemented work, not its original development timeline. Application files are preserved; the first Render deployment and real PayPal checks remain pending.
 
-| Step | Scope                                                                                              | Snapshot validation                                                                                                                  |
-| ---- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| C1   | Pinned tooling, local secret setup and explicit unfinished test commands                           | Frozen dependency install, typecheck, lint and source formatting PASS; 0 offline tests (no tests exist at this tooling-only step)    |
-| C2   | Typed contracts, encryption, clock, safe stubs and permitted intelligence boundaries               | Frozen dependency install, typecheck, lint and source formatting PASS; 6 offline tests PASS                                          |
-| C3   | Source SQL, Drizzle schema, migration/reset tooling and isolated integration-test launcher         | Frozen dependency install, typecheck, lint and source formatting PASS; 6 offline tests; 3 PostgreSQL tests PASS                      |
-| C4   | Canonical hashing, transactional ledger, normalized images, byte-preserving PDFs and storage tests | Locked installed dependencies verified/reused, typecheck, lint and source formatting PASS; 8 offline tests; 10 PostgreSQL tests PASS |
-| C5   | Named queues, payload validation, scheduling, debounce and transaction tests                       | Locked installed dependencies verified/reused, typecheck, lint and source formatting PASS; 8 offline tests; 15 PostgreSQL tests PASS |
+| Step | Scope                                                                                              | Snapshot validation                                                                                                                   |
+| ---- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| C1   | Pinned tooling, local secret setup and explicit unfinished test commands                           | Frozen dependency install, typecheck, lint and source formatting PASS; 0 offline tests (no tests exist at this tooling-only step)     |
+| C2   | Typed contracts, encryption, clock, safe stubs and permitted intelligence boundaries               | Frozen dependency install, typecheck, lint and source formatting PASS; 6 offline tests PASS                                           |
+| C3   | Source SQL, Drizzle schema, migration/reset tooling and isolated integration-test launcher         | Frozen dependency install, typecheck, lint and source formatting PASS; 6 offline tests; 3 PostgreSQL tests PASS                       |
+| C4   | Canonical hashing, transactional ledger, normalized images, byte-preserving PDFs and storage tests | Locked installed dependencies verified/reused, typecheck, lint and source formatting PASS; 8 offline tests; 10 PostgreSQL tests PASS  |
+| C5   | Named queues, payload validation, scheduling, debounce and transaction tests                       | Locked installed dependencies verified/reused, typecheck, lint and source formatting PASS; 8 offline tests; 15 PostgreSQL tests PASS  |
+| C6   | Fastify, demo authentication, ownership hooks, limits, safe errors/logging and API tests           | Locked installed dependencies verified/reused, typecheck, lint and source formatting PASS; 15 offline tests; 15 PostgreSQL tests PASS |
 
 ## 2026-11-09 — Research and documentation baseline
 
