@@ -1,6 +1,8 @@
 # Fairfold evidence records
 
-No runtime record has been created yet. Use one record per actual spike, acceptance run, eval or deployment. A committed record is a sanitized summary; original responses, private photos, credentials and tokens stay in ignored `local/` or `.work/`.
+The [H1 local verification record](2026-11-09-h1-local.md) covers actual foundation tests. No PayPal runtime record exists yet. Use one record per actual spike, acceptance run, eval or deployment. A committed record is a sanitized summary; original responses, private photos, credentials and tokens stay in ignored `local/` or `.work/`.
+
+The [commit history reconstruction record](2026-11-09-commit-history.md) documents the user-requested local split and validation of each replacement snapshot. It does not claim new product work or a deployment.
 
 Copy this template into a dated Markdown file when a real run occurs:
 

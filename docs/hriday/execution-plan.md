@@ -1,19 +1,19 @@
 # Hriday sequential execution plan
 
-This is the implementation work order derived from architecture section 16. It is a plan, not an implementation report. The current phase remains research and documents only. Do not run future workspace commands until the corresponding package or service exists.
+This is the implementation work order derived from architecture section 16. H1 is now in progress after the user authorized proceeding around absent sandbox accounts. The [H1 guide](h1-foundation.md) records local implementation evidence; later tasks remain plans. Do not run future workspace commands until the corresponding package or service exists.
 
 Hriday owns platform, PayPal, storage, outside-world actions and deployment. Ishaan owns interpretation, scoring, statistics and drafts. The Figma frontend is outside both task lists. Complete H1 → H8 in that order, on `Hriday`, using the fixed contracts and documented stubs. Every task needs its checks, `pnpm typecheck`, an evidence record and a task-prefixed commit before it is done.
 
 ## Before H1
 
-1. Finish the [sandbox dispute spike](sandbox-spike.md), the explicit pre-H1 assignment. Record actual dispute status, lifecycle stage, links/options and arrival delay in `DECISIONS.md`.
+1. The source assigns the [sandbox dispute spike](sandbox-spike.md) before H1. The user has explicitly deferred it because accounts do not exist. Proceed with H1; retain the real dispute checks as NOT RUN and record their results when account access becomes available.
 2. Prepare the discovery result and open questions for Ishaan. Establish which H1 contracts he needs first; his photo collection is his prerequisite, not Hriday's replacement task.
 3. Resolve only questions needed for the next task. Q2/Q4/Q5 affect H4 payloads; Q3 affects persistence; Q11 affects event durability. Do not change a shared contract without review.
 4. Check the branch is `Hriday` and internal files remain ignored. Establish Render access before H1's deploy gate. Node 22.16.0 and pnpm 12.4.2 were observed locally; Docker was not found on PATH. Installation/startup checks remain future work.
 
 ## H1 Foundation and first deploy
 
-Source estimate: 6 hours. Sources: architecture 7, 10–12, 14–16. Status: NOT STARTED.
+Source estimate: 6 hours. Sources: architecture 7, 10–12, 14–16. Status: IN PROGRESS; local foundation implemented, first Render deployment pending.
 
 1. Create only the prescribed pnpm workspace: strict TypeScript/ES modules, shared ES2022 configuration, ESLint, Prettier and Vitest. Define offline `pnpm test`, credential-aware `pnpm test:sandbox`, `pnpm test:e2e`, `pnpm typecheck`, and the specified database/dev scripts. Record compatible dependency versions; do not add a second backend or database.
 2. Add Postgres 16 to Docker Compose. Translate the section 7 SQL column-for-column into Drizzle and `0001_init`; preserve constraints, indexes and nullability. Keep reset explicitly local/test-oriented. Check all 25 tables against the original, not this summary.

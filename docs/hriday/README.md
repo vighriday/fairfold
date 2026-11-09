@@ -1,6 +1,6 @@
 # Hriday research and execution guide
 
-This guide turns the existing Fairfold documents into an ordered work queue for Hriday. It preserves the idea, the chosen architecture and the PayPal-only payment integration. The user explicitly selected research and documents before application code on 9 November 2026.
+This guide turns the existing Fairfold documents into an ordered work queue for Hriday. It preserves the idea, the chosen architecture and the PayPal-only payment integration. The user first selected research and documents, then authorized building H1 around the absent sandbox accounts on 9 November 2026.
 
 Read and act in this order:
 
@@ -12,6 +12,8 @@ Read and act in this order:
 6. [Contract and handoff inventory](contracts-handoff.md): endpoints, jobs, tables and the boundaries with Ishaan and the Figma frontend.
 7. [Validation plan](validation.md): A1–A14 and the evidence required to call a task complete.
 8. [Demo and submission preparation](submission.md): show the same B17 story and substantiate every claim.
+
+The [H1 foundation guide](h1-foundation.md) records the implemented local setup, tests, actual endpoints, handoff and pending deployment gate.
 
 Use the [evidence record template](evidence/README.md) for real runs. Keep unredacted working files under ignored `docs/hriday/evidence/local/` or `.work/`; publish only sanitized summaries. Maintain the root [changelog](../../CHANGELOG.md).
 

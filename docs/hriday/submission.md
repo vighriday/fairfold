@@ -8,13 +8,13 @@ Keep the source's story: Maya buys a $38 hoodie from fictional Neel Block Prints
 
 The case for the project is the two-sided evidence loop and preventive batch workflow. Show that loop before the dispute automation. A model may read and draft, while code computes signals/statistics and a human approves actions. The demonstration must show both a merchant receiving useful evidence and a buyer receiving fair treatment when inspection confirms a problem.
 
-| Published judging area | Evidence to prepare | Owner |
-| --- | --- | --- |
-| Technological implementation | Real create/capture/tracking, verified events, real dispute response, toolkit/MCP calls and coherent error handling | H with I integration |
-| Design | Connected checkout/report, merchant Pack Station/Dispute Room, shared-cause panel and buyer rights page | Figma frontend, H/I contracts |
-| Potential impact | Specific exporter/buyer scenario, material dispute-cost context and demonstrated prevention action | Both |
-| Innovation | Packing evidence becomes buyer information; complaint evidence changes later fulfilment | Both |
-| Presentation | Understandable single story, visible working steps, honest labels and short video | I narration, both recording |
+| Published judging area       | Evidence to prepare                                                                                                 | Owner                         |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| Technological implementation | Real create/capture/tracking, verified events, real dispute response, toolkit/MCP calls and coherent error handling | H with I integration          |
+| Design                       | Connected checkout/report, merchant Pack Station/Dispute Room, shared-cause panel and buyer rights page             | Figma frontend, H/I contracts |
+| Potential impact             | Specific exporter/buyer scenario, material dispute-cost context and demonstrated prevention action                  | Both                          |
+| Innovation                   | Packing evidence becomes buyer information; complaint evidence changes later fulfilment                             | Both                          |
+| Presentation                 | Understandable single story, visible working steps, honest labels and short video                                   | I narration, both recording   |
 
 These are the [published judging criteria](https://paypalaihackathon.devpost.com/rules). They are not a predicted score or guarantee of a prize. The source document's self-scores remain subjective and should not be presented as judging results.
 
@@ -22,16 +22,16 @@ These are the [published judging criteria](https://paypalaihackathon.devpost.com
 
 Use the timing from submission section 15. Keep the final exported video strictly below three minutes; the original closing interval ends at 3:00, so ensure the export ends earlier without dropping the core story. Record segments separately, then verify the final duration.
 
-| Time | Source segment | Evidence that must be real and legible |
-| --- | --- | --- |
-| 0:00–0:12 | Buyer/merchant problem and fair witness | Specific exporter/buyer context; any displayed fee has a source and currency |
-| 0:12–0:32 | Maya sees Store Report and pays | Cited report next to sandbox PayPal checkout; actual order/approval |
-| 0:32–0:50 | Alex R.'s merchant view | Seeded yellow band, top reasons, fulfilment recommendation |
-| 0:50–1:10 | Pack Station | Actual photo attestation, B17 scan, seal/hash result and PayPal tracking response |
-| 1:10–1:30 | Dispute enters | Real case linked to live capture; webhook or labelled reconciliation path; inspect-first recommendation |
-| 1:30–2:20 | Shared Cause and inspection | Six linked seam complaints, exposure/intervals, couriers, 18 orders, defective seam inspection and approved supported resolution |
-| 2:20–2:40 | Shopping agent | Store-report tool call, caution-store skip, explicit human approval and real sandbox payment |
-| 2:40–before 3:00 | Closing | Repo/demo reference, actual PayPal/AI tools used, fair treatment of both sides |
+| Time             | Source segment                          | Evidence that must be real and legible                                                                                           |
+| ---------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| 0:00–0:12        | Buyer/merchant problem and fair witness | Specific exporter/buyer context; any displayed fee has a source and currency                                                     |
+| 0:12–0:32        | Maya sees Store Report and pays         | Cited report next to sandbox PayPal checkout; actual order/approval                                                              |
+| 0:32–0:50        | Alex R.'s merchant view                 | Seeded yellow band, top reasons, fulfilment recommendation                                                                       |
+| 0:50–1:10        | Pack Station                            | Actual photo attestation, B17 scan, seal/hash result and PayPal tracking response                                                |
+| 1:10–1:30        | Dispute enters                          | Real case linked to live capture; webhook or labelled reconciliation path; inspect-first recommendation                          |
+| 1:30–2:20        | Shared Cause and inspection             | Six linked seam complaints, exposure/intervals, couriers, 18 orders, defective seam inspection and approved supported resolution |
+| 2:20–2:40        | Shopping agent                          | Store-report tool call, caution-store skip, explicit human approval and real sandbox payment                                     |
+| 2:40–before 3:00 | Closing                                 | Repo/demo reference, actual PayPal/AI tools used, fair treatment of both sides                                                   |
 
 Keep A12's real provide-evidence success in the recorded test evidence, even if the primary video shows the fair offer rather than defending a confirmed defective batch. If the actual case only permits accept-claim, the source describes that fallback; record and review it before changing the narrated action. Never substitute a mocked PayPal success.
 
@@ -49,16 +49,16 @@ The [India fee page](https://www.paypal.com/in/business/paypal-business-fees) su
 
 ## Submission evidence checklist
 
-| Deliverable | Required contents or check | Current state |
-| --- | --- | --- |
-| Public repository | Source/assets needed to run; top-level licence; clean history; no internal originals/secrets | Local docs only; MIT file prepared; remote publication not performed |
-| Setup README | Actual prerequisites, local/Render instructions, account creation and demo-role access, tools/AI usage, measured evals and limitations | Preparation only; H8 owns final run instructions |
-| Functional demo | Hosted working URL or complete reproducible build instructions | NOT BUILT |
-| YouTube video | Public visibility, duration below 3 minutes, working device view, authorized material | NOT RECORDED |
-| Devpost description | Ishaan adapts submission section 18 to actual delivered behavior and replaces every metric placeholder honestly | SOURCE DRAFT ONLY |
-| Built with list | Only APIs, models and sponsor tools actually used | NOT FINAL |
-| Evidence | A1–A14 results, real sandbox evidence response, agent transcript and measured evals | NOT RUN |
-| Team entry | Both eligible members and chosen representative confirmed in the actual submission | NOT VERIFIED |
+| Deliverable         | Required contents or check                                                                                                             | Current state                                                              |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Public repository   | Source/assets needed to run; top-level licence; clean history; no internal originals/secrets                                           | H1 backend and MIT licence local; remote publication not performed         |
+| Setup README        | Actual prerequisites, local/Render instructions, account creation and demo-role access, tools/AI usage, measured evals and limitations | H1 local setup verified; H8 owns full product/demo instructions            |
+| Functional demo     | Hosted working URL or complete reproducible build instructions                                                                         | NOT BUILT                                                                  |
+| YouTube video       | Public visibility, duration below 3 minutes, working device view, authorized material                                                  | NOT RECORDED                                                               |
+| Devpost description | Ishaan adapts submission section 18 to actual delivered behavior and replaces every metric placeholder honestly                        | SOURCE DRAFT ONLY                                                          |
+| Built with list     | Only APIs, models and sponsor tools actually used                                                                                      | NOT FINAL                                                                  |
+| Evidence            | A1–A14 results, real sandbox evidence response, agent transcript and measured evals                                                    | H1 local checks recorded; full deployed/sandbox suite and AI evals NOT RUN |
+| Team entry          | Both eligible members and chosen representative confirmed in the actual submission                                                     | NOT VERIFIED                                                               |
 
 The [hackathon requirements](https://paypalaihackathon.devpost.com/) require a working project, public licensed source and a public YouTube demo under three minutes. A polished document or static mockup alone is insufficient. Final judge setup must work without these ignored internal source documents.
 

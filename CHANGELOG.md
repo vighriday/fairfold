@@ -6,16 +6,45 @@ All authored work in this checkout is on `Hriday`. Entries distinguish documenta
 
 At the user's request, the unpublished H1 commit `d1f3055` is being replaced by focused dependency-ordered commits. The original research commit `b48f674` remains intact. This is a reorganization of previously implemented work, not its original development timeline. Application files are preserved; the first Render deployment and real PayPal checks remain pending.
 
-| Step | Scope                                                                                              | Snapshot validation                                                                                                                   |
-| ---- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| C1   | Pinned tooling, local secret setup and explicit unfinished test commands                           | Frozen dependency install, typecheck, lint and source formatting PASS; 0 offline tests (no tests exist at this tooling-only step)     |
-| C2   | Typed contracts, encryption, clock, safe stubs and permitted intelligence boundaries               | Frozen dependency install, typecheck, lint and source formatting PASS; 6 offline tests PASS                                           |
-| C3   | Source SQL, Drizzle schema, migration/reset tooling and isolated integration-test launcher         | Frozen dependency install, typecheck, lint and source formatting PASS; 6 offline tests; 3 PostgreSQL tests PASS                       |
-| C4   | Canonical hashing, transactional ledger, normalized images, byte-preserving PDFs and storage tests | Locked installed dependencies verified/reused, typecheck, lint and source formatting PASS; 8 offline tests; 10 PostgreSQL tests PASS  |
-| C5   | Named queues, payload validation, scheduling, debounce and transaction tests                       | Locked installed dependencies verified/reused, typecheck, lint and source formatting PASS; 8 offline tests; 15 PostgreSQL tests PASS  |
-| C6   | Fastify, demo authentication, ownership hooks, limits, safe errors/logging and API tests           | Locked installed dependencies verified/reused, typecheck, lint and source formatting PASS; 15 offline tests; 15 PostgreSQL tests PASS |
-| C7   | Explicit stub worker startup and API/worker development command                                    | Locked installed dependencies verified/reused, typecheck, lint and source formatting PASS; 15 offline tests; 15 PostgreSQL tests PASS |
-| C8   | API/worker/Postgres deployment configuration; deployment remains pending                           | Application sources unchanged from validated C7; YAML/format checks PASS; no redundant application test rerun                         |
+| Step | Scope                                                                                              | Snapshot validation                                                                                                                                        |
+| ---- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| C1   | Pinned tooling, local secret setup and explicit unfinished test commands                           | Frozen dependency install, typecheck, lint and source formatting PASS; 0 offline tests (no tests exist at this tooling-only step)                          |
+| C2   | Typed contracts, encryption, clock, safe stubs and permitted intelligence boundaries               | Frozen dependency install, typecheck, lint and source formatting PASS; 6 offline tests PASS                                                                |
+| C3   | Source SQL, Drizzle schema, migration/reset tooling and isolated integration-test launcher         | Frozen dependency install, typecheck, lint and source formatting PASS; 6 offline tests; 3 PostgreSQL tests PASS                                            |
+| C4   | Canonical hashing, transactional ledger, normalized images, byte-preserving PDFs and storage tests | Locked installed dependencies verified/reused, typecheck, lint and source formatting PASS; 8 offline tests; 10 PostgreSQL tests PASS                       |
+| C5   | Named queues, payload validation, scheduling, debounce and transaction tests                       | Locked installed dependencies verified/reused, typecheck, lint and source formatting PASS; 8 offline tests; 15 PostgreSQL tests PASS                       |
+| C6   | Fastify, demo authentication, ownership hooks, limits, safe errors/logging and API tests           | Locked installed dependencies verified/reused, typecheck, lint and source formatting PASS; 15 offline tests; 15 PostgreSQL tests PASS                      |
+| C7   | Explicit stub worker startup and API/worker development command                                    | Locked installed dependencies verified/reused, typecheck, lint and source formatting PASS; 15 offline tests; 15 PostgreSQL tests PASS                      |
+| C8   | API/worker/Postgres deployment configuration; deployment remains pending                           | Application sources unchanged from validated C7; YAML/format checks PASS; no redundant application test rerun                                              |
+| C9   | Actual H1 evidence, architecture-grounded handoff/status and history reconstruction record         | Application sources unchanged from validated C7; YAML/format checks PASS; final file/privacy/ancestry/link audit PASS; no redundant application test rerun |
+
+## 2026-11-09 — H1 local foundation
+
+### Implemented
+
+- Began H1 after the user confirmed sandbox accounts are absent and authorized building around that dependency. The real pre-H1 spike is deferred, not recorded as passed.
+- Added a pinned TypeScript/pnpm workspace with strict type checking, ESLint, Prettier, Vitest, lockfile, local-secret setup and explicit sandbox/end-to-end test status commands.
+- Added shared PayPal/AI/API/shared-cause/job contracts, injectable clock, AES-256-GCM encryption helpers and clearly labelled safe intelligence stubs.
+- Added the exact source SQL migration and matching Drizzle declarations for 25 tables and 253 columns, PostgreSQL 16 Compose configuration, idempotent migrations and a guarded local reset command.
+- Implemented transactional ledger append/verification, canonical JSON, image validation/EXIF inspection/normalization/deduplication, merchant-local photo reuse lookup and byte-preserving PDF storage.
+- Implemented validated pg-boss publication/handlers, all 16 named queues, scheduling, per-merchant delayed scan coalescing and optional transaction-aware publication.
+- Implemented the Fastify foundation with health/OpenAPI/demo login, role/subject authentication, safe errors/logging, CORS, global and upload rate limits, multipart limits and worker bootstrap.
+- Prepared the Render API/worker/Postgres 16 blueprint, pinned both services to `Hriday` and disabled automatic deployment. No Render deployment or purchase was performed.
+
+### Verified
+
+- Installed official PostgreSQL 16.15 as ignored workspace tooling and used only new isolated loopback Fairfold databases. The installed PostgreSQL 17 instance and Windows services were unchanged.
+- `pnpm db:migrate`, 15 offline tests, 15 PostgreSQL integration tests, typecheck, lint and formatting checks passed. Default offline tests do not open a database solely because TEST_DATABASE_URL exists; the database launcher explicitly opts in and validates the target.
+- Verified all 253 columns, ledger concurrency/tampering/rollback, normalized image dedupe, exact PDF bytes, queue delivery/debounce/scheduling/rollback, auth/ownership/expiry, upload limits and error/log redaction.
+- Verified the running API's database health, Swagger HTML/OpenAPI and demo-token issuance over HTTP, and the worker's explicit stub/zero-handler startup. Local API is configured on port 3110.
+- Recorded the actual verification and limitations in `docs/hriday/evidence/2026-11-09-h1-local.md`; local setup and Ishaan's handoff are in `docs/hriday/h1-foundation.md`.
+- Rechecked unchanged source-document digests, exact source SQL migration fidelity, all 28 local links across 16 Markdown documents and private-file exclusions.
+
+### Still pending
+
+- First Render deployment, full deployed acceptance suite and browser visual check. H1 remains IN PROGRESS until its first deployment gate passes.
+- Real PayPal sandbox spike/actions and all model evaluations. `pnpm test:sandbox` correctly reported SKIPPED without credentials; `test:e2e` explicitly reports that the later suite is not implemented.
+- H2–H8, Figma frontend integration, remote publication and actual team handoff. No outbound team message or submission was sent.
 
 ## 2026-11-09 — Research and documentation baseline
 

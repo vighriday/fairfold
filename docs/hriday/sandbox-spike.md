@@ -1,6 +1,6 @@
 # Hriday sandbox dispute spike
 
-This is the pre-H1 task explicitly assigned to Hriday in architecture section 16. Its purpose is to discover whether the planned demo's real PayPal dispute path works before investing in the application. Budget from the source: approximately 60 minutes. **Current result: NOT RUN.** These are instructions and request examples, not code executed during this documentation pass.
+This is the pre-H1 task explicitly assigned to Hriday in architecture section 16. Its purpose is to discover whether the planned demo's real PayPal dispute path works before investing in the application. Budget from the source: approximately 60 minutes. **Current result: DEFERRED BY USER; NOT RUN.** The user confirmed on 9 November that accounts do not exist and instructed building around that dependency. These request examples have not been executed against PayPal.
 
 The original brief requires a buyer-opened not-as-described case, a details snapshot, timing and a report to Ishaan. The full evidence/offer rehearsal extends that discovery into the highest-risk H4 path. Keep separate results for discovery and action rehearsal; do not call H4 complete merely because discovery succeeds.
 
@@ -111,22 +111,24 @@ Record `status`, `dispute_life_cycle_stage`, all action link names, allowed offe
 
 This step requires an explicit human choice of the action for that sandbox case. Each action can change or close it. Preserve the before snapshot and prepare a fresh captured transaction/dispute for another branch. These examples do not constitute blanket approval for application workers to submit anything.
 
-| Observation | Documented action to test | Evidence to record |
-| --- | --- | --- |
-| WAITING_FOR_SELLER_RESPONSE and `provide-evidence` link | Multipart evidence; first use a small PDF/PNG clearly labelled as spike material | Actual request structure, HTTP result, PayPal debug ID on failure, after snapshot |
-| INQUIRY and allowed replacement/refund offer | Merchant-approved `make-offer`, using a supported type and appropriate amount | Accepted offer type/amount, response and resulting state |
-| Escalated case where offer is unavailable | Inspect allowed accept options; test the source's accept-claim alternative only when its payload can be represented correctly | Allowed type and refund consequence; do not improvise missing return-address fields |
-| Sandbox case needing seller evidence reopened | `require-evidence` with `action: SELLER_EVIDENCE`, then re-fetch | New status **and** lifecycle stage and links; do not assume the stage changed |
-| Separate disposable case after other checks | Sandbox adjudicate to rehearse resolution | Explicit sandbox label and observed outcome; not a Fairfold prediction |
+| Observation                                             | Documented action to test                                                                                                     | Evidence to record                                                                  |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| WAITING_FOR_SELLER_RESPONSE and `provide-evidence` link | Multipart evidence; first use a small PDF/PNG clearly labelled as spike material                                              | Actual request structure, HTTP result, PayPal debug ID on failure, after snapshot   |
+| INQUIRY and allowed replacement/refund offer            | Merchant-approved `make-offer`, using a supported type and appropriate amount                                                 | Accepted offer type/amount, response and resulting state                            |
+| Escalated case where offer is unavailable               | Inspect allowed accept options; test the source's accept-claim alternative only when its payload can be represented correctly | Allowed type and refund consequence; do not improvise missing return-address fields |
+| Sandbox case needing seller evidence reopened           | `require-evidence` with `action: SELLER_EVIDENCE`, then re-fetch                                                              | New status **and** lifecycle stage and links; do not assume the stage changed       |
+| Separate disposable case after other checks             | Sandbox adjudicate to rehearse resolution                                                                                     | Explicit sandbox label and observed outcome; not a Fairfold prediction              |
 
 For evidence, prepare an ignored `evidence-input.json` matching this shape. Use a real tracking number only if it is genuinely associated with the tested captured order; otherwise test OTHER with truthful spike notes. The A12 fulfilment path must later use the real linked tracking data.
 
 ```json
 {
-  "evidences": [{
-    "evidence_type": "OTHER",
-    "notes": "Sandbox integration spike material. This is not production shipment proof."
-  }]
+  "evidences": [
+    {
+      "evidence_type": "OTHER",
+      "notes": "Sandbox integration spike material. This is not production shipment proof."
+    }
+  ]
 }
 ```
 
@@ -149,21 +151,21 @@ The source's `accept_claim_reason` list remains unverified. The integration guid
 
 ## 8. Record the discovery result and handoff
 
-| Field | Result |
-| --- | --- |
-| Run date/time, operator, branch/commit | NOT RUN |
-| App features enabled; business/personal roles checked | NOT VERIFIED |
-| Fairfold reference / invoice / PayPal order / capture | NOT RUN |
-| Capture status, seller protection, payer account status | NOT RUN |
-| Buyer dispute submit time and first API visibility | NOT RUN |
-| Dispute ID, reason, status, lifecycle stage | NOT RUN |
-| Action links and `allowed_response_options` | NOT RUN |
-| Capture/invoice mapping result | NOT RUN |
-| Multipart evidence result and post-state | NOT RUN |
-| Offer or accepted documented alternative, result/post-state | NOT RUN |
-| Webhook arrival and verification, if a receiver exists | NOT RUN |
-| Sanitized artifact paths; failures/debug IDs | NONE |
-| Joint contract questions resolved | NONE |
+| Field                                                       | Result       |
+| ----------------------------------------------------------- | ------------ |
+| Run date/time, operator, branch/commit                      | NOT RUN      |
+| App features enabled; business/personal roles checked       | NOT VERIFIED |
+| Fairfold reference / invoice / PayPal order / capture       | NOT RUN      |
+| Capture status, seller protection, payer account status     | NOT RUN      |
+| Buyer dispute submit time and first API visibility          | NOT RUN      |
+| Dispute ID, reason, status, lifecycle stage                 | NOT RUN      |
+| Action links and `allowed_response_options`                 | NOT RUN      |
+| Capture/invoice mapping result                              | NOT RUN      |
+| Multipart evidence result and post-state                    | NOT RUN      |
+| Offer or accepted documented alternative, result/post-state | NOT RUN      |
+| Webhook arrival and verification, if a receiver exists      | NOT RUN      |
+| Sanitized artifact paths; failures/debug IDs                | NONE         |
+| Joint contract questions resolved                           | NONE         |
 
 Copy the actual discovery summary into root `DECISIONS.md`, update `status.md`, and prepare the result for Ishaan's CP0 handoff. The source plan asks Hriday to tell Ishaan; no message has been sent by this agent. Log evidence/action rehearsal separately. Remove token/header variables or close the private shell when finished.
 
