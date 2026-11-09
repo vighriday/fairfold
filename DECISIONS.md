@@ -19,6 +19,11 @@ Judgement calls made while building Fairfold. Each entry names who made it and w
 - Alex: OWN_DISPUTES_LOST 15 + OWN_REFUND_RATIO 10 + NEW_ADDRESS 5 + PAYER_VERIFIED −5 = 25 → yellow.
 - Contract change: **yes**, to section 10's points table. Needs Hriday's approval.
 
+### I-D5 — Alex R.'s seeded history must give a refund ratio above one half — 2026-11-09
+- OWN_REFUND_RATIO needs at least 2 orders with **more than** half refunded. With "one earlier refund" over 2 orders (exactly half), the rule cannot fire. The eval profile therefore gives Alex 2 earlier orders, both refunded, one of which he later disputed and lost, plus a new ship-to address.
+- Action for Hriday's `scripts/seed.ts`: seed Alex's history to match this profile (`packages/intelligence/eval/fixtures/buyers.json`, id `b15`).
+- Contract change: none (seed data only).
+
 ### I-D3 — Dispute messages are appended, not new complaint rows — 2026-11-09
 - Section 9 lists a `dispute_message` source, but the `complaints.source` check constraint allows only `buyer_report | dispute | review`, and section 7 says dispute messages are appended to the dispute's complaint text. We follow section 7.
 - Contract change: none.
