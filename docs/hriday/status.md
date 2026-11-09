@@ -44,6 +44,8 @@ The 33-hour estimates are inherited from the architecture. They exclude the pre-
 
 ## Immediate next action
 
+The approved fixture boundary is executable: opt-in operation recording sanitizes before writing, and real-record parser tests stay explicitly skipped until observed files exist. [Recording evidence](evidence/2026-11-09-h2-response-recording.md) records 201 offline passes; no real sandbox response has been recorded.
+
 The minimal H2 account-backed setup is now executable with `pnpm setup:sandbox`; it creates only the source Neel merchant and hoodie after local credentials exist. [Setup evidence](evidence/2026-11-09-h2-sandbox-setup.md) records 111 database passes and eleven operator-guard passes. Its actual no-credential invocation skipped without writes; real account setup remains pending. The remaining H2 rehearsal/recording workflow is being completed before any H3 work.
 
 H2’s local path now includes database-priced creation, approved capture minimization, atomic order/ledger/job writes, authoritative capture recovery, owner-scoped reads, the seven source HTTP endpoints and the unstyled /dev harness. Current checks: **173 offline passes and 102 real PostgreSQL/HTTP passes**, plus actual API startup/OpenAPI/private-auth and DEMO_MODE on/off asset checks. The runtime still labels intelligence as a stub. Start with the [checkout integration handoff](checkout-integration.md); [HTTP evidence](evidence/2026-11-09-h2-http.md), [harness evidence](evidence/2026-11-09-h2-dev-checkout.md) and the [ordered H2 record](h2-paypal.md) give the exact scope.

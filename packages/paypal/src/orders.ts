@@ -2,6 +2,7 @@ import { PayPalOrderInputSchema, type CaptureResult, type PayPalClient } from '@
 import { formatMoney, moneyMinor } from './money.js';
 import { type PayPalTransport } from './transport.js';
 import { createTrackingOperation } from './tracking.js';
+import { recordOrderSafely, type OrderRecording } from './recording.js';
 import {
   array,
   inputText,
@@ -158,33 +159,43 @@ function parseCaptured(body: unknown, expectedId: string): CaptureResult {
 export function readCapturedOrder(
   transport: PayPalTransport,
   id: string,
+  recording?: OrderRecording,
 ): Promise<CaptureResult | null> {
   orderId(id);
-  return transport.requestValidated(
-    { method: 'GET', path: `/v2/checkout/orders/${id}?fields=payment_source` },
-    (body) => {
-      const order = object(body);
-      if (order.id !== id) return invalidResponse();
-      const status = responseText(order.status);
-      const units = array(order.purchase_units);
-      if (units.length !== 1) return invalidResponse();
-      const payments = optionalObject(object(units[0]).payments);
-      const captures = payments.captures === undefined ? [] : array(payments.captures);
-      if (!captures.length) {
-        if (!['CREATED', 'SAVED', 'APPROVED', 'PAYER_ACTION_REQUIRED'].includes(status))
-          return invalidResponse();
-        return null;
-      }
-      return parseCaptured(body, id);
-    },
-  );
+  return transport
+    .requestValidated(
+      { method: 'GET', path: `/v2/checkout/orders/${id}?fields=payment_source` },
+      (body) => {
+        const order = object(body);
+        if (order.id !== id) return invalidResponse();
+        const status = responseText(order.status);
+        const units = array(order.purchase_units);
+        if (units.length !== 1) return invalidResponse();
+        const payments = optionalObject(object(units[0]).payments);
+        const captures = payments.captures === undefined ? [] : array(payments.captures);
+        if (!captures.length) {
+          if (!['CREATED', 'SAVED', 'APPROVED', 'PAYER_ACTION_REQUIRED'].includes(status))
+            return invalidResponse();
+          return null;
+        }
+        return parseCaptured(body, id);
+      },
+    )
+    .then(async (result) => {
+      if (result) await recordOrderSafely(recording, 'capture-get', result.raw);
+      return result;
+    });
 }
 
-export function createOrderOperations(transport: PayPalTransport): Orders {
+export function createOrderOperations(
+  transport: PayPalTransport,
+  recording?: OrderRecording,
+): Orders {
   return {
     addTracking: createTrackingOperation(transport),
     async create(input, opts) {
-      return transport.requestValidated(
+      let observed: unknown;
+      const result = await transport.requestValidated(
         {
           method: 'POST',
           path: '/v2/checkout/orders',
@@ -192,12 +203,18 @@ export function createOrderOperations(transport: PayPalTransport): Orders {
           opts,
           retrySafe: true,
         },
-        parseCreated,
+        (body) => {
+          const parsed = parseCreated(body);
+          observed = body;
+          return parsed;
+        },
       );
+      await recordOrderSafely(recording, 'create', observed);
+      return result;
     },
     async capture(id, opts) {
       orderId(id);
-      return transport.requestValidated(
+      const result = await transport.requestValidated(
         {
           method: 'POST',
           path: `/v2/checkout/orders/${id}/capture`,
@@ -207,6 +224,8 @@ export function createOrderOperations(transport: PayPalTransport): Orders {
         },
         (body) => parseCaptured(body, id),
       );
+      await recordOrderSafely(recording, 'capture', result.raw);
+      return result;
     },
     async get(id) {
       orderId(id);

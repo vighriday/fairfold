@@ -6,3 +6,9 @@ export { carriers } from './carriers.js';
 export { createPaymentOperations } from './payments.js';
 export { createReportingOperations } from './reporting.js';
 export { createCheckoutClientFactory, type CheckoutClient } from './checkout.js';
+export {
+  type OrderRecording,
+  type SanitizedOrderRecord,
+  sanitizeOrderRecord,
+  parseOrderRecord,
+} from './recording.js';

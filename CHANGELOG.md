@@ -2,6 +2,12 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-09 — H2 sanitized sandbox response recording
+
+- Added opt-in recording after the real create/capture/recovery parsers, with in-memory allowlisting and synthetic replacements for buyer/shipping fields. OAuth/raw bodies never reach a recording sink; recording failures preserve payment semantics.
+- Added atomic ignored-file writing, strict replay validation and recorded-response parser acceptance without a synthetic fallback. Captured GET records remain distinguishable from capture POST records.
+- Seventeen new offline checks passed (201 total); typecheck/lint passed. Actual recorded acceptance explicitly skipped because no real response records exist. See response-recording evidence; no PayPal success is claimed.
+
 ## 2026-11-09 — H2 minimal sandbox merchant setup
 
 - Added setup:sandbox for the source Neel merchant and USD38 hoodie only, with encrypted credentials, local/demo/sandbox guards and transactional repeat/concurrency safety. Conflicting setup fails without overwriting existing data.
