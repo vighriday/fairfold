@@ -2,6 +2,13 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-09 — H2.2b tracking and carrier mapping
+
+- Completed the existing Orders method group with flat-body addTracking, explicit notification choice, validated returned tracker selection and unchanged request IDs. No seal, tracking job or notification was executed.
+- Added the source carrier crosswalk, including INDIA_POST to IN_INDIAPOST and named Indian carriers. Bare OTHER is rejected by the dispute mapper; callers must supply the stored actual carrier name, never a guessed default.
+- Preserved the required POST request-ID header while disabling automatic tracking 5xx replay because the operation does not document that idempotency header. HTTP 429 remains bounded by the existing transport.
+- Added 28 synthetic tracking/carrier cases. After correcting validation failures before commit, the full offline suite passed 111 tests with 17 DB checks skipped; typecheck and lint passed. Evidence distinguishes official response examples from unobserved real sandbox behavior.
+
 ## 2026-11-09 — H2.2a Orders create, capture and get
 
 - Implemented the existing create/capture/get contracts using the sandbox merchant transport. Create sends one CAPTURE purchase unit, stable identifiers, string quantities and exact BigInt-derived totals; wire currency precision and numeric(12,2) bounds are checked without changing shared Money.

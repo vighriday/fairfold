@@ -1,6 +1,7 @@
 import { PayPalOrderInputSchema, type CaptureResult, type PayPalClient } from '@fairfold/contracts';
 import { formatMoney, moneyMinor } from './money.js';
 import { type PayPalTransport } from './transport.js';
+import { createTrackingOperation } from './tracking.js';
 import {
   array,
   inputText,
@@ -13,7 +14,7 @@ import {
   responseText,
 } from './validation.js';
 
-type Orders = Pick<PayPalClient['orders'], 'create' | 'capture' | 'get'>;
+type Orders = PayPalClient['orders'];
 
 function shippingBody(input: NonNullable<Parameters<Orders['create']>[0]['shipping']>) {
   const limits: Record<string, number> = {
@@ -155,6 +156,7 @@ function parseCaptured(body: unknown, expectedId: string): CaptureResult {
 
 export function createOrderOperations(transport: PayPalTransport): Orders {
   return {
+    addTracking: createTrackingOperation(transport),
     async create(input, opts) {
       return transport.requestValidated(
         {

@@ -44,6 +44,14 @@ Capture maps the actual capture's status and seller protection, wallet account s
 
 `requestValidated` reports malformed response shapes with actual debug-ID/status metadata and never retries a potentially completed mutation because parsing failed. Order GET validates identity and returns the transient vendor object; vendor HATEOAS links are not followed. [Orders evidence](evidence/2026-11-09-h2-orders.md) records 83 offline passes and the current official schema digest. Real sandbox fixtures and A4 remain NOT RUN.
 
+## H2.2b Tracking and carrier mapping
+
+`createOrderOperations` now returns the complete existing Orders method group, including `addTracking`; it still does not claim the whole PayPalClient/ForMerchant. Tracking sends capture_id, tracking_number, carrier, optional carrier_name_other and the explicit notify_payer value as a flat object. It sends the source request ID but does not automatically replay 5xx because the current tracking operation does not document that idempotency header. The future H5 job must reconcile an ambiguous outcome before repeating a notification-producing call.
+
+The returned tracker must exist in the actual response for the expected order. A matching captureId-trackingNumber ID is selected among older trackers, as illustrated in the official response examples; a unique opaque returned ID is also accepted. Missing or ambiguous IDs fail rather than being invented. The format remains subject to actual sandbox observation.
+
+The source carrier map handles DHL, FedEx, UPS, India Post, Delhivery and Blue Dart. `carriers.toDisputeCarrier` keeps the existing one-string interface. For a shipment tracked as OTHER, its caller passes the actual stored carrier_name_other value; bare OTHER fails. Known names map to the verified disputes enum; an explicit unlisted name remains OTHER with that supplied name. No default courier identity is guessed. [Tracking evidence](evidence/2026-11-09-h2-tracking.md) records 111 offline passes. Refund/reporting helpers follow before persistence.
+
 ## Persistence review still needed
 
 Q3 identifies a conflict between `CaptureResult.raw`/`disputes.raw`/webhook payloads and the original no-email/no-street-address persistence rule. Preserve raw webhook bytes transiently for signature verification. Keep the exact capture contract transient; do not persist its raw object or add real fixtures before joint review.
