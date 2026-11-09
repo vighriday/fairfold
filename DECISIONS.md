@@ -47,6 +47,10 @@ Recorded 9 November 2026 IST. The architecture's choices below are inherited, no
 
 On Render only (`RENDER=true`), use its documented `RENDER_EXTERNAL_URL` as the default APP_BASE_URL, and default FRONTEND_ORIGIN to that app URL while H1/H2 serve Swagger and the unstyled harness from the API origin. Explicit APP_BASE_URL and FRONTEND_ORIGIN still take precedence; local configuration still requires both. Configure the actual Figma frontend origin when it exists. This avoids guessing a hostname before first resource creation and preserves the section 14 environment names and section 12 CORS boundary. Source: [Render's default environment variables](https://render.com/docs/environment-variables).
 
+### O15 — Continue local H2 while H1 hosting is pending
+
+The user reports deleting a stale Blueprint and asks to wait for synchronization while continuing the other pieces, with a possible later deployment handoff to Ishaan. Continue the next source task, H2, locally in focused increments. H1 remains IN PROGRESS until hosted verification passes; H2 cannot pass A4 without real sandbox accounts. The supplied screenshot establishes a separate payment-information requirement for the paid Blueprint, not a measured quota reset or synchronization delay. Retain D18 and the existing service plans; prepare the handoff without assigning it to Ishaan or sending a message. Q3 still gates capture persistence, and H3 has not been authorized as a skipped-ahead task.
+
 ## Questions to resolve before the affected implementation
 
 | ID  | Finding and consequence                                                                                                                                                                                   | Required evidence or review                                                                                                                                                                                                                                                                                                                              | Gate                           |

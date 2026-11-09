@@ -4,6 +4,8 @@ This is the implementation work order derived from architecture section 16. H1 i
 
 Hriday owns platform, PayPal, storage, outside-world actions and deployment. Ishaan owns interpretation, scoring, statistics and drafts. The Figma frontend is outside both task lists. Complete H1 → H8 in that order, on `Hriday`, using the fixed contracts and documented stubs. Every task needs its checks, `pnpm typecheck`, an evidence record and a task-prefixed commit before it is done.
 
+On 9 November the user asked to continue local work while waiting for Render capacity/billing. H2 may proceed locally in order under O15; H1's hosted completion remains pending. This is a recorded exception to waiting at the external hosting gate, not an H1 pass or permission to skip ahead to H3. See [H2 increments](h2-paypal.md) and the [conditional deployment handoff](ishaan-deployment-handoff.md).
+
 ## Before H1
 
 1. The source assigns the [sandbox dispute spike](sandbox-spike.md) before H1. The user has explicitly deferred it because accounts do not exist. Proceed with H1; retain the real dispute checks as NOT RUN and record their results when account access becomes available.
@@ -28,7 +30,7 @@ Source estimate: 6 hours. Sources: architecture 7, 10–12, 14–16. Status: IN 
 
 ## H2 PayPal client and checkout
 
-Source estimate: 5 hours. Sources: architecture 3, 8 F1/F6, 11–12, 16 H2. Status: NOT STARTED. Depends on H1.
+Source estimate: 5 hours. Sources: architecture 3, 8 F1/F6, 11–12, 16 H2. Status: LOCAL PREPARATION under user instruction O15; H1 hosting remains pending.
 
 1. Implement `forMerchant(merchantId)` with credential lookup/decryption and per-merchant in-memory token caching until 60 seconds before returned expiry. Reject non-sandbox configuration. Use the source's typed interface.
 2. Implement HTTP error normalization, bounded three retries on 429/5xx with backoff, deterministic operation request IDs, representation preference and PayPal debug-ID error logging. Protect against ambiguous retry outcomes; do not assume every endpoint honors the header identically.

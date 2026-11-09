@@ -15,6 +15,8 @@ Read and act in this order:
 
 The [H1 foundation guide](h1-foundation.md) records the implemented local setup, tests, actual endpoints, handoff and pending deployment gate.
 
+While Render hosting is pending, follow [H2's local increments](h2-paypal.md). The [conditional Ishaan deployment handoff](ishaan-deployment-handoff.md) is prepared for the user's possible reassignment; it has not been sent.
+
 Use the [evidence record template](evidence/README.md) for real runs. Keep unredacted working files under ignored `docs/hriday/evidence/local/` or `.work/`; publish only sanitized summaries. Maintain the root [changelog](../../CHANGELOG.md).
 
 The explicitly allocated research task is the sandbox dispute spike in architecture section 16. The source verification, contract inventory, execution breakdown and submission evidence plan here support that task; they are not a reassignment of Ishaan's research, intelligence, evals, Devpost text or narration.

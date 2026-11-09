@@ -2,6 +2,8 @@
 
 The source-prescribed deployment is one Blueprint containing the API, worker and PostgreSQL 16. Use the published `Hriday` branch. H1 remains IN PROGRESS until the actual hosted checks below pass.
 
+The user's latest Dashboard screenshot shows **Payment Information Required** for these paid services. They also report deleting a stale Blueprint; any quota reset or synchronization delay is unverified. Recheck capacity once in the Dashboard after the user's wait, but do not assume it removes the separate billing gate. If deployment moves to Ishaan's workspace, use the [conditional handoff](ishaan-deployment-handoff.md). No service plans or architecture have been changed.
+
 ## Open the prepared Blueprint
 
 [Open Fairfold's Blueprint in Render](https://dashboard.render.com/blueprint/new?repo=https://github.com/vighriday/fairfold).

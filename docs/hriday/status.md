@@ -1,6 +1,6 @@
 # Hriday current status and next action
 
-Updated 9 November 2026 IST. The research-first pass is complete. The user subsequently confirmed that PayPal sandbox accounts do not exist and instructed building around them. H1's local foundation is implemented and tested; its first Render deployment is pending. H2–H8 have not started.
+Updated 9 November 2026 IST. The research-first pass is complete. The user subsequently confirmed that PayPal sandbox accounts do not exist and instructed building around them. H1's local foundation is implemented and tested; its first Render deployment is pending. The user now asks to continue the other pieces while hosting is pending: H2's local preparation is in progress. H3–H8 have not started.
 
 The user has explicitly chosen connecting Render and completing H1's first deployment. The [Render preflight](evidence/2026-11-09-render-preflight.md) passed schema/build and local Render-mode startup checks. Render installation is confirmed and the user reports signing in. Explicit Render selection loaded its deployment skills; this conversation still has no Render account-management tools, so account/workspace access remains unverified. No hosted resources have been created by this work.
 
@@ -32,7 +32,7 @@ The local checkout was initialized for the requested branch; no remote history w
 | P4        | Planning-package verification            | COMPLETE                      | 14 Markdown files, 20 valid local links, source counts/digests and private-file checks; see CHANGELOG |
 | RUNTIME-0 | Pre-H1 sandbox dispute discovery         | DEFERRED BY USER; NOT RUN     | Accounts absent; real capture/dispute snapshot still required later                                   |
 | H1        | Foundation and first deploy, 6 h         | IN PROGRESS                   | Local implementation/checks pass; first Render deployment remains open                                |
-| H2        | PayPal client and checkout, 5 h          | NOT STARTED                   | A4 and real `/dev` purchase                                                                           |
+| H2        | PayPal client and checkout, 5 h          | LOCAL PREPARATION             | Transport increment next; A4 and real `/dev` purchase remain NOT RUN                                  |
 | H3        | Verified webhooks and poll, 3 h          | NOT STARTED                   | A5 and verified real capture event                                                                    |
 | H4        | Disputes and approved actions, 5 h       | NOT STARTED                   | Real evidence/offer checks and A12                                                                    |
 | H5        | Pack Station and action execution, 5 h   | NOT STARTED                   | A6/A7/A11                                                                                             |
@@ -44,7 +44,9 @@ The 33-hour estimates are inherited from the architecture. They exclude the pre-
 
 ## Immediate next action
 
-Use the [first Render deployment guide](render-deployment.md): the published Blueprint now derives its initial URLs from Render and asks for only APP_ENCRYPTION_KEY. The [bootstrap verification](evidence/2026-11-09-render-bootstrap.md) records 19 passing offline tests and actual local HTTP/CORS checks. Render is already installed and selected; do not repeat those steps. Its deployment skill uses the Dashboard for initial multi-service Blueprint application. Apply the published `Hriday` Blueprint in the intended personal/default workspace, then verify hosted health, Swagger and worker readiness before starting H2. No Render service or billing action has been taken. Browser fallback initialization failed with a local helper error; this is not an application build failure. The isolated CLI is available, but workspace-aware validation has not run because no workspace is accessible here.
+Continue [H2's local increments](h2-paypal.md) while H1 hosting is pending, as the user now requests. Start with merchant sandbox authentication/HTTP transport, then checkout bindings; retain the Q3 review before capture persistence. H3 remains unstarted. The local transport must not claim a completed PayPal client, successful sandbox call or A4 pass.
+
+The user reports deleting a stale Blueprint; quota recovery/synchronization is unverified. Their supplied screenshot independently shows payment information is required for the existing paid plans. Waiting cannot be assumed to remove that billing gate. The [conditional Ishaan handoff](ishaan-deployment-handoff.md) is prepared but not sent or assigned. Render is already installed; account-management tools and the browser helper remain unavailable here. No service or billing action has been taken by this work. Use the [deployment guide](render-deployment.md) once the intended workspace can apply it, then record actual health, Swagger and worker readiness before closing H1.
 
 The [sandbox spike](sandbox-spike.md) remains deferred. Resume it when accounts exist; H1's local tests do not satisfy any PayPal-dependent gate. Review Q1–Q13 with Ishaan before affected tasks; the Figma frontend remains outside H1.
 
