@@ -2,6 +2,12 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-09 — Q3 capture persistence review package
+
+- Prepared a concrete existing-schema allowlist and proposed email/address hash normalization before H2.3. It includes address_line_2 only as transient hash input and keeps the shared CaptureResult unchanged.
+- Specified missing-data, capture-state/amount validation, exactly-once transaction and safe fixture boundaries. These are review/implementation requirements, not completed capture persistence tests.
+- Kept Q3 open and distinguished capture review from later webhook/dispute/reporting/action-response field reviews. No reviewer approval, outgoing message or database write was implied; application files are unchanged in this increment.
+
 ## 2026-11-09 — H2.2c refund and bounded reporting helpers
 
 - Implemented the unchanged payment/refund and Transaction Search method groups. Full refunds send an empty object; partial amounts use exact decimal/currency checks. Refund IDs and actual statuses are returned without assuming PENDING means completed.

@@ -50,6 +50,8 @@ The user reports deleting a stale Blueprint; quota recovery/synchronization is u
 
 The [sandbox spike](sandbox-spike.md) remains deferred. Resume it when accounts exist; H1's local tests do not satisfy any PayPal-dependent gate. Review Q1–Q13 with Ishaan before affected tasks; the Figma frontend remains outside H1.
 
+The concrete [Q3 capture persistence proposal](capture-persistence-review.md) is prepared for review. It specifies the retained fields and exact email/address normalization, including transient address_line_2 handling. No approval or Ishaan review is implied; capture persistence remains pending until that decision is recorded.
+
 ## Original checkpoints and present risk
 
 | Checkpoint      | Original IST target          | Required result                                                                    | Status                                   |

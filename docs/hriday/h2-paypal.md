@@ -62,6 +62,8 @@ All history rows remain transient unknown[] objects. This code does not persist 
 
 ## Persistence review still needed
 
+Review the [concrete capture persistence proposal](capture-persistence-review.md) before H2.3 writes capture-derived data. It lists the existing-schema allowlist, exact proposed normalization, missing-data behavior and transient address_line_2 handling. Status remains PROPOSED; no shared contract or persistence policy has been approved by this document.
+
 Q3 identifies a conflict between `CaptureResult.raw`/`disputes.raw`/webhook payloads and the original no-email/no-street-address persistence rule. Preserve raw webhook bytes transiently for signature verification. Keep the exact capture contract transient; do not persist its raw object or add real fixtures before joint review.
 
 Prepare the explicit allowlist and mappings at H2.3: required PayPal/Fairfold identifiers, status, seller protection, account status, monetary amounts and item metadata; email only as a SHA-256 hash, street address only as a hash plus country/postal code. Review normalization, retained vendor fields and diagnostic samples with Hriday/Ishaan before implementation. Do not silently rename or remove `raw` from the shared contract. Database writes and real fixture capture remain gated; H2.1 can be tested with clearly synthetic data.

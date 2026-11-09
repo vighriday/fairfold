@@ -75,6 +75,10 @@ Transaction Search uses the source-prescribed maximum 31-day request window and 
 
 Q2–Q13 are focused review items. None authorizes a new architecture, payment rail, safety verdict, or change to the idea. Where external behavior blocks a specified path, record the failure and use only a jointly accepted documented fallback.
 
+### Q3 capture review prepared
+
+The [capture persistence proposal](docs/hriday/capture-persistence-review.md) maps the existing schema/contracts to an explicit allowlist and proposed email/address normalization. It keeps raw transient and includes address_line_2 in the in-memory hash input without changing CaptureResult.shipping. Status: PROPOSED; no approval or Ishaan review is implied. Capture database writes remain pending; webhook/dispute/action-response retained fields need separate review before their tasks. Record the actual reviewer/decision here after a response.
+
 ## Sandbox spike result
 
 Status: **DEFERRED BY USER; NOT RUN**. The user confirmed accounts do not currently exist and authorized H1 around that dependency. No sandbox transaction, dispute, webhook, evidence upload or offer has been observed. Fill the result fields in `docs/hriday/sandbox-spike.md` after the real run. No guessed PayPal identifiers or success responses belong here.
