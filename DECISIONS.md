@@ -109,3 +109,9 @@ Status: **DEFERRED BY USER; NOT RUN**. The user confirmed accounts do not curren
 - Endpoint 34 also returns `signalId`, because a buyer needs it to call endpoint 35 (contest). The field is additive.
 - A missing model configuration now degrades to each component's template fallback (logged as `model_not_configured`) instead of failing the job.
 - Contract change: none (additive response field).
+
+### I-D7 — Local embedding when no embedding provider is configured — 2026-11-09
+- xAI (our chosen provider, I-D1) has no embedding model, so with Grok alone shared-cause grouping would never run.
+- When `AI_EMBEDDING_PROVIDER` / `AI_MODEL_EMBEDDING` and its key are not set, `readComplaint` embeds the extracted `category | component | failure_mode` string with a deterministic local feature-hashed bag of stemmed words (`localEmbedding`, 256 dimensions), and logs `embedding: local`. A configured OpenAI or Google embedding model always takes precedence.
+- The clustering eval reports which embedding it used; the 0.80 threshold still applies (raise `CLUSTER_SIMILARITY` if precision falls below 0.85).
+- Contract change: none.

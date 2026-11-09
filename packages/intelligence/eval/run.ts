@@ -1,6 +1,7 @@
 // pnpm --filter intelligence eval — prints the section 10 eval table as Markdown for the README.
 // Each phase registers its eval here as it lands; rows without one print "not run".
 import { runBuyerEval } from './buyers.js';
+import { complaintEvalConfigured, runComplaintEval } from './complaints.js';
 import { runDisputeEval } from './disputes.js';
 import { photoEvalConfigured, runPhotoEval } from './photos.js';
 import { runB17Eval, runNullEval } from './sharedCause.js';
@@ -13,6 +14,10 @@ const NOT_CONFIGURED = 'not run (set AI_PROVIDER, AI_MODEL_VISION and the provid
 const evals: Partial<Record<EvalRowId, EvalFn>> = {
   buyers: async () => (await runBuyerEval()).summary,
   disputes: async () => (await runDisputeEval()).summary,
+  complaints: async () =>
+    complaintEvalConfigured()
+      ? (await runComplaintEval()).summary
+      : 'not run (set AI_PROVIDER, AI_MODEL_TEXT and the provider key)',
   b17_seed: runB17Eval,
   null_seed: runNullEval,
   photos: async () => (photoEvalConfigured() ? (await runPhotoEval()).summary : NOT_CONFIGURED),
