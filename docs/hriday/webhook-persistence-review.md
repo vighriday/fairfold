@@ -1,6 +1,6 @@
 # Q3 webhook persistence proposal
 
-Status: **PROPOSED; NOT APPROVED** on 10 November 2026 IST. The earlier capture approval does not authorize this boundary. This proposal covers H3's `paypal_events` only. `disputes.raw`, buyer message text, action responses and evidence remain a separate H4 review.
+Status: **APPROVED BY HRIDAY** on 10 November 2026 IST. Hriday replied “Proceed with H3 and approve the event policy” to this exact proposal and the phase-gate exception. This covers H3's `paypal_events` only. `disputes.raw`, buyer message text, action responses and evidence remain a separate H4 review. Ishaan's review has not been received.
 
 Architecture section 8 F4 requires original bytes for verification, a durable event and `paypal.event { eventId }`; section 12 prohibits plaintext email/street retention and requires unverified events to be ignored. The original documents were reread for H3 (architecture paragraphs 278–279, 295, 809, 812, 818 and 1077–1082). No shared column, DTO or job payload changes are proposed.
 

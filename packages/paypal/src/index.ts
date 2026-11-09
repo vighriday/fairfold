@@ -1,4 +1,7 @@
 export * from './credentials.js';
+export { registerMerchantWebhook, PayPalEventTypes } from './registration.js';
+export { createEventIngress } from './event-ingress.js';
+export { minimizeEvent, type VerifiedEvent } from './event-policy.js';
 export * from './errors.js';
 export * from './transport.js';
 export { createOrderOperations } from './orders.js';

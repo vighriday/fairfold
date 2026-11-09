@@ -2,6 +2,12 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-10 — H3 registration and durable verified ingress
+
+- Recorded Hriday's explicit H3 phase exception and event-policy approval. Added merchant-locked seven-event registration and endpoint 37 with isolated original-byte parsing and the approved nested allowlist.
+- Event and pg-boss job commit atomically; verified duplicates do not enqueue again, unverified rows cannot suppress authentic delivery, and provider failures never become trusted events.
+- All 148 PostgreSQL/HTTP checks and nine new policy checks passed; typecheck/lint passed after correcting initial missing logger/dependency/test typing. Real registration/signature/A5 and hosted acceptance remain NOT RUN. Reconciliation/polling are the next local H3 work.
+
 ## 2026-11-10 — H3 source plan and event policy proposal
 
 - Prepared the complete H3 sequence and verification matrix against the original documents: exact registration/path, verified durable ingress, capture import/refund reconciliation and per-merchant dispute polling.

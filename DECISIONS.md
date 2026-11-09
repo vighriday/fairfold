@@ -138,3 +138,7 @@ The official postback guide requires unchanged webhook_event formatting. The cli
 ## O25 — H3 preparation after local H2 closeout
 
 The user asks to continue after the complete local H2 delivery. Prepare the [H3 source plan](docs/hriday/h3-webhooks.md) and [Q3 event allowlist](docs/hriday/webhook-persistence-review.md). Current AGENTS.md explicitly says not to advance H3 while H1/H2 gates remain pending, and capture approval does not extend to event retention. Obtain an explicit exception and concrete policy review before H3 implementation. Do not repeat finished H2 work or call H1/H2 formally complete. No assumption of approval or new architecture is made by this preparation.
+
+### O25 approval received
+
+On 10 November 2026 IST Hriday explicitly replied “Proceed with H3 and approve the event policy.” This authorizes H3 local implementation under that exact event allowlist while H1 hosting/H2 account-backed acceptance remain pending. Update AGENTS.md to preserve the exception. This does not authorize H4 dispute/message/action-response retention or close any real acceptance gate. Registration uses a merchant row lock and never overwrites an existing webhook ID; ambiguous outcomes require Dashboard reconciliation before another attempt. No automatic registration retry or vendor call is performed by tests/startup.

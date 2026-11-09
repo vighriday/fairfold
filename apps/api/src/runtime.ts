@@ -4,6 +4,7 @@ import { computeBuyerSignal } from '@fairfold/intelligence';
 import { createJobs } from '@fairfold/jobs';
 import {
   createPayPalClientFactory,
+  createEventIngress,
   databaseCredentials,
   type OrderRecording,
 } from '@fairfold/paypal';
@@ -12,6 +13,7 @@ import { type Config } from './config.js';
 import { createCheckoutService } from './checkout/service.js';
 import { createOrderReads } from './orders/read.js';
 import { createCoreRoutes } from './routes/core/index.js';
+import { createWebhookRoutes } from './routes/core/webhooks.js';
 
 /** The normal server and local recorded rehearsal use the same application composition. */
 export async function createRuntime(config: Config, options: { recording?: OrderRecording } = {}) {
@@ -29,8 +31,13 @@ export async function createRuntime(config: Config, options: { recording?: Order
     const reads = createOrderReads({ database: database.db, computeBuyerSignal });
     const app = await createApi({
       config,
-      phase: 'H2',
-      routes: createCoreRoutes({ checkout, reads, demoMode: config.demoMode }),
+      phase: 'H3',
+      routes: async (routes) => {
+        await routes.register(createCoreRoutes({ checkout, reads, demoMode: config.demoMode }));
+        await routes.register(
+          createWebhookRoutes(createEventIngress({ database, jobs, forMerchant })),
+        );
+      },
       checkDatabase: async () => {
         await database.pool.query('select 1');
       },

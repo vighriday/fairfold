@@ -1,6 +1,6 @@
 # H3 — Verified webhooks and reconciliation
 
-Status: **PREPARED; IMPLEMENTATION GATES PENDING** on 10 November 2026 IST. H2's ungated local code is ready; its real acceptance and H1 hosting remain pending. The current AGENTS.md still prohibits advancing H3 while those gates are open, so an explicit exception is required before implementation. The [event policy](webhook-persistence-review.md) is also proposed, not approved. Preparation does not complete H3.
+Status: **IN PROGRESS; AUTHORIZED** on 10 November 2026 IST. Hriday approved “Proceed with H3 and approve the event policy,” superseding the prior phase gate. H2's ungated local code is ready; its real acceptance and H1 hosting remain pending. Registration and durable verified ingress are implemented: 148 PostgreSQL/HTTP checks and nine policy cases passed; see [ingress evidence](evidence/2026-11-10-h3-ingress.md). Reconciliation and polling follow below. H3 real acceptance remains pending.
 
 ## Source obligations and implementation sequence
 

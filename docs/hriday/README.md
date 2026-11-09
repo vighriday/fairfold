@@ -21,7 +21,7 @@ H2's local setup-to-evidence workflow is ready in the [sandbox rehearsal guide](
 
 The [H2 local closeout](h2-closeout.md) is the current handoff: complete client composition and local checks are ready, with only the listed account-backed acceptance and review/deployment dependencies pending. Start there before repeating H2 work.
 
-The [H3 execution plan](h3-webhooks.md) and [event persistence proposal](webhook-persistence-review.md) prepare the next task. They require the current phase-gate exception and Q3 approval before implementation; they do not declare H1/H2 acceptance complete.
+The [H3 execution plan](h3-webhooks.md) is now authorized under the [approved event policy](webhook-persistence-review.md). Registration and durable verified ingress are locally ready; reconciliation/polling follow in source order. H1/H2 acceptance remains pending.
 
 Use the [evidence record template](evidence/README.md) for real runs. Keep unredacted working files under ignored `docs/hriday/evidence/local/` or `.work/`; publish only sanitized summaries. Maintain the root [changelog](../../CHANGELOG.md).
 
