@@ -2,7 +2,8 @@
 
 ## Current phase and source authority
 
-- The user confirmed on 2026-11-09: research and documents first; no application code yet. This delivery must not create application scaffolding, install packages, deploy services, or claim implementation is complete.
+- The research-first pass is complete. On 2026-11-09 the user confirmed that sandbox accounts do not exist and instructed: “In the meantime build around it.” Implement the documented H1 foundation while deferring the real pre-H1 sandbox spike. This supersedes the earlier documentation-only phase; it does not change the idea or architecture.
+- Keep credential-dependent PayPal checks explicitly pending. Do not manufacture successful sandbox responses. H1 remains incomplete until its required local checks and first Render deployment are actually verified.
 - Work only on the exact case-sensitive branch `Hriday`. This user instruction overrides the internal plan's branches per task and instructions to push directly to main. Do not merge or force-push main.
 - Read `docs/hriday/README.md`, `DECISIONS.md`, and `docs/hriday/status.md` before continuing.
 - The authoritative local sources are `docs/internal/Fairfold — PayPal AI Hackathon Submission.docx` and `docs/internal/Fairfold — Solution Architecture and Build Plan.docx`. Their sections are indexed in `docs/hriday/source-contract.md`. Read the relevant originals before implementing a task; derived documents do not replace them.
@@ -20,6 +21,7 @@
 - Follow architecture section 7 exactly for schema and ledger hashing. Use decimal strings for money, UTC timestamps and an injected clock.
 - Preserve raw webhook bytes for signature verification. Never process unverified messages or treat simulator postback failures as permission to skip verification.
 - Keep secrets, tokens, passwords, raw buyer email/street addresses, and unsanitized vendor payloads out of commits and logs. Resolve the open raw-payload question before persistent capture fixtures.
+- Make focused commits for one coherent change, with its relevant tests and changelog entry. Do not bundle an entire H task into one commit.
 - For implementation tasks, run the specified acceptance checks and `pnpm typecheck` before a task commit. Start messages with `H1:`, `H2:`, etc. Documentation-only preparation uses `DOCS:` and does not complete an H task.
 - Update `CHANGELOG.md`, task status and evidence records with every meaningful work unit. `NOT RUN`, `PASS`, `FAIL`, and `BLOCKED` must reflect actual observations. Never manufacture metrics, sandbox successes, deployment URLs or judging outcomes.
 

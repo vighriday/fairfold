@@ -2,6 +2,14 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-09 — Incremental H1 history reconstruction
+
+At the user's request, the unpublished H1 commit `d1f3055` is being replaced by focused dependency-ordered commits. The original research commit `b48f674` remains intact. This is a reorganization of previously implemented work, not its original development timeline. Application files are preserved; the first Render deployment and real PayPal checks remain pending.
+
+| Step | Scope                                                                    | Snapshot validation                                                                                                               |
+| ---- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| C1   | Pinned tooling, local secret setup and explicit unfinished test commands | Frozen dependency install, typecheck, lint and source formatting PASS; 0 offline tests (no tests exist at this tooling-only step) |
+
 ## 2026-11-09 — Research and documentation baseline
 
 ### Added
