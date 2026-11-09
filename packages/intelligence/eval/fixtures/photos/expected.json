@@ -1,5 +1,5 @@
 {
-  "_note": "Ground truth for the packing-photo eval (I2). Each set lives in photos/<id>/ as the four files in 'files', taken in-app style as JPEG. See README.md for the shot list. A 'caught' wrong set is one whose attestation is not 'match' OR whose batchLabelText differs from enteredBatchCode.",
+  "_note": "Ground truth for the packing-photo eval (I2). Each set lives in photos/<id>/ as the four files in 'files', taken in-app style as JPEG. See README.md for the shot list. A 'caught' wrong set is one whose attestation is not 'match' OR whose batchLabelText differs from enteredBatchCode. When synthetic is true the photos were drawn by eval/synthetic-photos.ts (pnpm photos:synthetic), not taken with a camera; replace them with real photos and set synthetic to false before publishing eval numbers.",
   "garments": {
     "G1": {
       "sku": "HD-IND-01",
@@ -54,7 +54,12 @@
       "enteredBatchCode": "B14",
       "trackingNumber": "FF100000001",
       "expectedStatus": "match",
-      "expectedBatchLabel": "B14"
+      "expectedBatchLabel": "B14",
+      "shown": {
+        "garment": "G1",
+        "batchTag": "B14",
+        "defect": null
+      }
     },
     {
       "id": "set-02",
@@ -71,7 +76,12 @@
       "enteredBatchCode": "B15",
       "trackingNumber": "FF100000002",
       "expectedStatus": "match",
-      "expectedBatchLabel": "B15"
+      "expectedBatchLabel": "B15",
+      "shown": {
+        "garment": "G2",
+        "batchTag": "B15",
+        "defect": null
+      }
     },
     {
       "id": "set-03",
@@ -88,7 +98,12 @@
       "enteredBatchCode": "B16",
       "trackingNumber": "FF100000003",
       "expectedStatus": "match",
-      "expectedBatchLabel": "B16"
+      "expectedBatchLabel": "B16",
+      "shown": {
+        "garment": "G3",
+        "batchTag": "B16",
+        "defect": null
+      }
     },
     {
       "id": "set-04",
@@ -105,7 +120,12 @@
       "enteredBatchCode": "B17",
       "trackingNumber": "FF100000004",
       "expectedStatus": "match",
-      "expectedBatchLabel": "B17"
+      "expectedBatchLabel": "B17",
+      "shown": {
+        "garment": "G4",
+        "batchTag": "B17",
+        "defect": null
+      }
     },
     {
       "id": "set-05",
@@ -122,7 +142,12 @@
       "enteredBatchCode": "B14",
       "trackingNumber": "FF100000005",
       "expectedStatus": "match",
-      "expectedBatchLabel": "B14"
+      "expectedBatchLabel": "B14",
+      "shown": {
+        "garment": "G1",
+        "batchTag": "B14",
+        "defect": null
+      }
     },
     {
       "id": "set-06",
@@ -139,7 +164,12 @@
       "enteredBatchCode": "B15",
       "trackingNumber": "FF100000006",
       "expectedStatus": "match",
-      "expectedBatchLabel": "B15"
+      "expectedBatchLabel": "B15",
+      "shown": {
+        "garment": "G2",
+        "batchTag": "B15",
+        "defect": null
+      }
     },
     {
       "id": "set-07",
@@ -156,7 +186,12 @@
       "enteredBatchCode": "B16",
       "trackingNumber": "FF100000007",
       "expectedStatus": "match",
-      "expectedBatchLabel": "B16"
+      "expectedBatchLabel": "B16",
+      "shown": {
+        "garment": "G3",
+        "batchTag": "B16",
+        "defect": null
+      }
     },
     {
       "id": "set-08",
@@ -173,7 +208,12 @@
       "enteredBatchCode": "B17",
       "trackingNumber": "FF100000008",
       "expectedStatus": "match",
-      "expectedBatchLabel": "B17"
+      "expectedBatchLabel": "B17",
+      "shown": {
+        "garment": "G4",
+        "batchTag": "B17",
+        "defect": null
+      }
     },
     {
       "id": "set-09",
@@ -190,7 +230,12 @@
       "enteredBatchCode": "B14",
       "trackingNumber": "FF100000009",
       "expectedStatus": "match",
-      "expectedBatchLabel": "B14"
+      "expectedBatchLabel": "B14",
+      "shown": {
+        "garment": "G1",
+        "batchTag": "B14",
+        "defect": null
+      }
     },
     {
       "id": "set-10",
@@ -207,7 +252,12 @@
       "enteredBatchCode": "B15",
       "trackingNumber": "FF100000010",
       "expectedStatus": "match",
-      "expectedBatchLabel": "B15"
+      "expectedBatchLabel": "B15",
+      "shown": {
+        "garment": "G2",
+        "batchTag": "B15",
+        "defect": null
+      }
     },
     {
       "id": "set-11",
@@ -224,7 +274,12 @@
       "enteredBatchCode": "B16",
       "trackingNumber": "FF100000011",
       "expectedStatus": "match",
-      "expectedBatchLabel": "B16"
+      "expectedBatchLabel": "B16",
+      "shown": {
+        "garment": "G3",
+        "batchTag": "B16",
+        "defect": null
+      }
     },
     {
       "id": "set-12",
@@ -241,7 +296,12 @@
       "enteredBatchCode": "B17",
       "trackingNumber": "FF100000012",
       "expectedStatus": "match",
-      "expectedBatchLabel": "B17"
+      "expectedBatchLabel": "B17",
+      "shown": {
+        "garment": "G4",
+        "batchTag": "B17",
+        "defect": null
+      }
     },
     {
       "id": "set-13",
@@ -258,7 +318,12 @@
       "enteredBatchCode": "B14",
       "trackingNumber": "FF100000013",
       "expectedStatus": "match",
-      "expectedBatchLabel": "B14"
+      "expectedBatchLabel": "B14",
+      "shown": {
+        "garment": "G1",
+        "batchTag": "B14",
+        "defect": null
+      }
     },
     {
       "id": "set-14",
@@ -275,7 +340,12 @@
       "enteredBatchCode": "B15",
       "trackingNumber": "FF100000014",
       "expectedStatus": "match",
-      "expectedBatchLabel": "B15"
+      "expectedBatchLabel": "B15",
+      "shown": {
+        "garment": "G2",
+        "batchTag": "B15",
+        "defect": null
+      }
     },
     {
       "id": "set-15",
@@ -292,7 +362,12 @@
       "enteredBatchCode": "B16",
       "trackingNumber": "FF100000015",
       "expectedStatus": "match",
-      "expectedBatchLabel": "B16"
+      "expectedBatchLabel": "B16",
+      "shown": {
+        "garment": "G3",
+        "batchTag": "B16",
+        "defect": null
+      }
     },
     {
       "id": "set-16",
@@ -309,7 +384,12 @@
       "enteredBatchCode": "B16",
       "trackingNumber": "FF100000016",
       "expectedStatus": "mismatch",
-      "expectedBatchLabel": "B16"
+      "expectedBatchLabel": "B16",
+      "shown": {
+        "garment": "G4",
+        "batchTag": "B16",
+        "defect": null
+      }
     },
     {
       "id": "set-17",
@@ -326,7 +406,12 @@
       "enteredBatchCode": "B17",
       "trackingNumber": "FF100000017",
       "expectedStatus": "mismatch",
-      "expectedBatchLabel": "B17"
+      "expectedBatchLabel": "B17",
+      "shown": {
+        "garment": "G1",
+        "batchTag": "B17",
+        "defect": null
+      }
     },
     {
       "id": "set-18",
@@ -349,7 +434,12 @@
       "enteredBatchCode": "B15",
       "trackingNumber": "FF100000018",
       "expectedStatus": "mismatch",
-      "expectedBatchLabel": "B15"
+      "expectedBatchLabel": "B15",
+      "shown": {
+        "garment": "G1",
+        "batchTag": "B15",
+        "defect": null
+      }
     },
     {
       "id": "set-19",
@@ -366,7 +456,12 @@
       "enteredBatchCode": "B17",
       "trackingNumber": "FF100000019",
       "expectedStatus": "match",
-      "expectedBatchLabel": "B18"
+      "expectedBatchLabel": "B18",
+      "shown": {
+        "garment": "G2",
+        "batchTag": "B18",
+        "defect": null
+      }
     },
     {
       "id": "set-20",
@@ -383,7 +478,12 @@
       "enteredBatchCode": "B14",
       "trackingNumber": "FF100000020",
       "expectedStatus": "mismatch",
-      "expectedBatchLabel": "B14"
+      "expectedBatchLabel": "B14",
+      "shown": {
+        "garment": "G1",
+        "batchTag": "B14",
+        "defect": "hole_front"
+      }
     }
   ],
   "inspection": {
@@ -393,5 +493,6 @@
     "instruction": "Photograph the left sleeve seam close up and check for open or broken stitching.",
     "clusterLabel": "sleeve seam opening",
     "expectedDefectVisible": true
-  }
+  },
+  "synthetic": true
 }

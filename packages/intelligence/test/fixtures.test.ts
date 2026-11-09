@@ -119,6 +119,20 @@ describe('photos/expected.json', () => {
     expect(fx.sets.filter((s) => s.expectedBatchLabel !== null)).toHaveLength(20);
     expect(fx.inspection.expectedDefectVisible).toBe(true);
   });
+
+  it('every set has its four photos and the inspection close-up, each a JPEG under 12 MB', () => {
+    const files = load<{ files: string[] }>('../eval/fixtures/photos/expected.json').files;
+    const paths = [
+      ...fx.sets.flatMap((s) => files.map((f) => `../eval/fixtures/photos/${s.id}/${f}`)),
+      '../eval/fixtures/photos/inspection/seam_closeup.jpg',
+    ];
+    expect(paths).toHaveLength(81);
+    for (const rel of paths) {
+      const bytes = readFileSync(fileURLToPath(new URL(rel, import.meta.url)));
+      expect([bytes[0], bytes[1]], rel).toEqual([0xff, 0xd8]);
+      expect(bytes.length, rel).toBeLessThan(12 * 1024 * 1024);
+    }
+  });
 });
 
 describe('shared cause fixtures', () => {

@@ -1,6 +1,10 @@
-# Packing photo shot list (Ishaan, before Phase 2)
+# Packing photo shot list
 
 This folder holds the 20 packing-photo sets and one inspection photo for the Evidence Agent eval. `expected.json` is the ground truth and says exactly what each set must show.
+
+> **Current photos are SYNTHETIC.** They were drawn by `eval/synthetic-photos.ts` (`pnpm photos:synthetic`), not taken with a camera, and `expected.json` has `"synthetic": true`. The drawn text is cleaner than a real handwritten tag on fabric, so eval scores on these photos overstate real-world accuracy. Before publishing eval numbers:
+> 1. replace each file with a real phone photo following the shot list below;
+> 2. set `"synthetic": false`.
 
 ## Garments
 
