@@ -244,6 +244,54 @@ describe('H1 API foundation', () => {
       413,
     );
   });
+  it('uses the assigned Render URL for initial hosted API and frontend configuration', () => {
+    const { APP_BASE_URL: _base, FRONTEND_ORIGIN: _frontend, ...hosted } = env;
+    expect(
+      readConfig({
+        ...hosted,
+        RENDER: 'true',
+        RENDER_EXTERNAL_URL: 'https://assigned-fairfold.example',
+        PORT: '10000',
+      }),
+    ).toMatchObject({
+      appBaseUrl: 'https://assigned-fairfold.example',
+      frontendOrigin: 'https://assigned-fairfold.example',
+      port: 10000,
+    });
+  });
+  it('keeps explicit deployment URLs ahead of Render metadata', () => {
+    expect(
+      readConfig({ ...env, RENDER: 'true', RENDER_EXTERNAL_URL: 'https://assigned.example' }),
+    ).toMatchObject({ appBaseUrl: env.APP_BASE_URL, frontendOrigin: env.FRONTEND_ORIGIN });
+  });
+  it('requires explicit URL configuration outside Render', () => {
+    const { APP_BASE_URL: _base, FRONTEND_ORIGIN: _frontend, ...local } = env;
+    for (const render of [undefined, 'false']) {
+      expect(() =>
+        readConfig({
+          ...local,
+          RENDER: render,
+          RENDER_EXTERNAL_URL: 'https://ignored.example',
+        }),
+      ).toThrow('APP_BASE_URL');
+    }
+  });
+  it('rejects missing or malformed assigned URLs without exposing configuration values', () => {
+    const { APP_BASE_URL: _base, FRONTEND_ORIGIN: _frontend, ...hosted } = env;
+    for (const url of [undefined, '', 'invalid-private-value']) {
+      expect(() => readConfig({ ...hosted, RENDER: 'true', RENDER_EXTERNAL_URL: url })).toThrow(
+        'Invalid configuration: APP_BASE_URL, FRONTEND_ORIGIN',
+      );
+    }
+    expect(() =>
+      readConfig({
+        ...env,
+        APP_BASE_URL: '',
+        RENDER: 'true',
+        RENDER_EXTERNAL_URL: 'https://assigned.example',
+      }),
+    ).toThrow('APP_BASE_URL');
+  });
   it('refuses live PayPal configuration before boot', () => {
     expect(() => readConfig({ ...env, PAYPAL_API_BASE: 'https://api-m.paypal.com' })).toThrow(
       'PAYPAL_API_BASE',

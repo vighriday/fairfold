@@ -2,6 +2,14 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-09 — H1 initial hosted URL bootstrap
+
+- Added Render-only URL defaults from its assigned public URL, preserving explicit APP_BASE_URL/FRONTEND_ORIGIN overrides and strict local configuration. The API, worker, Postgres and CORS architecture are unchanged.
+- Removed the two initial URL prompts from the Blueprint. The only manual secret remains APP_ENCRYPTION_KEY; its required base64 format is unchanged.
+- Added four configuration regression cases. All 19 offline tests, typecheck and lint passed. Actual local HTTP smoke confirmed assigned URL defaults, database readiness, Swagger and restricted CORS.
+- Validated the revised Blueprint against the official JSON Schema. Installed official Render CLI 2.36.0 as ignored workspace tooling and verified its release digest; platform validation remains blocked by absent workspace access.
+- Added `docs/hriday/render-deployment.md` and a verification record with the exact Dashboard handoff. H1's hosted deployment remains pending; no cloud resource or PayPal/model action was created.
+
 ## 2026-11-09 — Render installation confirmed
 
 - Confirmed Render is installed after the user reported adding it and signing in. Cloud account/workspace access is not yet independently verified because Render's deployment tools are absent from this conversation.

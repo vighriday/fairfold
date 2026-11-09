@@ -43,6 +43,10 @@ Recorded 9 November 2026 IST. The architecture's choices below are inherited, no
 | O12 | Pin pnpm 12.4.2/TypeScript 5.9.3 and compatible packages; use SQL column names in Drizzle, one-hour demo JWTs and local generated secrets              | H1 implementation details within D3–D5/D17; no architectural replacement                                                                                         |
 | O13 | Validate locally against isolated native PostgreSQL 16.15 on loopback because Docker is absent; retain Compose postgres:16 and Render major version 16 | Official Windows binaries linked by PostgreSQL; no Windows service or production database changed                                                                |
 
+### O14 — Initial hosted URL configuration
+
+On Render only (`RENDER=true`), use its documented `RENDER_EXTERNAL_URL` as the default APP_BASE_URL, and default FRONTEND_ORIGIN to that app URL while H1/H2 serve Swagger and the unstyled harness from the API origin. Explicit APP_BASE_URL and FRONTEND_ORIGIN still take precedence; local configuration still requires both. Configure the actual Figma frontend origin when it exists. This avoids guessing a hostname before first resource creation and preserves the section 14 environment names and section 12 CORS boundary. Source: [Render's default environment variables](https://render.com/docs/environment-variables).
+
 ## Questions to resolve before the affected implementation
 
 | ID  | Finding and consequence                                                                                                                                                                                   | Required evidence or review                                                                                                                                                                                                                                                                                                                              | Gate                           |

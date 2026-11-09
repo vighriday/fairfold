@@ -25,10 +25,6 @@ services:
         fromDatabase:
           name: fairfold-db
           property: connectionString
-      - key: APP_BASE_URL
-        sync: false
-      - key: FRONTEND_ORIGIN
-        sync: false
       - key: APP_ENCRYPTION_KEY
         sync: false
       - key: DEMO_TOKEN_SECRET

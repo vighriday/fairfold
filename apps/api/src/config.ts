@@ -15,7 +15,15 @@ const EnvironmentSchema = z.object({
 });
 
 export function readConfig(environment: NodeJS.ProcessEnv = process.env) {
-  const parsed = EnvironmentSchema.safeParse(environment);
+  const onRender = environment.RENDER === 'true';
+  const appBaseUrl =
+    environment.APP_BASE_URL ?? (onRender ? environment.RENDER_EXTERNAL_URL : undefined);
+  const frontendOrigin = environment.FRONTEND_ORIGIN ?? (onRender ? appBaseUrl : undefined);
+  const parsed = EnvironmentSchema.safeParse({
+    ...environment,
+    APP_BASE_URL: appBaseUrl,
+    FRONTEND_ORIGIN: frontendOrigin,
+  });
   if (!parsed.success)
     throw new Error(
       'Invalid configuration: ' +
