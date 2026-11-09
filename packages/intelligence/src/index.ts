@@ -27,3 +27,13 @@ export {
 } from './storeReport/index.js';
 export { searchCatalog, searchCatalogWith } from './catalog.js';
 export { upsertComplaint } from './complaints/create.js';
+export { buildEvidencePack, buildEvidencePackWith } from './dispute/build.js';
+export type { EvidencePackResult } from './dispute/build.js';
+export { decide } from './dispute/decide.js';
+export type { Decision, DisputeFacts } from './dispute/decide.js';
+export {
+  packPdfForMerchant,
+  rebuildPackForMerchant,
+  rebuildPacks,
+  syncDispute,
+} from './dispute/handlers.js';
