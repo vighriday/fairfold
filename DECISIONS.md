@@ -134,3 +134,7 @@ Evidence uses stable multipart bytes with input JSON and file1..n. Conservative 
 ## O24 — Exact-body signature postback without an H3 handler
 
 The official postback guide requires unchanged webhook_event formatting. The client therefore validates raw JSON without replacing it, embeds the original text and restricts raw-JSON transport to verify-webhook-signature. It requires five non-duplicate headers, registered ID and exact sandbox certificate URL; only provider SUCCESS returns true. Invalid metadata returns false and provider errors fail safely. No certificate URL is followed, no simulator bypass is added and no event is persisted/processed. The 1 MiB input limit is local, not a PayPal platform claim. Verify is read-only and can retry; register has a generated stable-per-call request ID but no assumed provider idempotency, so uncertain registration is not replayed. See [webhook client evidence](docs/hriday/evidence/2026-11-09-h2-webhook-client.md).
+
+## O25 — H3 preparation after local H2 closeout
+
+The user asks to continue after the complete local H2 delivery. Prepare the [H3 source plan](docs/hriday/h3-webhooks.md) and [Q3 event allowlist](docs/hriday/webhook-persistence-review.md). Current AGENTS.md explicitly says not to advance H3 while H1/H2 gates remain pending, and capture approval does not extend to event retention. Obtain an explicit exception and concrete policy review before H3 implementation. Do not repeat finished H2 work or call H1/H2 formally complete. No assumption of approval or new architecture is made by this preparation.

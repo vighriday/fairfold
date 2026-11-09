@@ -1,6 +1,6 @@
 # Hriday current status and next action
 
-Updated 9 November 2026 IST. Research and H2's ungated local implementation are ready. The complete 17-method PayPalClient/ForMerchant, checkout/order APIs, /dev, setup/recording and A4 audit are implemented and locally verified. Formal H1/H2 acceptance remains IN PROGRESS: first Render deployment and real PayPal account-backed evidence are pending. H3–H8 have not started.
+Updated 10 November 2026 IST. Research and H2's ungated local implementation are ready. The complete 17-method PayPalClient/ForMerchant, checkout/order APIs, /dev, setup/recording and A4 audit are implemented and locally verified. Formal H1/H2 acceptance remains IN PROGRESS: first Render deployment and real PayPal account-backed evidence are pending. H3 has a [source execution plan](h3-webhooks.md) and [event retention proposal](webhook-persistence-review.md); implementation awaits the explicit no-H3 gate exception and Q3 approval. H3–H8 application work has not started.
 
 The user authorized the first Render deployment, then asked to wait for capacity/billing while continuing H2. On this pass Render account tools became available; Hriday confirmed My Workspace. Read-only discovery found no Fairfold services and no PostgreSQL instances. No infrastructure/billing action was taken. See the [current discovery record](evidence/2026-11-09-render-workspace.md) and [deployment guide](render-deployment.md); the earlier [preflight](evidence/2026-11-09-render-preflight.md) remains historical local validation.
 
@@ -43,6 +43,8 @@ The local checkout was initialized for the requested branch; no remote history w
 The 33-hour estimates are inherited from the architecture. They exclude the pre-H1 spike, joint reviews/checkpoints, frontend work and video/submission. H1 now has actual local engineering evidence; no revised remaining-hours estimate has been claimed.
 
 ## Immediate next action
+
+**H3 preparation is ready for review:** the [source plan](h3-webhooks.md), [event policy](webhook-persistence-review.md) and [acceptance/human handoff](h3-acceptance.md) cover the next task end to end. Current AGENTS.md explicitly prohibits advancing H3 while prior gates remain pending; the exception and concrete event policy have been requested together. Await that answer before implementation. This is a phase/privacy gate, not unfinished H2 code. See [preparation evidence](evidence/2026-11-10-h3-preparation.md).
 
 **Local H2 implementation is ready.** Use the [H2 closeout](h2-closeout.md) for the final handoff and remaining human work. The API and rehearsal now use the complete type-checked 17-method PayPalClient/ForMerchant, with the existing private capture-recovery helper. No placeholder groups, shared DTO/schema changes or new H3 route/worker were introduced. Current checks: **279 offline and 126 real PostgreSQL/HTTP passes**, typecheck/lint/formatting and actual normal/rehearsal startup. See [complete-client evidence](evidence/2026-11-09-h2-complete-client.md).
 

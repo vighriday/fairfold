@@ -2,6 +2,13 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-10 — H3 source plan and event policy proposal
+
+- Prepared the complete H3 sequence and verification matrix against the original documents: exact registration/path, verified durable ingress, capture import/refund reconciliation and per-merchant dispute polling.
+- Added the registration recovery, real A5 redelivery and acceptance handoff, separating future-run instructions from implemented commands and observed results.
+- Proposed an explicit webhook payload allowlist, transient original-body verification, unverified-event isolation/promotion and atomic PostgreSQL/pg-boss delivery. Capture approval remains separate from event/dispute retention.
+- H3 implementation awaits the current no-H3 gate exception and this concrete Q3 review. No vendor, hosting or persistence action occurred; real acceptance remains pending.
+
 ## 2026-11-09 — H2 complete ForMerchant and local closeout
 
 - Composed all 17 shared PayPalClient operations under a type-checked ForMerchant factory and wired it into the API/rehearsal runtime. The checkout adapter now projects from that complete composition; shared contracts remain unchanged.

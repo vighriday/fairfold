@@ -21,6 +21,8 @@ H2's local setup-to-evidence workflow is ready in the [sandbox rehearsal guide](
 
 The [H2 local closeout](h2-closeout.md) is the current handoff: complete client composition and local checks are ready, with only the listed account-backed acceptance and review/deployment dependencies pending. Start there before repeating H2 work.
 
+The [H3 execution plan](h3-webhooks.md) and [event persistence proposal](webhook-persistence-review.md) prepare the next task. They require the current phase-gate exception and Q3 approval before implementation; they do not declare H1/H2 acceptance complete.
+
 Use the [evidence record template](evidence/README.md) for real runs. Keep unredacted working files under ignored `docs/hriday/evidence/local/` or `.work/`; publish only sanitized summaries. Maintain the root [changelog](../../CHANGELOG.md).
 
 The explicitly allocated research task is the sandbox dispute spike in architecture section 16. The source verification, contract inventory, execution breakdown and submission evidence plan here support that task; they are not a reassignment of Ishaan's research, intelligence, evals, Devpost text or narration.
