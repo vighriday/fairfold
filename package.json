@@ -15,8 +15,11 @@
     "format:check": "prettier --check .",
     "format": "prettier --write .",
     "test": "vitest run",
+    "test:db": "tsx scripts/test-database.ts",
     "test:sandbox": "tsx scripts/test-sandbox.ts",
     "test:e2e": "tsx scripts/test-e2e.ts",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "db:reset": "tsx scripts/reset.ts",
     "setup:local": "tsx scripts/setup-local.ts"
   },
   "devDependencies": {

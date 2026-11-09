@@ -256,6 +256,18 @@ importers:
         specifier: 4.6.7
         version: 4.6.7
 
+  packages/db:
+    dependencies:
+      '@fairfold/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      drizzle-orm:
+        specifier: 0.45.4
+        version: 0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(pg@8.23.1)
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
+
   packages/intelligence:
     dependencies:
       '@fairfold/contracts':
