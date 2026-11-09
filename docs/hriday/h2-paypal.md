@@ -113,3 +113,7 @@ Twelve synthetic browser VM/asset checks and actual API demo-on/off runs passed;
 ## H2.5b Complete local rehearsal path
 
 The [sandbox rehearsal guide](sandbox-rehearsal.md) provides setup → read-only preflight → actual /dev approval → sanitized recording → A4 database/ledger audit → recorded parser verification, including exact commands and same-order recovery. Normal and recorded rehearsal servers share runtime composition. The audit performs no repairs and does not infer Maya identity/SDK success; GET-only recovery is not a capture POST fixture. Current checks are 201 offline and 121 PostgreSQL/HTTP passes, plus actual normal/rehearsal startup checks. See [rehearsal evidence](evidence/2026-11-09-h2-sandbox-rehearsal.md). Real account-backed gates remain pending; no H3 work is included.
+
+## H2.6 Complete source client
+
+Hriday chose finishing the remaining local H2 client before H3. The [full-client inventory](paypal-client.md) corrects the earlier scope split: low-level dispute/webhook bindings and ForMerchant composition belong to H2. Dispute reads now pass 23 offline cases; remaining action/upload and webhook groups follow in focused units. H3/H4 processing and action workflows remain unstarted.

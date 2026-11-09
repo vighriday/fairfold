@@ -2,6 +2,12 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-09 — H2 full-client dispute reads
+
+- Implemented dispute list/get bindings, UTC/date/state/page validation and both legacy-token and current page-number pagination through the unchanged opaque cursor field. Vendor links are validated for cursor extraction and never followed.
+- All 23 new synthetic transport/parser checks and typecheck passed; real dispute/scopes/pagination remain NOT RUN.
+- Corrected the H2 scope inventory: complete low-level PayPalClient/ForMerchant belongs to H2; H3/H4 event/poll/approved-action workflows remain unstarted. Added the client inventory and read evidence.
+
 ## 2026-11-09 — Render workspace recheck and current deployment handoff
 
 - Confirmed the user's selected My Workspace through connected Render tools. Read-only discovery found no Fairfold services and no PostgreSQL instances; quota recovery, billing readiness and unapplied Blueprints remain unverified.
