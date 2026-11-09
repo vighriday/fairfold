@@ -17,3 +17,13 @@ export {
 } from './buyerSignal/index.js';
 export { RECOMMENDATIONS, scoreBuyer } from './buyerSignal/points.js';
 export type { BuyerFeatures } from './buyerSignal/points.js';
+export {
+  buildStoreReport,
+  buildStoreReportWith,
+  createReview,
+  listReviews,
+  replyToReview,
+  storeReportFor,
+} from './storeReport/index.js';
+export { searchCatalog, searchCatalogWith } from './catalog.js';
+export { upsertComplaint } from './complaints/create.js';
