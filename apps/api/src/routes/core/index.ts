@@ -12,6 +12,7 @@ import {
   UuidSchema,
 } from '@fairfold/contracts';
 import { requireAuth } from '../../auth.js';
+import { createDevRoutes } from '../../dev/routes.js';
 import { type createCheckoutService } from '../../checkout/service.js';
 import { OrderListQuerySchema, type createOrderReads } from '../../orders/read.js';
 
@@ -32,9 +33,11 @@ const bearer = [{ bearerAuth: [] }];
 export function createCoreRoutes(options: {
   checkout: ReturnType<typeof createCheckoutService>;
   reads: ReturnType<typeof createOrderReads>;
+  demoMode: boolean;
 }): FastifyPluginAsync {
   return async (server) => {
     const app = server.withTypeProvider<ZodTypeProvider>();
+    await app.register(createDevRoutes(options.demoMode));
     app.get(
       '/api/checkout/config',
       {

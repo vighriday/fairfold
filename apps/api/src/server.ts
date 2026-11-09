@@ -26,7 +26,7 @@ const reads = createOrderReads({ database: database.db, computeBuyerSignal });
 const app = await createApi({
   config,
   phase: 'H2',
-  routes: createCoreRoutes({ checkout, reads }),
+  routes: createCoreRoutes({ checkout, reads, demoMode: config.demoMode }),
   checkDatabase: async () => {
     await database.pool.query('select 1');
   },

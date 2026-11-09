@@ -54,6 +54,7 @@ describe.skipIf(!integrationUrl)('H2 HTTP contracts with real database/client/qu
       clock: checkoutClock,
       logger: false,
       routes: createCoreRoutes({
+        demoMode: config.demoMode,
         checkout: f.service,
         reads: createOrderReads({ database: database.db, computeBuyerSignal }),
       }),

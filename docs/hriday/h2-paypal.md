@@ -9,7 +9,7 @@ Sources: original architecture sections 3, 8 F1/F6, 11–12 and 16 H2. D1, D3–
 | H2.1      | Merchant credential lookup/decryption, per-merchant OAuth cache, sandbox-only HTTP transport, bounded retries and sanitized errors | IMPLEMENTED AND LOCALLY VERIFIED; no endpoint or full `ForMerchant` client claimed              |
 | H2.2      | Real Orders create/capture/get/tracking bindings, exact decimal-string totals, refund/reporting helpers and seed-carrier mapping   | IMPLEMENTED AND LOCALLY VERIFIED in three focused commits; real sandbox fixtures remain NOT RUN |
 | H2.3      | Database-priced checkout creation and capture persistence, exactly-once ledger/job behavior, order reads and auth/ownership        | Creation/capture/read/recovery services wired and verified through HTTP                         |
-| H2.4      | Numbered endpoints 2–4, 7–8, 30–31 and unstyled `/dev` using sandbox JS SDK v6 with client ID only                                 | Seven source endpoints/runtime locally verified; unstyled /dev remains next                     |
+| H2.4      | Numbered endpoints 2–4, 7–8, 30–31 and unstyled `/dev` using sandbox JS SDK v6 with client ID only                                 | Seven source endpoints/runtime and unstyled /dev locally verified; real SDK session NOT RUN     |
 | H2.5      | Real sandbox A4, Maya purchase, sanitized recorded create/capture fixtures and deployment integration                              | Requires sandbox merchant/buyer accounts and H1 hosted verification; retain failures honestly   |
 
 Each implementation increment has its own task-prefixed commit, tests, typecheck, changelog and evidence. Preserve the source task order; H3 is not started by this exception. Packages owned by Ishaan are unchanged.
@@ -32,7 +32,7 @@ The transport permits only the exact sandbox API origin and relative `/v1/` or `
 
 Diagnostics contain merchant ID, phase/method, attempt, upstream status, validated debug ID and bounded symbolic error codes. Vendor descriptions, request/response bodies, tokens, credentials and payer fields are excluded. The shared contracts and existing API/worker are unchanged; no operation binding or complete `ForMerchant` client is exported yet.
 
-The [verification record](evidence/2026-11-09-h2-transport.md) records 49 offline passes, 17 isolated PostgreSQL integration passes, typecheck/lint/formatting and the dependency-install observations. All vendor responses are labelled synthetic; no PayPal request or persistent buyer payload was used. H2.2 is the next increment.
+The [verification record](evidence/2026-11-09-h2-transport.md) records 49 offline passes, 17 isolated PostgreSQL integration passes, typecheck/lint/formatting and the dependency-install observations. All vendor responses are labelled synthetic; no PayPal request or persistent buyer payload was used. That evidence describes the H2.1 baseline; subsequent increments are recorded below.
 
 ## H2.2a Orders bindings
 
@@ -40,7 +40,7 @@ H2.2a implemented `createOrderOperations(transport)` with the unchanged create/c
 
 Create builds one CAPTURE purchase unit with the source reference/custom/invoice IDs, string quantities and an exact item-total breakdown. Arithmetic uses BigInt hundredths and checks the existing numeric(12,2) range. Wire amounts normalize to two decimals, or integral values for HUF/JPY/TWD; nonzero fractions in integral currencies, mixed/unsupported currencies, invalid quantities and invalid shipping fields fail before credential lookup. An approval link must be a GET link on the sandbox PayPal web origin.
 
-Capture maps the actual capture's status and seller protection, wallet account status, modern account identity with legacy payer fallback, and the exact shared shipping fields. Absent/empty optional fields remain null; multiple purchase units/captures and conflicting payer IDs require reconciliation rather than an invented singular result. `raw` is retained only in the transient return object. The shared shipping type omits address_line_2 while raw includes it: Q3's future address-hash review must account for all necessary address components without silently changing the contract.
+Capture maps the actual capture's status and seller protection, wallet account status, modern account identity with legacy payer fallback, and the exact shared shipping fields. Absent/empty optional fields remain null; multiple purchase units/captures and conflicting payer IDs require reconciliation rather than an invented singular result. `raw` is retained only in the transient return object. The shared shipping type omits address_line_2 while raw includes it: The subsequent approved capture policy hashes all six components transiently without changing that contract.
 
 `requestValidated` reports malformed response shapes with actual debug-ID/status metadata and never retries a potentially completed mutation because parsing failed. Order GET validates identity and returns the transient vendor object; vendor HATEOAS links are not followed. [Orders evidence](evidence/2026-11-09-h2-orders.md) records 83 offline passes and the current official schema digest. Real sandbox fixtures and A4 remain NOT RUN.
 
@@ -97,3 +97,11 @@ Guest checkout retains the original public exception and returns OrderSummary on
 The seven source endpoints are implemented under routes/core and documented live by Fastify/Zod. Config/create/capture keep the public checkout exceptions; private lists/details enforce their exact source roles and ownership. Create returns the unchanged two-ID response with HTTP 201. Capture accepts absent body or {}, rejects nonempty bodies and returns OrderSummary. Shared DTOs and error envelopes remain fixed.
 
 The actual server starts pg-boss before listening, injects stored merchant credentials through packages/paypal and the existing computeBuyerSignal export, and closes HTTP/jobs/database on shutdown. Health reports phase H2 and intelligence stub. See the [integration guide](checkout-integration.md) and [HTTP evidence](evidence/2026-11-09-h2-http.md). The /dev harness and real sandbox/hosting acceptance remain open; intelligence routes are still Ishaan-owned.
+
+## H2.4b Unstyled /dev harness
+
+DEMO_MODE=true enables /dev and /dev/checkout.js; both are absent otherwise. The page defaults to neel-block-prints and HD-IND-01, one item, with no browser-supplied price. It fetches public config, loads only the sandbox v6 core URL, initializes clientId/paypal-payments, checks configured-currency eligibility and creates a one-time payment session. No client-token route, new frontend package or Figma UI was added.
+
+The session starts synchronously from the click with an unresolved order promise whose value is {orderId: paypalOrderId}. The callback checks that PayPal approved the active ID, then calls the bodyless capture endpoint and prints the confirmed source summary with textContent. Errors/cancellation never print raw SDK data or claim completed payment. An uncertain approved capture can be checked again using the same ID without creating another order; in-memory guards prevent double clicks and a fresh purchase while recovery is unresolved. IDs are not persisted in browser storage, so a reload is not durable recovery.
+
+Twelve synthetic browser VM/asset checks and actual API demo-on/off runs passed; see [harness evidence](evidence/2026-11-09-h2-dev-checkout.md). This does not exercise the actual SDK/network/PayPal pop-up and does not complete A4. Account-backed merchant/product setup, Maya’s verified payer mapping, recorded/sanitized fixtures, full remaining ForMerchant groups and H1 hosting are still pending. H3 is not started.

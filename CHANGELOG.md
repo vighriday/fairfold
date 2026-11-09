@@ -2,6 +2,14 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-09 — H2.4 unstyled sandbox checkout harness
+
+- Added /dev and its plain JavaScript asset behind DEMO_MODE. The source hoodie defaults, client-ID-only sandbox SDK, eligibility check and one-time payment session use the implemented API; no Figma/product UI or frontend scaffold was added.
+- Mapped the SDK’s order promise to { orderId: paypalOrderId }, started the session before awaiting creation, guarded double clicks/approval context, and printed the safe capture JSON as text. Cancellation/errors never claim payment completion or print raw SDK data.
+- Added explicit retry of the same approved capture after an uncertain failure, blocking a fresh purchase until that check completes. No automatic new payment, client token, browser credential or raw response persistence was introduced.
+- All 12 harness flow checks passed, bringing offline tests to 173; all 102 PostgreSQL/HTTP cases passed again. Actual API runs verified both demo-on 200 and demo-off 404 asset behavior. Typecheck/lint/formatting passed; real browser SDK/A4 remain NOT RUN.
+- Updated the integration handoff, source SDK reference decision and sandbox command wording to retain the real-account/fixture/Render gates honestly.
+
 ## 2026-11-09 — H2.4 checkout/order HTTP and runtime wiring
 
 - Implemented source endpoints 2/3/4/7/8/30/31 with unchanged request/response fields, generated OpenAPI, shared safe errors, role guards and SQL ownership. Creation returns 201; capture accepts no body or an empty object.

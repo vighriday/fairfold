@@ -11,7 +11,7 @@ if (!process.env.PAYPAL_CLIENT_ID || !process.env.PAYPAL_CLIENT_SECRET) {
   );
 } else {
   console.error(
-    'NOT RUN: The real PayPal test suite belongs to H2–H4 and has not been implemented in H1.',
+    'NOT RUN: Real A4/Maya checkout and recorded sandbox fixtures have not been verified. Follow docs/hriday/checkout-integration.md; local HTTP/VM tests are not PayPal acceptance.',
   );
   process.exitCode = 1;
 }
