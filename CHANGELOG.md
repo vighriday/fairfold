@@ -2,6 +2,13 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-09 — H2.3 owner-scoped order reads
+
+- Added merchant/buyer SQL ownership filters for lists and details, repeatable-read snapshots, status filtering and stable time/UUID pagination. Missing and foreign private orders share the same 404; admin/agent roles receive no implicit bypass.
+- Projected exact existing summary/row/detail DTOs. Buyer details neutralize merchant signals, hold/investigation links, stock batch and payer account status; hashes, credentials, raw dispute/scan data and ledger payloads never leave the read layer.
+- Read merchant-scoped latest stored signal summaries, unacknowledged alert counts, unresolved disputes and linked investigations. Merchant detail invokes the existing computeBuyerSignal seam only after ownership succeeds; its current labelled stub remains explicit.
+- Added 16 real PostgreSQL read cases; all 77 database checks passed. Typecheck/lint passed after correcting the initially rejected Drizzle read-only option. Full validation and remaining runtime gates are recorded in the read evidence.
+
 ## 2026-11-09 — H2 repeatable creation test fixture
 
 - Fixed the listing-change integration test’s reused synthetic PayPal order ID. Its fixed value collided with a prior successful test row on the second suite run; application behavior was unchanged.

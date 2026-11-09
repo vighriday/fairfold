@@ -4,13 +4,13 @@ Sources: original architecture sections 3, 8 F1/F6, 11–12 and 16 H2. D1, D3–
 
 ## Increment order
 
-| Increment | Deliverable                                                                                                                        | Current gate                                                                                                                      |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| H2.1      | Merchant credential lookup/decryption, per-merchant OAuth cache, sandbox-only HTTP transport, bounded retries and sanitized errors | IMPLEMENTED AND LOCALLY VERIFIED; no endpoint or full `ForMerchant` client claimed                                                |
-| H2.2      | Real Orders create/capture/get/tracking bindings, exact decimal-string totals, refund/reporting helpers and seed-carrier mapping   | IMPLEMENTED AND LOCALLY VERIFIED in three focused commits; real sandbox fixtures remain NOT RUN                                   |
-| H2.3      | Database-priced checkout creation and capture persistence, exactly-once ledger/job behavior, order reads and auth/ownership        | Capture mapper/store locally verified; creation/capture stores locally verified; ownership reads and orchestration remain pending |
-| H2.4      | Numbered endpoints 2–4, 7–8, 30–31 and unstyled `/dev` using sandbox JS SDK v6 with client ID only                                 | Connect source contracts and existing intelligence stubs; no Figma replacement                                                    |
-| H2.5      | Real sandbox A4, Maya purchase, sanitized recorded create/capture fixtures and deployment integration                              | Requires sandbox merchant/buyer accounts and H1 hosted verification; retain failures honestly                                     |
+| Increment | Deliverable                                                                                                                        | Current gate                                                                                           |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| H2.1      | Merchant credential lookup/decryption, per-merchant OAuth cache, sandbox-only HTTP transport, bounded retries and sanitized errors | IMPLEMENTED AND LOCALLY VERIFIED; no endpoint or full `ForMerchant` client claimed                     |
+| H2.2      | Real Orders create/capture/get/tracking bindings, exact decimal-string totals, refund/reporting helpers and seed-carrier mapping   | IMPLEMENTED AND LOCALLY VERIFIED in three focused commits; real sandbox fixtures remain NOT RUN        |
+| H2.3      | Database-priced checkout creation and capture persistence, exactly-once ledger/job behavior, order reads and auth/ownership        | Creation/capture stores and owner-scoped reads locally verified; capture orchestration remains pending |
+| H2.4      | Numbered endpoints 2–4, 7–8, 30–31 and unstyled `/dev` using sandbox JS SDK v6 with client ID only                                 | Connect source contracts and existing intelligence stubs; no Figma replacement                         |
+| H2.5      | Real sandbox A4, Maya purchase, sanitized recorded create/capture fixtures and deployment integration                              | Requires sandbox merchant/buyer accounts and H1 hosted verification; retain failures honestly          |
 
 Each implementation increment has its own task-prefixed commit, tests, typecheck, changelog and evidence. Preserve the source task order; H3 is not started by this exception. Packages owned by Ishaan are unchanged.
 
@@ -75,3 +75,11 @@ The application creation service validates the existing CoreRequests.createOrder
 After the validated vendor operation returns, order and item inserts share one transaction. A listing changed during the vendor call does not change the snapshot already sent. The response remains exactly orderId/paypalOrderId; shipping plaintext is not stored at creation. Nineteen new PostgreSQL cases pass; see [creation evidence](evidence/2026-11-09-h2-checkout-create.md).
 
 O17 documents the original create-before-insert crash window. Local persistence failure returns only safe recovery IDs and no automatic second vendor creation. This is not a durable HTTP retry claim; H3’s specified import/reconciliation is still unimplemented. Public routes, authorization reads and /dev follow as separate increments.
+
+## H2.3d Scoped order reads
+
+Lists and details filter by the authenticated merchant_id or buyer_id in SQL. No admin/agent bypass exists. The list cursor is the last returned order UUID, resolved inside the same owner/status filter; ordering is created_at descending then UUID descending. Default limit remains 50. Invalid/foreign cursors fail without identifying another account. Arrays and DTOs remain unchanged.
+
+Buyer details keep required DTO fields with neutral values for merchant-only content: buyerSignal=null, hold=null, sharedCauses=[], item batchCode=null and buyer payerAccountStatus=null. Merchant summaries use the latest matching merchant/order/buyer signal row, first three stored reason labels, unacknowledged alerts and unresolved disputes. Details report the real ledger verifier result and never return ledger payloads or contact/address hashes.
+
+Merchant detail calls the source computeBuyerSignal function only after authorization; the API bootstrap will inject the existing intelligence export. Current output is labelled INTELLIGENCE_STUB; no new score/model implementation or private features JSON layout is assumed. Buyer reads never call it. See O18 and [read evidence](evidence/2026-11-09-h2-order-reads.md). Public HTTP wiring is the following increment.
