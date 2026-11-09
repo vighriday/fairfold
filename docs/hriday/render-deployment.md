@@ -4,6 +4,8 @@ The source-prescribed deployment is one Blueprint containing the API, worker and
 
 The user's latest Dashboard screenshot shows **Payment Information Required** for these paid services. They also report deleting a stale Blueprint; any quota reset or synchronization delay is unverified. Recheck capacity once in the Dashboard after the user's wait, but do not assume it removes the separate billing gate. If deployment moves to Ishaan's workspace, use the [conditional handoff](ishaan-deployment-handoff.md). No service plans or architecture have been changed.
 
+Render account access is now confirmed in Hriday's explicitly selected **My Workspace**. [Read-only discovery](evidence/2026-11-09-render-workspace.md) found no Fairfold services and no Postgres instances. Blueprint capacity and billing readiness were not verified by those reads; an unapplied Blueprint may still exist. Check the Dashboard for that existing Blueprint before creating another.
+
 ## Open the prepared Blueprint
 
 [Open Fairfold's Blueprint in Render](https://dashboard.render.com/blueprint/new?repo=https://github.com/vighriday/fairfold).
@@ -34,13 +36,13 @@ The first hosted API URL is assigned by Render. With the URL variables omitted, 
 
 ## Apply and verify
 
-Apply the reviewed Blueprint in the Render Dashboard. The Render deployment skill describes initial Blueprint application through the Dashboard; see [Render Blueprints](https://render.com/docs/infrastructure-as-code). The browser helper and Render account-management tools are unavailable in this conversation, so this Apply step needs the signed-in user. The repository configuration is prepared first.
+Apply only the reviewed existing Blueprint when the account gate is resolved; see [Render Blueprints](https://render.com/docs/infrastructure-as-code). Connected account tools can now inspect resources and plan/apply a Blueprint; the Dashboard remains available for private manual values and billing. No application was attempted during this read-only recheck. Do not enter card details or change plans. If a future tool requires approval of a newly reviewed infrastructure plan, show that concrete plan before its application.
 
 After applying, retain the actual service URLs, resource/deploy IDs and deployed Git commit. Check:
 
 1. API build, `pnpm db:migrate` pre-deploy and start all succeed. The service reaches `live`.
-2. Actual API URL plus `/healthz` returns database `ready`, phase `H1` and intelligence `stub`.
-3. `/docs/` loads Swagger; `/docs/json` contains the implemented demo-login endpoint. The Figma frontend and checkout routes are not implemented in H1.
+2. Actual API URL plus `/healthz` returns database `ready`, phase `H2` and intelligence `stub` for the current branch. Earlier H1-only commits reported phase H1; do not deploy a stale commit just to match that historical label.
+3. `/docs/` loads Swagger; `/docs/json` contains demo login and the seven current H2 checkout/order endpoints. The Figma product frontend remains unimplemented; absent PayPal credentials do not authorize a dummy successful checkout.
 4. Worker deploy succeeds and runtime logs say `Worker ready`, `handlerCount: 0`, intelligence `stub`. No real intelligence job result is claimed.
 5. Record the deployed commit and actual observations in a new dated evidence record, then update H1's status. A queued deploy or green API alone does not prove the worker is ready.
 
@@ -48,6 +50,6 @@ The public API URL can be supplied back in chat for HTTP verification; no creden
 
 ## Validation state
 
-The revised Blueprint passes Render's official JSON Schema. Render CLI 2.36.0 was downloaded to ignored workspace tooling and its archive digest was verified against GitHub's release-asset digest. The CLI's platform/workspace validation could not run because it reported no selected/default workspace. The Dashboard preview must perform that workspace-aware validation before Apply. No CLI authentication or workspace selection was invented.
+The revised Blueprint previously passed Render's official JSON Schema. Render CLI 2.36.0 was downloaded to ignored workspace tooling and its archive digest was verified against GitHub's release-asset digest. That earlier CLI validation had no selected workspace; CLI authentication has not been claimed. The connected account tools now have the user's confirmed request-scoped workspace. A current Dashboard/tool plan must still validate the actual intended infrastructure before application. No hosted build, health or worker readiness has been verified.
 
 References: [Blueprint specification](https://render.com/docs/blueprint-spec), [default environment variables](https://render.com/docs/environment-variables), [deployment lifecycle](https://render.com/docs/deploys), [health checks](https://render.com/docs/health-checks).

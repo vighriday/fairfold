@@ -2,7 +2,7 @@
 
 Updated 9 November 2026 IST. The research-first pass is complete. The user subsequently confirmed that PayPal sandbox accounts do not exist and instructed building around them. H1's local foundation is implemented and tested; its first Render deployment is pending. The user now asks to continue the other pieces while hosting is pending: H2’s local transport/operation bindings and database-priced creation/minimized capture store are implemented and tested. H2 is IN PROGRESS; H3–H8 have not started.
 
-The user authorized the first Render deployment, then asked to wait for capacity/billing while continuing H2. On this pass Render account tools became available; Hriday confirmed My Workspace. Read-only discovery found no Fairfold services and no PostgreSQL instances. No infrastructure/billing action was taken. See the [deployment guide](render-deployment.md); the earlier [preflight](evidence/2026-11-09-render-preflight.md) remains historical local validation.
+The user authorized the first Render deployment, then asked to wait for capacity/billing while continuing H2. On this pass Render account tools became available; Hriday confirmed My Workspace. Read-only discovery found no Fairfold services and no PostgreSQL instances. No infrastructure/billing action was taken. See the [current discovery record](evidence/2026-11-09-render-workspace.md) and [deployment guide](render-deployment.md); the earlier [preflight](evidence/2026-11-09-render-preflight.md) remains historical local validation.
 
 ## Current checkout
 

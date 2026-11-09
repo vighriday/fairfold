@@ -6,6 +6,8 @@ Prepared on 9 November 2026 IST. This is ready if Hriday decides deployment shou
 
 Hriday reports exhausted Blueprint capacity and deleting one stale Blueprint. Recovery and any synchronization interval have not been independently observed. His supplied Dashboard screenshot separately says **Payment Information Required** for the Blueprint's paid services. Waiting for a quota change does not establish that billing is ready. Render's [free-plan documentation](https://render.com/docs/free) excludes background workers from free instance types; the fixed API/worker/Postgres architecture is retained.
 
+Current account access works: Hriday confirmed My Workspace and [resource discovery](evidence/2026-11-09-render-workspace.md) found no Fairfold services or Postgres instances. This does not establish quota/billing recovery or rule out an unapplied Blueprint. The current Hriday runtime is H2; hosted foundation checks must use that current commit and phase.
+
 If the Dashboard still blocks Hriday after his wait, an intended Ishaan workspace with repository access, available capacity and the required payment setup can apply the same published Blueprint. This handoff does not request card details in chat, authorize a purchase on another person's account or change the plans to bypass D18.
 
 ## Apply exactly the existing deployment
@@ -20,13 +22,13 @@ If the Dashboard still blocks Hriday after his wait, an intended Ishaan workspac
 
 Provide the actual public API URL, workspace/resource/deploy IDs, deployed commit, and sanitized runtime observations. Never return encryption keys, tokens, database connection strings, passwords or billing details.
 
-| Check     | Required actual observation                                                                   |
-| --------- | --------------------------------------------------------------------------------------------- |
-| API       | Build, pre-deploy migration and startup succeed; deploy is `live`                             |
-| Readiness | `GET /healthz` returns database `ready`, phase `H1`, intelligence `stub`                      |
-| Swagger   | `/docs/` loads and `/docs/json` includes demo login                                           |
-| Worker    | Deploy succeeds; logs show `Worker ready`, `handlerCount: 0`, intelligence `stub`             |
-| Identity  | API and worker both run the recorded `Hriday` commit and share the intended internal database |
+| Check     | Required actual observation                                                                     |
+| --------- | ----------------------------------------------------------------------------------------------- |
+| API       | Build, pre-deploy migration and startup succeed; deploy is `live`                               |
+| Readiness | `GET /healthz` returns database `ready`, phase `H2`, intelligence `stub` on the current branch  |
+| Swagger   | `/docs/` loads and `/docs/json` includes demo login and all seven current checkout/order routes |
+| Worker    | Deploy succeeds; logs show `Worker ready`, `handlerCount: 0`, intelligence `stub`               |
+| Identity  | API and worker both run the recorded `Hriday` commit and share the intended internal database   |
 
 Hriday can independently verify the public HTTP endpoints from the URL. A green API does not prove worker readiness. Record successful hosted observations in a new dated evidence file and update the H1 status only after every check passes. H2's real checkout and PayPal dispute checks are separate and remain unverified.
 
