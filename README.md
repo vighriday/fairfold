@@ -10,6 +10,8 @@ The user authorized proceeding around the absent sandbox accounts. The real disp
 
 For H2's complete local setup, opt-in recorded /dev rehearsal, read-only A4 audit and response-parser evidence, follow the [sandbox rehearsal guide](docs/hriday/sandbox-rehearsal.md). Account-backed PayPal approval and actual recorded fixtures remain pending.
 
+H2's local implementation now includes all 17 PayPalClient methods and the complete ForMerchant composition used by the API. The [local closeout](docs/hriday/h2-closeout.md) records 279 offline and 126 PostgreSQL/HTTP passes, the two Q2 return-address review gates and the remaining real-account steps. H3 has not started.
+
 While hosting is pending, H2 has begun locally: `packages/paypal` provides encrypted merchant credential lookup, sandbox OAuth/HTTP transport and incremental order-operation bindings, verified with synthetic offline responses and isolated PostgreSQL tests. Database-priced creation and the approved minimized capture transaction are locally verified in the API application layer, including atomic ledger/job writes. The seven source H2 checkout/order routes and ownership projections are wired into the API runtime. The source unstyled `/dev` sandbox harness is available when DEMO_MODE=true; it uses client ID only and prints the minimal capture JSON. Real SDK/browser purchase is still unverified without accounts. Read the [checkout integration guide](docs/hriday/checkout-integration.md). This package does not yet expose the complete `PayPalClient`/`ForMerchant` interface. Follow the [H2 increments](docs/hriday/h2-paypal.md); the [conditional deployment handoff](docs/hriday/ishaan-deployment-handoff.md) is ready if hosting moves to Ishaan.
 
 ## Run the local foundation

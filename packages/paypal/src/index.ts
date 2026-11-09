@@ -10,6 +10,11 @@ export { createDisputeActionOperations } from './dispute-actions.js';
 export { createWebhookOperations } from './webhooks.js';
 export { createCheckoutClientFactory, type CheckoutClient } from './checkout.js';
 export {
+  createPayPalClientFactory,
+  type PayPalMerchantClient,
+  type PayPalClientOptions,
+} from './client.js';
+export {
   type OrderRecording,
   type SanitizedOrderRecord,
   sanitizeOrderRecord,

@@ -1,6 +1,6 @@
 # H2 checkout and order integration
 
-Updated 9 November 2026 IST. This is the implemented local API handoff, grounded in original F1 and endpoints 2/3/4/7/8/30/31. Real PayPal A4, recorded vendor fixtures, Maya’s purchase and H1 Render hosting remain pending. Complete PayPalClient/ForMerchant methods outside the implemented checkout subset remain future work; no throwing placeholders are exposed.
+Updated 9 November 2026 IST. This is the implemented local API handoff, grounded in original F1 and endpoints 2/3/4/7/8/30/31. Real PayPal A4, recorded vendor fixtures, Maya’s purchase and H1 Render hosting remain pending. The complete PayPalClient/ForMerchant is now implemented and used by runtime; two Q2 return-address branches remain review-gated. See the [H2 closeout](h2-closeout.md).
 
 ## Implemented HTTP surface
 
@@ -54,15 +54,15 @@ The SDK promise resolves to {orderId: paypalOrderId}; the Fairfold UUID is not t
 
 Before a real run, the database must contain the source Neel merchant/product records and the actual sandbox client ID/encrypted secret under the configured encryption key. Merely placing an app secret in a browser or obtaining a demo JWT does not configure the merchant row. The full B17 seed remains H8 work; test fixtures live only in the isolated test database and are not a recording world. Accounts and real app setup were explicitly deferred by Hriday, so an empty/unconfigured development catalogue should produce a setup error, not a dummy purchase.
 
-| Gate                   | Required observation                                                                                       | Current state                                      |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| Real account/app setup | Neel merchant app and Maya personal sandbox account, credential scopes verified                            | NOT AVAILABLE / DEFERRED BY USER                   |
-| Demo buyer identity    | Existing fixed Maya buyer row linked to her verified actual payer ID                                       | PENDING REAL SETUP                                 |
-| A4                     | Real create/approve/capture, actual protection/account data, one captured ledger and job                   | NOT RUN                                            |
-| /dev browser session   | Actual SDK eligibility/pop-up/approval/capture with Maya                                                   | NOT RUN; synthetic flow and HTTP asset checks PASS |
-| Recorded fixtures      | Observed real create/capture responses sanitized in memory before any write, provenance retained           | NOT RECORDED; unit inputs remain synthetic         |
-| Full PayPal interface  | Remaining dispute/webhook operations implemented without placeholder methods or shared-contract alteration | INCOMPLETE                                         |
-| H1 hosting             | Existing Render Blueprint deployment and actual health/Swagger/worker verification                         | PENDING CAPACITY/BILLING/ACCESS                    |
+| Gate                   | Required observation                                                                             | Current state                                         |
+| ---------------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
+| Real account/app setup | Neel merchant app and Maya personal sandbox account, credential scopes verified                  | NOT AVAILABLE / DEFERRED BY USER                      |
+| Demo buyer identity    | Existing fixed Maya buyer row linked to her verified actual payer ID                             | PENDING REAL SETUP                                    |
+| A4                     | Real create/approve/capture, actual protection/account data, one captured ledger and job         | NOT RUN                                               |
+| /dev browser session   | Actual SDK eligibility/pop-up/approval/capture with Maya                                         | NOT RUN; synthetic flow and HTTP asset checks PASS    |
+| Recorded fixtures      | Observed real create/capture responses sanitized in memory before any write, provenance retained | NOT RECORDED; unit inputs remain synthetic            |
+| Full PayPal interface  | All 17 source methods, type-checked composition, explicit Q2 return-address failures             | LOCAL PASS; actual vendor behavior remains unverified |
+| H1 hosting             | Existing Render Blueprint deployment and actual health/Swagger/worker verification               | PENDING CAPACITY/BILLING/ACCESS                       |
 
 When recording fixtures, retain only the reviewed required vendor fields and substitute synthetic payer/name/email/street values before serialization. Keep raw capture responses transient. The approved capture policy does not approve blanket webhook/dispute/reporting/action-response retention. No success fixture, pass metric or screenshot should be manufactured to bridge these gates.
 

@@ -2,6 +2,12 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-09 — H2 complete ForMerchant and local closeout
+
+- Composed all 17 shared PayPalClient operations under a type-checked ForMerchant factory and wired it into the API/rehearsal runtime. The checkout adapter now projects from that complete composition; shared contracts remain unchanged.
+- Added cross-group method execution, token coalescing/isolation and credential-rotation/removal checks. All 279 offline and 126 PostgreSQL/HTTP cases passed; typecheck/lint and actual normal/rehearsal startup checks passed without vendor calls.
+- Finished the local H2 implementation pass and consolidated the exact account/approval/fixture checklist. Formal acceptance remains pending; Q2 return-address branches remain explicit review gates. No H3 processing was added.
+
 ## 2026-11-09 — H2 exact-body webhook client
 
 - Implemented verify/register methods, preserving raw event formatting in signature postback and requiring the exact provider verification result. Added scoped raw-JSON transport, header/certificate/input checks, explicit registration snapshots and returned-resource validation.

@@ -13,7 +13,7 @@ The original architecture section 3 defines PayPalClient/ForMerchant, and sectio
 | Disputes reads  | list, get                                                                                       | Implemented and tested in this increment                                                         |
 | Disputes writes | provideEvidence, makeOffer, acceptClaim, sendMessage, sandboxAdjudicate, sandboxRequireEvidence | Implemented and locally tested; both Q2 return-address branches fail before OAuth pending review |
 | Webhooks        | verify, register                                                                                | Implemented and locally tested; exact-body postback; no H3 handler or persistence                |
-| Composition     | ForMerchant returning all existing groups                                                       | Pending completion of the above; no casts/placeholders                                           |
+| Composition     | ForMerchant returning all existing groups                                                       | Implemented, satisfies ForMerchant without a cast; API/rehearsal use the full factory            |
 
 ## Dispute reads and cursors
 
@@ -30,3 +30,9 @@ Dispute objects remain transient unknown values. No raw payloads are written, lo
 Checked 9 November 2026: [Disputes schema v1.12](https://developer.paypal.com/api/customer-disputes/v1/schema.json), [list reference](https://developer.paypal.com/api/customer-disputes/v1/disputes-list) and [dispute integration guide](https://developer.paypal.com/api/disputes/). Schema SHA-256: fee5e04ab606f8961b95744e65c4189fc7c4613e79ba2f944d2deab79e834330. Working schemas stay ignored.
 
 Real OAuth, pagination/resource shapes, scopes, action eligibility, actual multipart acceptance and verification remain NOT RUN until the sandbox accounts exist. Q2 return-address, Q3 retention, Q5 accept-claim behavior and Q12 mutation replay boundaries remain explicit. H1/H2 are not complete and H3–H8 remain unstarted. See the [current status](status.md).
+
+## Complete composition and handoff
+
+createPayPalClientFactory returns all 17 shared operations with one credential-versioned per-merchant transport/cache, plus the private readCapture helper. It satisfies the unchanged ForMerchant type without a cast. Constructing a client makes no eager vendor call. The checkout compatibility adapter projects orders/readCapture from this same factory; the normal API and recorded rehearsal use the full factory directly.
+
+All 279 offline and 126 PostgreSQL/HTTP cases pass, including a synthetic call through every shared method, concurrent cross-group token coalescing, merchant isolation and credential rotation/removal/simulation. Actual normal/rehearsal startup checks pass. Q2 return branches and real account-backed acceptance remain explicit; see [complete-client evidence](evidence/2026-11-09-h2-complete-client.md) and [H2 closeout](h2-closeout.md). No H3/H4 consumer or raw retention was activated.

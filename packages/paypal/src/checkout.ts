@@ -1,19 +1,16 @@
-import { createOrderOperations, readCapturedOrder } from './orders.js';
-import { createMerchantTransportFactory, type PayPalTransportOptions } from './transport.js';
-import { type OrderRecording } from './recording.js';
+import {
+  createPayPalClientFactory,
+  type PayPalClientOptions,
+  type PayPalMerchantClient,
+} from './client.js';
 
-/** A real checkout subset; does not claim the unfinished full ForMerchant contract. */
-export function createCheckoutClientFactory(
-  options: PayPalTransportOptions & { recording?: OrderRecording },
-) {
-  const transportFor = createMerchantTransportFactory(options);
+/** Compatibility projection for existing checkout callers; composition lives in the full client. */
+export function createCheckoutClientFactory(options: PayPalClientOptions) {
+  const forMerchant = createPayPalClientFactory(options);
   return async (merchantId: string) => {
-    const transport = transportFor(merchantId);
-    return {
-      orders: createOrderOperations(transport, options.recording),
-      readCapture: (orderId: string) => readCapturedOrder(transport, orderId, options.recording),
-    };
+    const client = await forMerchant(merchantId);
+    return { orders: client.orders, readCapture: client.readCapture };
   };
 }
 
-export type CheckoutClient = Awaited<ReturnType<ReturnType<typeof createCheckoutClientFactory>>>;
+export type CheckoutClient = Pick<PayPalMerchantClient, 'orders' | 'readCapture'>;

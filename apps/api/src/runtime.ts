@@ -3,7 +3,7 @@ import { decodeEncryptionKey } from '@fairfold/contracts';
 import { computeBuyerSignal } from '@fairfold/intelligence';
 import { createJobs } from '@fairfold/jobs';
 import {
-  createCheckoutClientFactory,
+  createPayPalClientFactory,
   databaseCredentials,
   type OrderRecording,
 } from '@fairfold/paypal';
@@ -18,7 +18,7 @@ export async function createRuntime(config: Config, options: { recording?: Order
   const database = createDatabase(config.databaseUrl);
   const jobs = createJobs(config.databaseUrl);
   try {
-    const forMerchant = createCheckoutClientFactory({
+    const forMerchant = createPayPalClientFactory({
       credentials: databaseCredentials(database.db),
       encryptionKey: decodeEncryptionKey(config.encryptionKey),
       apiBase: config.paypalApiBase,

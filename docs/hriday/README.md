@@ -19,6 +19,8 @@ While Render hosting is pending, follow [H2's local increments](h2-paypal.md). T
 
 H2's local setup-to-evidence workflow is ready in the [sandbox rehearsal guide](sandbox-rehearsal.md). It provides the actual commands, recording/audit behavior and remaining account/approval gates; local readiness does not close H2.
 
+The [H2 local closeout](h2-closeout.md) is the current handoff: complete client composition and local checks are ready, with only the listed account-backed acceptance and review/deployment dependencies pending. Start there before repeating H2 work.
+
 Use the [evidence record template](evidence/README.md) for real runs. Keep unredacted working files under ignored `docs/hriday/evidence/local/` or `.work/`; publish only sanitized summaries. Maintain the root [changelog](../../CHANGELOG.md).
 
 The explicitly allocated research task is the sandbox dispute spike in architecture section 16. The source verification, contract inventory, execution breakdown and submission evidence plan here support that task; they are not a reassignment of Ishaan's research, intelligence, evals, Devpost text or narration.
