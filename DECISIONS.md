@@ -1,0 +1,65 @@
+# Fairfold decisions and contract questions
+
+Recorded 9 November 2026 IST. The architecture's choices below are inherited, not newly selected. No application code or shared-contract change has been made. Current questions are review inputs, not implemented answers.
+
+## Fixed architecture decisions
+
+| ID | Existing choice | Source |
+| --- | --- | --- |
+| D1 | Per-merchant REST app credentials behind `PayPalCredentials`; partner mode is future work | Architecture 5 |
+| D2 | Verified webhooks plus a one-minute dispute reconciliation poll | Architecture 5, 8 F4 |
+| D3 | TypeScript, Node.js 22 LTS or newer | Architecture 5, 14 |
+| D4 | Fastify 5, Zod and generated OpenAPI | Architecture 5 |
+| D5 | PostgreSQL 16 with Drizzle | Architecture 5, 7 |
+| D6 | pg-boss using the same Postgres | Architecture 5 |
+| D7 | Content-addressed Postgres `bytea`; image max dimension 2,048 px; BlobStore abstraction | Architecture 5, 12 |
+| D8 | Per-order SHA-256 hash chain; external anchoring is stretch only | Architecture 5, 7 |
+| D9 | Vercel AI SDK with structured output and embeddings | Architecture 5, 10 |
+| D10 | Environment-selected models/provider; optional separate embedding provider | Architecture 5, 14 |
+| D11 | Embeddings in `real[]`, cosine comparison in memory | Architecture 5, 9 |
+| D12 | Fixed-taxonomy extraction, deterministic product/category grouping and cosine threshold 0.80 | Architecture 5, 9 |
+| D13 | Exposure-based exact conditional binomial test, Benjamini–Hochberg correction; Fisher cross-check | Architecture 5, 9 |
+| D14 | Transparent points and reason codes for Buyer Signal | Architecture 5, 10 |
+| D15 | Separate Fairfold MCP server alongside PayPal tools | Architecture 5, 16 H7 |
+| D16 | REST/JSON contract; OpenAPI at `/docs` | Architecture 5, 11 |
+| D17 | Seeded role/subject demo bearer tokens | Architecture 5, 12 |
+| D18 | Render web service, worker and Postgres from one blueprint | Architecture 5, 14 |
+
+## Operational instructions for this branch
+
+| ID | Instruction or clarification | Basis |
+| --- | --- | --- |
+| O1 | All authored work stays on `Hriday`; no task branches or direct main updates | Explicit user instruction overrides architecture 14/16 workflow wording |
+| O2 | This pass creates research and documents only | User's explicit reply on 9 November |
+| O3 | Internal sources and extracted media never enter Git | Local internal README; `.gitignore` protects them |
+| O4 | No app success, deployment, evaluation, interview or prize outcome is claimed without evidence | Architecture completion checks and submission 18 |
+| O5 | Standard v6 checkout uses client ID only; do not add a client-token route from the summary table | Architecture 3 and 16 H2 are specific; current [migration guide](https://developer.paypal.com/v5-v6) supports this |
+| O6 | The sandbox buyer opens the dispute manually; no ordinary API creation script is assumed | Architecture 3 and pre-H1 brief; current [setup guide](https://developer.paypal.com/platforms/disputes/set-up) requires additional buyer scopes for API creation |
+| O7 | Public testing instructions may explain access; they must not publish PayPal passwords, app secrets or bearer tokens | Architecture 1/12 no-secrets rule governs older submission wording about credentials in README |
+| O8 | CP0 is past its planned date and unverified; preserve the original milestones, record actual completion dates | Current date is 9 November; architecture 18 planned CP0 for 8 November |
+| O9 | `AI_EMBEDDING_PROVIDER` selects the embedding provider; the adjacent “Webhook verification” cell is a clerical mismatch | Architecture D10, section 14 variable description and I1 agree |
+| O10 | Planning preparation uses `DOCS:` commits and does not satisfy H1 | Architecture 16 requires working acceptance evidence for H tasks |
+
+## Questions to resolve before the affected implementation
+
+| ID | Finding and consequence | Required evidence or review | Gate |
+| --- | --- | --- | --- |
+| Q1 | Actual dispute status, lifecycle stage, available links/options and arrival delay are unknown | Run the pre-H1 spike; record both detail snapshots and timing | Before H1 per brief |
+| Q2 | `REFUND_WITH_RETURN` needs a return address, absent from `PayPalClient.acceptClaim` and action parameters; `makeOffer` also omits address support for that choice | Joint Hriday/Ishaan contract review after observing allowed options; no new field added here. [PayPal offer reference](https://developer.paypal.com/api/customer-disputes/v1/disputes-make-offer) and [schema](https://raw.githubusercontent.com/paypal/paypal-rest-api-specifications/main/openapi/customer_disputes_v1.json) establish the requirement | Before return-based H4 actions |
+| Q3 | `CaptureResult.raw`, `disputes.raw` and event payloads can retain email/street addresses, conflicting with privacy requirements if persisted unchanged | Agree a sanitization boundary that preserves verification inputs transiently and required identifiers; review fixture redaction before commits | Before H2/H3 persistence |
+| Q4 | `EvidencePackDraft.actionParams.amount` differs from stored `action_params.offerAmount`/`refundAmount` and approval body `amount` | Agree explicit mapping at the existing boundary; test all three shapes; do not rename shared fields implicitly | H4/I5 integration |
+| Q5 | API detail/schema renders accept-claim as multipart with incomplete structured fields, while the official integration guide demonstrates JSON `note`; full `accept_claim_reason` enum remains unspecified | Sandbox-test the supported JSON path and allowed types. Omit optional reason until verified. Do not generate a guessed enum | Pre-H1/H4 spike |
+| Q6 | Webhook resource shape is still an external uncertainty | Observe a real dispute webhook; preserve `resource.dispute_id` then `resource.id` fallback and authoritative GET; do not invent a fixture | H3/H4 |
+| Q7 | H4's full A12 uses fulfilment/delivery facilities implemented later; H1's first deploy depends on Render access | Use the documented stub pack and recorded PayPal transaction for the H4 component check; record full A12 as pending until deployed integrated test; acquire Render access before declaring H1 done | H1, H4 and H8 |
+| Q8 | The seed's B14 “received 75 days ago” and comparison population “delivered in last 60 days” need explicit delivered dates | Choose delivery dates that satisfy both existing rules; keep received dates unchanged; assert the population and denominator before trusting A1/A2 | H8/I6 fixture review |
+| Q9 | A1 needs 18 unshipped orders with B17 stock; live checkout adds an order that must be sealed before recounting. Seeded disputes also affect Store Report bands | Verify exact counts before and after live capture/seal/dispute. Keep seam complaints as complaints unless specified as disputes; do not silently alter band thresholds or seed totals | H8/A1/A14 |
+| Q10 | Agent tool `get_order_proof` needs an ownership policy for private order IDs; H7 names role access but not this finer rule | Review with Hriday/Ishaan against section 12 ownership rules before exposing private proof to an arbitrary agent | H7 |
+| Q11 | A durable event row followed by a failed enqueue can leave an unprocessed event if every duplicate exits immediately; one-minute dispute polling alone does not repair capture imports | Resolve the atomic/retry boundary within the chosen Postgres/pg-boss design; prove recovery without changing the event/API contract | H3 |
+| Q12 | PayPal documentation establishes Orders request-id support, not universal idempotency for every dispute operation | Keep deterministic IDs as specified; establish local dedupe/claiming and re-fetch on ambiguous outcomes; verify per-operation behavior before retrying money actions | H2/H4/H5 |
+| Q13 | The H4 check expects an offer to fail after `sandboxRequireEvidence`, but that endpoint documents response-status changes, not necessarily a move out of INQUIRY | Observe status and lifecycle stage separately; agree the exact stage-change rehearsal before declaring STAGE_CHANGED coverage | Pre-H1/H4 spike |
+
+Q2–Q13 are focused review items. None authorizes a new architecture, payment rail, safety verdict, or change to the idea. Where external behavior blocks a specified path, record the failure and use only a jointly accepted documented fallback.
+
+## Sandbox spike result
+
+Status: **NOT RUN**. No sandbox merchant or buyer session, transaction, dispute, webhook, evidence upload or offer has been observed in this pass. Fill the result fields in `docs/hriday/sandbox-spike.md` after the real run. No guessed PayPal identifiers or success responses belong here.

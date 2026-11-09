@@ -1,0 +1,14 @@
+# Private planning sources must never be committed (docs/internal/README.md).
+/docs/internal/
+
+# Local credentials and generated work products.
+.env
+.env.*
+!.env.example
+!.env.*.example
+/docs/hriday/evidence/local/
+/.work/
+node_modules/
+dist/
+coverage/
+*.log
