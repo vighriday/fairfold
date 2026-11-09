@@ -2,6 +2,14 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-09 — H2.2a Orders create, capture and get
+
+- Implemented the existing create/capture/get contracts using the sandbox merchant transport. Create sends one CAPTURE purchase unit, stable identifiers, string quantities and exact BigInt-derived totals; wire currency precision and numeric(12,2) bounds are checked without changing shared Money.
+- Added sandbox approval-link checks, modern/legacy payer parsing, actual capture status and seller protection, nullable absent fields and exact CaptureResult field mapping. Raw responses remain transient; no capture persistence or route was added.
+- Added validated transport responses so shape failures retain PayPal's debug ID and an explicit ambiguous-mutation flag without logging vendor bodies or payer fields. Such failures are not replayed.
+- Verified current official Orders 2.36 schema and currency documentation against the original H2 source. Retained the existing PostOpts limit and shared interfaces; no dependency version changed.
+- Added 34 synthetic Orders cases. The full offline suite passed 83 tests with 17 DB checks skipped; typecheck and lint passed. Recorded scope, source digest and pending real sandbox/hosting/privacy gates in the Orders evidence record.
+
 ## 2026-11-09 — H2.1 sandbox authentication and HTTP transport
 
 - Implemented merchant-scoped encrypted credential lookup and sandbox-only OAuth/HTTP transport inside `packages/paypal`, using existing shared crypto, clock, PostOpts and error helpers. No shared contract, schema, API route, worker or Ishaan-owned package changed.

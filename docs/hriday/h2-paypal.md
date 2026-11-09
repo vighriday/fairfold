@@ -34,6 +34,16 @@ Diagnostics contain merchant ID, phase/method, attempt, upstream status, validat
 
 The [verification record](evidence/2026-11-09-h2-transport.md) records 49 offline passes, 17 isolated PostgreSQL integration passes, typecheck/lint/formatting and the dependency-install observations. All vendor responses are labelled synthetic; no PayPal request or persistent buyer payload was used. H2.2 is the next increment.
 
+## H2.2a Orders bindings
+
+`createOrderOperations(transport)` now implements the unchanged order create/capture/get method types. Tracking is the next sub-increment, so this currently returns that exact three-method subset rather than claiming a complete PayPalClient/ForMerchant.
+
+Create builds one CAPTURE purchase unit with the source reference/custom/invoice IDs, string quantities and an exact item-total breakdown. Arithmetic uses BigInt hundredths and checks the existing numeric(12,2) range. Wire amounts normalize to two decimals, or integral values for HUF/JPY/TWD; nonzero fractions in integral currencies, mixed/unsupported currencies, invalid quantities and invalid shipping fields fail before credential lookup. An approval link must be a GET link on the sandbox PayPal web origin.
+
+Capture maps the actual capture's status and seller protection, wallet account status, modern account identity with legacy payer fallback, and the exact shared shipping fields. Absent/empty optional fields remain null; multiple purchase units/captures and conflicting payer IDs require reconciliation rather than an invented singular result. `raw` is retained only in the transient return object. The shared shipping type omits address_line_2 while raw includes it: Q3's future address-hash review must account for all necessary address components without silently changing the contract.
+
+`requestValidated` reports malformed response shapes with actual debug-ID/status metadata and never retries a potentially completed mutation because parsing failed. Order GET validates identity and returns the transient vendor object; vendor HATEOAS links are not followed. [Orders evidence](evidence/2026-11-09-h2-orders.md) records 83 offline passes and the current official schema digest. Real sandbox fixtures and A4 remain NOT RUN.
+
 ## Persistence review still needed
 
 Q3 identifies a conflict between `CaptureResult.raw`/`disputes.raw`/webhook payloads and the original no-email/no-street-address persistence rule. Preserve raw webhook bytes transiently for signature verification. Keep the exact capture contract transient; do not persist its raw object or add real fixtures before joint review.

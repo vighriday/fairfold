@@ -32,6 +32,7 @@ export type PayPalRequest =
 
 export interface PayPalTransport {
   request(input: PayPalRequest): Promise<unknown>;
+  requestValidated<T>(input: PayPalRequest, parse: (body: unknown) => T): Promise<T>;
 }
 
 interface Token {
@@ -264,52 +265,82 @@ export function createMerchantTransportFactory(options: PayPalTransportOptions) 
 
   return function merchantTransport(merchantId: string): PayPalTransport {
     validateMerchantId(merchantId);
+    async function perform(input: PayPalRequest): Promise<ExchangeResult> {
+      const url = urlFor(input.path);
+      if (
+        input.method === 'POST' &&
+        (!PostOptsSchema.safeParse(input.opts).success ||
+          !/^[\x21-\x7e]+$/.test(input.opts.requestId))
+      )
+        throw new AppError('INVALID_PAYPAL_REQUEST_ID', 'A valid PayPal request ID is required');
+      let body: string | undefined;
+      try {
+        body = input.method === 'POST' ? JSON.stringify(input.body ?? {}) : undefined;
+        if (input.method === 'POST' && body === undefined) throw new Error();
+      } catch {
+        throw new AppError('INVALID_PAYPAL_BODY', 'The PayPal request must be JSON serializable');
+      }
+      const lease = await getToken(merchantId);
+      const headers = new Headers({
+        Accept: 'application/json',
+        Authorization: 'Bearer ' + lease.token.value,
+        Prefer: 'return=representation',
+      });
+      if (input.method === 'POST') {
+        headers.set('Content-Type', 'application/json');
+        headers.set('PayPal-Request-Id', input.opts.requestId);
+      }
+      try {
+        return await exchange({
+          merchantId,
+          phase: 'api',
+          method: input.method,
+          url,
+          headers,
+          body,
+          retrySafe: input.method === 'GET' || input.retrySafe,
+        });
+      } catch (error) {
+        if (
+          error instanceof PayPalError &&
+          error.upstreamStatus === 401 &&
+          lease.entry.token === lease.token
+        )
+          lease.entry.token = undefined;
+        throw error;
+      }
+    }
     return {
       async request(input) {
-        const url = urlFor(input.path);
-        if (
-          input.method === 'POST' &&
-          (!PostOptsSchema.safeParse(input.opts).success ||
-            !/^[\x21-\x7e]+$/.test(input.opts.requestId))
-        )
-          throw new AppError('INVALID_PAYPAL_REQUEST_ID', 'A valid PayPal request ID is required');
-        let body: string | undefined;
+        return (await perform(input)).body;
+      },
+      async requestValidated(input, parse) {
+        const result = await perform(input);
         try {
-          body = input.method === 'POST' ? JSON.stringify(input.body ?? {}) : undefined;
-          if (input.method === 'POST' && body === undefined) throw new Error();
+          return await parse(result.body);
         } catch {
-          throw new AppError('INVALID_PAYPAL_BODY', 'The PayPal request must be JSON serializable');
-        }
-        const lease = await getToken(merchantId);
-        const headers = new Headers({
-          Accept: 'application/json',
-          Authorization: 'Bearer ' + lease.token.value,
-          Prefer: 'return=representation',
-        });
-        if (input.method === 'POST') {
-          headers.set('Content-Type', 'application/json');
-          headers.set('PayPal-Request-Id', input.opts.requestId);
-        }
-        try {
-          return (
-            await exchange({
+          options.logger.warn(
+            {
+              event: 'paypal.request_error',
               merchantId,
               phase: 'api',
               method: input.method,
-              url,
-              headers,
-              body,
-              retrySafe: input.method === 'GET' || input.retrySafe,
-            })
-          ).body;
-        } catch (error) {
-          if (
-            error instanceof PayPalError &&
-            error.upstreamStatus === 401 &&
-            lease.entry.token === lease.token
-          )
-            lease.entry.token = undefined;
-          throw error;
+              upstreamStatus: result.status,
+              debugId: result.debugId,
+              paypalName: null,
+              issues: [],
+              attempt: result.attempt,
+            },
+            'PayPal sandbox response shape was invalid',
+          );
+          throw new PayPalError(
+            'PAYPAL_INVALID_RESPONSE',
+            result.status,
+            result.debugId,
+            null,
+            [],
+            input.method === 'POST',
+          );
         }
       },
     };
