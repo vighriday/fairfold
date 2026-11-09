@@ -40,7 +40,11 @@ export function readAiConfig(env: Env = process.env): AiConfig {
   return {
     provider,
     embeddingProvider,
-    models: { vision: env.AI_MODEL_VISION, text: env.AI_MODEL_TEXT, embedding: env.AI_MODEL_EMBEDDING },
+    models: {
+      vision: env.AI_MODEL_VISION,
+      text: env.AI_MODEL_TEXT,
+      embedding: env.AI_MODEL_EMBEDDING,
+    },
   };
 }
 
@@ -60,10 +64,14 @@ export function hasModelConfig(kind: ModelKind, env: Env = process.env): boolean
 function providerFactory(provider: Provider, env: Env) {
   const apiKey = env[KEY_VARS[provider]];
   switch (provider) {
-    case 'xai': return createXai({ apiKey });
-    case 'openai': return createOpenAI({ apiKey });
-    case 'anthropic': return createAnthropic({ apiKey });
-    case 'google': return createGoogleGenerativeAI({ apiKey });
+    case 'xai':
+      return createXai({ apiKey });
+    case 'openai':
+      return createOpenAI({ apiKey });
+    case 'anthropic':
+      return createAnthropic({ apiKey });
+    case 'google':
+      return createGoogleGenerativeAI({ apiKey });
   }
 }
 
@@ -74,7 +82,10 @@ function requireModelId(kind: ModelKind, id: string | undefined): string {
 
 export function getModel(kind: 'vision' | 'text', env?: Env): LanguageModelV4;
 export function getModel(kind: 'embedding', env?: Env): EmbeddingModelV4;
-export function getModel(kind: ModelKind, env: Env = process.env): LanguageModelV4 | EmbeddingModelV4 {
+export function getModel(
+  kind: ModelKind,
+  env: Env = process.env,
+): LanguageModelV4 | EmbeddingModelV4 {
   const cfg = readAiConfig(env);
   if (kind === 'embedding') {
     if (!EMBEDDING_CAPABLE.has(cfg.embeddingProvider)) {
@@ -84,7 +95,9 @@ export function getModel(kind: ModelKind, env: Env = process.env): LanguageModel
       );
     }
     const id = requireModelId(kind, cfg.models.embedding);
-    const factory = providerFactory(cfg.embeddingProvider, env) as { embeddingModel(id: string): EmbeddingModelV4 };
+    const factory = providerFactory(cfg.embeddingProvider, env) as {
+      embeddingModel(id: string): EmbeddingModelV4;
+    };
     return factory.embeddingModel(id);
   }
   const id = requireModelId(kind, cfg.models[kind]);

@@ -1,0 +1,26 @@
+{
+  "name": "@fairfold/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts"
+  },
+  "dependencies": {
+    "zod": "4.6.7",
+    "@fairfold/contracts": "workspace:*",
+    "@fairfold/db": "workspace:*",
+    "@fairfold/intelligence": "workspace:*",
+    "fastify": "5.12.8",
+    "fastify-type-provider-zod": "7.0.0",
+    "@fastify/swagger": "9.9.3",
+    "@fastify/swagger-ui": "6.1.3",
+    "@fastify/cors": "11.4.1",
+    "@fastify/rate-limit": "11.2.2",
+    "@fastify/multipart": "10.1.8",
+    "jose": "6.2.16",
+    "openapi-types": "12.1.3",
+    "dotenv": "18.0.10"
+  }
+}

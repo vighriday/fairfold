@@ -1,0 +1,39 @@
+{
+  "name": "fairfold",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.4.2",
+  "engines": {
+    "node": ">=22.16.0",
+    "pnpm": ">=9"
+  },
+  "scripts": {
+    "dev": "concurrently -k --names api,worker \"pnpm --filter @fairfold/api dev\" \"pnpm --filter @fairfold/worker dev\"",
+    "build": "pnpm typecheck",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format:check": "prettier --check .",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "test:db": "tsx scripts/test-database.ts",
+    "test:sandbox": "tsx scripts/test-sandbox.ts",
+    "test:e2e": "tsx scripts/test-e2e.ts",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "db:reset": "tsx scripts/reset.ts",
+    "setup:local": "tsx scripts/setup-local.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "22.20.5",
+    "@types/pg": "8.23.1",
+    "concurrently": "10.0.7",
+    "dotenv": "18.0.10",
+    "eslint": "10.14.0",
+    "prettier": "3.9.10",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.72.1",
+    "vitest": "5.1.0"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "@fairfold/ledger",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "zod": "4.6.7",
+    "drizzle-orm": "0.45.4",
+    "@fairfold/contracts": "workspace:*",
+    "@fairfold/db": "workspace:*",
+    "sharp": "0.35.5",
+    "exif-reader": "2.0.3"
+  }
+}

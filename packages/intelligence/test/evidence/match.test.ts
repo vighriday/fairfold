@@ -1,19 +1,54 @@
 import { describe, expect, it } from 'vitest';
-import type { AttestationResult, AttestInput } from '../../src/contracts.ts';
-import { applyItemMatching, deriveStatus, normaliseColour, normaliseSize } from '../../src/evidence/match.ts';
+import type { AttestationResult, AttestInput } from '@fairfold/contracts';
+import {
+  applyItemMatching,
+  deriveStatus,
+  normaliseColour,
+  normaliseSize,
+} from '../../src/evidence/match.js';
 
 const input: AttestInput = {
-  orderId: 'o1', hypothesisId: null, step: 'pack',
-  items: [{ orderItemId: 'i1', name: 'Block-print cotton hoodie', sku: 'HD-IND-01', colour: 'navy', size: 'M', quantity: 1 }],
-  batchCodes: { i1: 'B17' }, photos: [{ sha256: 'a', label: 'item', mime: 'image/jpeg' }],
-  inspectionRule: null, expectedTrackingNumber: 'FF100000001',
+  orderId: 'o1',
+  hypothesisId: null,
+  step: 'pack',
+  items: [
+    {
+      orderItemId: 'i1',
+      name: 'Block-print cotton hoodie',
+      sku: 'HD-IND-01',
+      colour: 'navy',
+      size: 'M',
+      quantity: 1,
+    },
+  ],
+  batchCodes: { i1: 'B17' },
+  photos: [{ sha256: 'a', label: 'item', mime: 'image/jpeg' }],
+  inspectionRule: null,
+  expectedTrackingNumber: 'FF100000001',
 };
 
-function raw(over: Partial<AttestationResult> = {}, item: Partial<AttestationResult['items'][number]> = {}): AttestationResult {
+function raw(
+  over: Partial<AttestationResult> = {},
+  item: Partial<AttestationResult['items'][number]> = {},
+): AttestationResult {
   return {
-    items: [{ orderItemId: 'i1', seen: { itemType: 'hoodie', colour: 'navy', sizeLabel: 'M', quantity: 1 }, matches: false, confidence: 0.9, notes: '', ...item }],
-    batchLabelText: 'B17', shippingLabel: { visible: true, trackingNumberText: 'FF100000001' },
-    defects: [], inspection: null, couldNotVerify: [], confidence: 0.9, ...over,
+    items: [
+      {
+        orderItemId: 'i1',
+        seen: { itemType: 'hoodie', colour: 'navy', sizeLabel: 'M', quantity: 1 },
+        matches: false,
+        confidence: 0.9,
+        notes: '',
+        ...item,
+      },
+    ],
+    batchLabelText: 'B17',
+    shippingLabel: { visible: true, trackingNumberText: 'FF100000001' },
+    defects: [],
+    inspection: null,
+    couldNotVerify: [],
+    confidence: 0.9,
+    ...over,
   };
 }
 
@@ -54,7 +89,17 @@ describe('status rules (section 10)', () => {
   });
 
   it('ignores the model’s own matches flag and decides in code', () => {
-    expect(status(raw({}, { matches: true, seen: { itemType: 'hoodie', colour: 'ochre', sizeLabel: 'M', quantity: 1 } }))).toBe('mismatch');
+    expect(
+      status(
+        raw(
+          {},
+          {
+            matches: true,
+            seen: { itemType: 'hoodie', colour: 'ochre', sizeLabel: 'M', quantity: 1 },
+          },
+        ),
+      ),
+    ).toBe('mismatch');
   });
 
   it('item confidence 0.69 is not match', () => {
@@ -63,19 +108,34 @@ describe('status rules (section 10)', () => {
   });
 
   it('cosmetic defect still match', () => {
-    expect(status(raw({ defects: [{ component: 'hem', description: 'loose thread', severity: 'cosmetic' }] }))).toBe('match');
+    expect(
+      status(
+        raw({ defects: [{ component: 'hem', description: 'loose thread', severity: 'cosmetic' }] }),
+      ),
+    ).toBe('match');
   });
 
   it('functional defect is mismatch', () => {
-    expect(status(raw({ defects: [{ component: 'front', description: 'hole', severity: 'functional' }] }))).toBe('mismatch');
+    expect(
+      status(
+        raw({ defects: [{ component: 'front', description: 'hole', severity: 'functional' }] }),
+      ),
+    ).toBe('mismatch');
   });
 
   it('safety defect is mismatch', () => {
-    expect(status(raw({ defects: [{ component: 'zip', description: 'sharp edge', severity: 'safety' }] }))).toBe('mismatch');
+    expect(
+      status(
+        raw({ defects: [{ component: 'zip', description: 'sharp edge', severity: 'safety' }] }),
+      ),
+    ).toBe('mismatch');
   });
 
   it('unreadable size label is could_not_verify', () => {
-    const r = applyItemMatching(input, raw({}, { seen: { itemType: 'hoodie', colour: 'navy', sizeLabel: null, quantity: 1 } }));
+    const r = applyItemMatching(
+      input,
+      raw({}, { seen: { itemType: 'hoodie', colour: 'navy', sizeLabel: null, quantity: 1 } }),
+    );
     expect(r.couldNotVerify).toContain('sizeLabel:i1');
     expect(deriveStatus(r)).toBe('could_not_verify');
   });
@@ -90,16 +150,25 @@ describe('status rules (section 10)', () => {
   });
 
   it('wrong size is mismatch', () => {
-    expect(status(raw({}, { seen: { itemType: 'hoodie', colour: 'navy', sizeLabel: 'L', quantity: 1 } }))).toBe('mismatch');
+    expect(
+      status(
+        raw({}, { seen: { itemType: 'hoodie', colour: 'navy', sizeLabel: 'L', quantity: 1 } }),
+      ),
+    ).toBe('mismatch');
   });
 
   it('a definite mismatch outranks an unreadable field', () => {
-    const r = raw({ couldNotVerify: ['batch label'] }, { seen: { itemType: 'hoodie', colour: 'ochre', sizeLabel: 'M', quantity: 1 } });
+    const r = raw(
+      { couldNotVerify: ['batch label'] },
+      { seen: { itemType: 'hoodie', colour: 'ochre', sizeLabel: 'M', quantity: 1 } },
+    );
     expect(status(r)).toBe('mismatch');
   });
 
   it('an item the model reports as not visible (quantity 0) is mismatch', () => {
-    expect(status(raw({}, { seen: { itemType: 'none', colour: '', sizeLabel: null, quantity: 0 } }))).toBe('mismatch');
+    expect(
+      status(raw({}, { seen: { itemType: 'none', colour: '', sizeLabel: null, quantity: 0 } })),
+    ).toBe('mismatch');
   });
 
   it('an order item missing from the model output is could_not_verify', () => {
@@ -111,12 +180,25 @@ describe('status rules (section 10)', () => {
   });
 
   it('drops model items that are not on the order', () => {
-    const r = applyItemMatching(input, raw({ items: [...raw().items, { ...raw().items[0]!, orderItemId: 'ghost' }] }));
+    const r = applyItemMatching(
+      input,
+      raw({ items: [...raw().items, { ...raw().items[0]!, orderItemId: 'ghost' }] }),
+    );
     expect(r.items.map((i) => i.orderItemId)).toEqual(['i1']);
   });
 
   it('an order item without a colour or size on file is matched on what is known', () => {
-    const plain: AttestInput = { ...input, items: [{ ...input.items[0]!, colour: null, size: null }] };
-    expect(deriveStatus(applyItemMatching(plain, raw({}, { seen: { itemType: 'hoodie', colour: 'red', sizeLabel: null, quantity: 1 } })))).toBe('match');
+    const plain: AttestInput = {
+      ...input,
+      items: [{ ...input.items[0]!, colour: null, size: null }],
+    };
+    expect(
+      deriveStatus(
+        applyItemMatching(
+          plain,
+          raw({}, { seen: { itemType: 'hoodie', colour: 'red', sizeLabel: null, quantity: 1 } }),
+        ),
+      ),
+    ).toBe('match');
   });
 });

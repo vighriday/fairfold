@@ -6,8 +6,17 @@ import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
 type GarmentId = 'G1' | 'G2' | 'G3' | 'G4';
-interface Garment { sku: string; name: string; colour: string; size: string }
-interface PhotoSet { id: string; trackingNumber: string; shown: { garment: GarmentId; batchTag: string; defect: string | null } }
+interface Garment {
+  sku: string;
+  name: string;
+  colour: string;
+  size: string;
+}
+interface PhotoSet {
+  id: string;
+  trackingNumber: string;
+  shown: { garment: GarmentId; batchTag: string; defect: string | null };
+}
 interface Expected {
   garments: Record<GarmentId, Garment>;
   sets: PhotoSet[];
@@ -54,10 +63,11 @@ function table(): string {
 
 function hoodie(colour: string, defect: string | null): string {
   const f = fill(colour);
-  const hole = defect === 'hole_front'
-    ? `<path d="M470 470 l22 -14 l18 10 l6 22 l-14 18 l-26 2 l-14 -16 z" fill="#14100c"/>
+  const hole =
+    defect === 'hole_front'
+      ? `<path d="M470 470 l22 -14 l18 10 l6 22 l-14 18 l-26 2 l-14 -16 z" fill="#14100c"/>
        <path d="M468 470 l-10 -8 M492 456 l4 -12 M516 488 l12 2 M504 506 l6 12 M478 508 l-8 10" stroke="${f.print}" stroke-width="2"/>`
-    : '';
+      : '';
   return `<g stroke="${f.outline}" stroke-width="4" stroke-linejoin="round">
     <path d="M330 230 L200 300 L150 560 L230 580 L290 380 Z" fill="url(#print)"/>
     <path d="M694 230 L824 300 L874 560 L794 580 L734 380 Z" fill="url(#print)"/>
@@ -122,7 +132,8 @@ function barcode(trackingNumber: string): string {
     const code = ch.charCodeAt(0);
     for (let b = 0; b < 4; b += 1) {
       const w = ((code >> b) & 1) + 2;
-      if ((code + b) % 2 === 0) bars.push(`<rect x="${x}" y="470" width="${w}" height="70" fill="#111"/>`);
+      if ((code + b) % 2 === 0)
+        bars.push(`<rect x="${x}" y="470" width="${w}" height="70" fill="#111"/>`);
       x += w + 1;
     }
   }
@@ -148,7 +159,8 @@ function seamCloseup(colour: string): string {
   const f = fill(colour);
   const stitches = Array.from({ length: 30 }, (_, i) => i * 34)
     .filter((x) => x < 380 || x > 600)
-    .map((x) => `<rect x="${x}" y="372" width="20" height="6" rx="2" fill="#e9e4d4"/>`).join('');
+    .map((x) => `<rect x="${x}" y="372" width="20" height="6" rx="2" fill="#e9e4d4"/>`)
+    .join('');
   return `${fabricBackground(colour)}
     <path d="M0 330 L1024 330 L1024 420 L0 420 Z" fill="${f.base}" opacity="0.6"/>
     ${stitches}

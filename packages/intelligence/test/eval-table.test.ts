@@ -1,9 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { EVAL_ROWS, renderEvalTable } from '../eval/table.ts';
+import { EVAL_ROWS, renderEvalTable } from '../eval/table.js';
 
 describe('eval table', () => {
   it('has the six rows of section 10 in order', () => {
-    expect(EVAL_ROWS.map((r) => r.id)).toEqual(['photos', 'complaints', 'b17_seed', 'null_seed', 'disputes', 'buyers']);
+    expect(EVAL_ROWS.map((r) => r.id)).toEqual([
+      'photos',
+      'complaints',
+      'b17_seed',
+      'null_seed',
+      'disputes',
+      'buyers',
+    ]);
   });
 
   it('prints every row as not run when nothing has run', () => {

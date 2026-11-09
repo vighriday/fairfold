@@ -5,25 +5,26 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./handlers": "./src/handlers.ts"
+    "./handlers": "./src/handlers.ts",
+    "./runtime": "./src/runtime.ts"
   },
   "scripts": {
-    "test": "vitest run",
-    "typecheck": "tsc --noEmit",
     "eval": "tsx --env-file-if-exists=../../.env eval/run.ts",
-    "photos:synthetic": "tsx eval/synthetic-photos.ts"
-  },
-  "devDependencies": {
-    "@ai-sdk/provider": "^4.0.37",
-    "@types/node": "^26.6.6",
-    "ai": "^7.0.165",
-    "sharp": "^0.35.5",
-    "tsx": "^4.23.15",
-    "typescript": "^7.0.2",
-    "vitest": "^5.1.0"
+    "photos:synthetic": "tsx eval/synthetic-photos.ts",
+    "test:db": "tsx scripts/test-db.ts"
   },
   "dependencies": {
-    "@fairfold/ai": "link:../ai",
-    "zod": "^4.6.7"
+    "@fairfold/ai": "workspace:*",
+    "@fairfold/contracts": "workspace:*",
+    "@fairfold/db": "workspace:*",
+    "@fairfold/jobs": "workspace:*",
+    "@fairfold/ledger": "workspace:*",
+    "drizzle-orm": "0.45.4",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@ai-sdk/provider": "4.0.37",
+    "ai": "7.0.165",
+    "sharp": "0.35.5"
   }
 }

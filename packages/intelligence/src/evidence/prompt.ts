@@ -1,6 +1,6 @@
 // Prompt for the Evidence Agent (section 10). The model is told what was ordered so it can report against it,
 // but never the batch code or tracking number the packer entered — code compares those, so the model cannot echo them.
-import type { AttestInput } from '../contracts.ts';
+import type { AttestInput } from '@fairfold/contracts';
 
 const BASE_RULES = `You are the Evidence Agent for Fairfold, a neutral packing witness. You look at photos and describe only what is visible.
 Rules:
@@ -15,8 +15,10 @@ Rules:
 
 const STEP_NOTES: Record<AttestInput['step'], string> = {
   pack: 'These photos were taken by the merchant at the packing table before sealing the parcel.',
-  inspection: 'These are inspection photos of units from one production batch; there may be no order items.',
-  buyer_photo: 'These photos were taken by the buyer after delivery. No shipping label is expected (shippingLabel.visible is false unless one is shown).',
+  inspection:
+    'These are inspection photos of units from one production batch; there may be no order items.',
+  buyer_photo:
+    'These photos were taken by the buyer after delivery. No shipping label is expected (shippingLabel.visible is false unless one is shown).',
 };
 
 export function buildAttestPrompt(input: AttestInput): { system: string; user: string } {
@@ -27,10 +29,16 @@ export function buildAttestPrompt(input: AttestInput): { system: string; user: s
     : 'Set inspection to null.';
   const system = `${BASE_RULES}\n${STEP_NOTES[input.step]}\n${inspection}`;
 
-  const items = input.items.length === 0
-    ? 'Order items: none.'
-    : `Order items:\n${input.items.map((i) => `- orderItemId ${i.orderItemId}: ${i.name} (SKU ${i.sku}), ` +
-        `expected colour ${i.colour ?? 'not specified'}, expected size ${i.size ?? 'not specified'}, quantity ${i.quantity}`).join('\n')}`;
+  const items =
+    input.items.length === 0
+      ? 'Order items: none.'
+      : `Order items:\n${input.items
+          .map(
+            (i) =>
+              `- orderItemId ${i.orderItemId}: ${i.name} (SKU ${i.sku}), ` +
+              `expected colour ${i.colour ?? 'not specified'}, expected size ${i.size ?? 'not specified'}, quantity ${i.quantity}`,
+          )
+          .join('\n')}`;
   const photos = `Photos, in the order attached:\n${input.photos.map((p, n) => `${n + 1}. ${p.label}`).join('\n')}`;
   return { system, user: `${items}\n\n${photos}` };
 }

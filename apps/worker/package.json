@@ -1,0 +1,18 @@
+{
+  "name": "@fairfold/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@fairfold/contracts": "workspace:*",
+    "@fairfold/db": "workspace:*",
+    "@fairfold/jobs": "workspace:*",
+    "@fairfold/intelligence": "workspace:*",
+    "dotenv": "18.0.10",
+    "pino": "10.4.0"
+  }
+}

@@ -13,7 +13,9 @@ export function mockModel(answers: unknown[]) {
       const answer = answers[Math.min(i, answers.length - 1)];
       i += 1;
       return {
-        content: [{ type: 'text', text: typeof answer === 'string' ? answer : JSON.stringify(answer) }],
+        content: [
+          { type: 'text', text: typeof answer === 'string' ? answer : JSON.stringify(answer) },
+        ],
         finishReason: { unified: 'stop', raw: 'stop' },
         usage: {
           inputTokens: { total: 1, noCache: 1, cacheRead: undefined, cacheWrite: undefined },
@@ -27,7 +29,11 @@ export function mockModel(answers: unknown[]) {
 }
 
 /** The system prompt and the user message's text parts of a recorded call. */
-export function promptOf(call: LanguageModelV4CallOptions): { system: string; userText: string; fileCount: number } {
+export function promptOf(call: LanguageModelV4CallOptions): {
+  system: string;
+  userText: string;
+  fileCount: number;
+} {
   let system = '';
   let userText = '';
   let fileCount = 0;
