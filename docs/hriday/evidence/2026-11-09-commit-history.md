@@ -1,6 +1,6 @@
 # Local H1 commit history reconstruction
 
-The user requested incremental commits on 9 November 2026 IST. Only the local unpublished H1 commit `d1f3055` is replaced; research commit `b48f674` is preserved. No push, merge, deployment or further product implementation is part of this operation.
+The user requested incremental commits on 9 November 2026 IST. Only the local unpublished H1 commit `d1f3055` was replaced; research commit `b48f674` is preserved. No push, merge, deployment or further product implementation was part of the reconstruction itself. The user subsequently requested the branch publication recorded below.
 
 Each replacement snapshot is exported from the staged Git tree into an ignored isolated directory, then checked independently. The first three snapshots use frozen installs under normal supply-chain checks. Later code snapshots reuse those verified installed packages after checking every direct dependency against the frozen lockfile and linking each workspace dependency to that snapshot's own sources. This avoids repeated installation without resolving application imports from a later snapshot. Configuration/documentation-only increments verify that application sources are unchanged and check their own YAML, formatting and links. Database tests use only the existing loopback `fairfold_h1_test` database. Test counts are cumulative at each snapshot, not additional unique tests. The first tooling snapshot has no tests and records that explicitly. Reconstructed commit timestamps are current; the sequence does not claim to be the original engineering timeline.
 
@@ -16,4 +16,12 @@ Each replacement snapshot is exported from the staged Git tree into an ignored i
 | C8   | API/worker/Postgres deployment configuration; deployment remains pending                           | Application sources unchanged from validated C7; YAML/format checks PASS; no redundant application test rerun                                              |
 | C9   | Actual H1 evidence, architecture-grounded handoff/status and history reconstruction record         | Application sources unchanged from validated C7; YAML/format checks PASS; final file/privacy/ancestry/link audit PASS; no redundant application test rerun |
 
-The source history is retained in an ignored local Git bundle for recovery. Final verification compares every non-document application/configuration file to the original H1 tree, checks private-path exclusions, confirms the preserved research ancestor and leaves a clean `Hriday` checkout. Final tree comparison: **PASS**. All application/configuration files are identical to the original H1 tree. Private-path and credential-pattern checks passed; 30 local links resolve across 17 Markdown files; the replacement ancestry preserves the research commit. The branch installation and clean-checkout checks run after creating the final commit.
+The source history is retained in an ignored local Git bundle for recovery. Final verification compares every non-document application/configuration file to the original H1 tree, checks private-path exclusions, confirms the preserved research ancestor and leaves a clean `Hriday` checkout. Final tree comparison: **PASS**. All application/configuration files are identical to the original H1 tree. Private-path and credential-pattern checks passed; 30 local links resolve across 17 Markdown files; the replacement ancestry preserves the research commit. The branch installation and clean-checkout checks passed after creating the final commit.
+
+## Subsequent authorized publication
+
+On 9 November 2026 IST, the user requested pushing the branch. A read-only remote check showed no existing branches. All ten commits passed private-path and credential-pattern audits before publication.
+
+`git push --set-upstream origin refs/heads/Hriday:refs/heads/Hriday` succeeded and created the remote `Hriday` branch. A separate `git ls-remote --heads origin refs/heads/Hriday` returned `52f7c84d4a83423c3fcda8b3998a2bb01e7f0834`, matching the initial published local tip. No force push or main update was used.
+
+This publication record and the status/changelog updates form a separate documentation follow-up commit. The initial ten-commit implementation history and application files remain unchanged. Deployment and sandbox gates remain pending.

@@ -7,7 +7,7 @@ Updated 9 November 2026 IST. The research-first pass is complete. The user subse
 | Item                      | Observed state                                                                                                    |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | Working branch            | `Hriday`, created locally for this work                                                                           |
-| Remote                    | `https://github.com/vighriday/fairfold.git`; read-only remote check returned no refs on 9 November                |
+| Remote                    | `https://github.com/vighriday/fairfold.git`; local `Hriday` now tracks published `origin/Hriday`                  |
 | Initial local files       | Internal README and two DOCX source documents; no existing Git checkout/application                               |
 | Source audit              | Both documents fully read; six embedded diagrams inspected; originals unchanged                                   |
 | Private source protection | `docs/internal/` and `.work/` ignored; no originals included in deliverables                                      |
@@ -16,7 +16,7 @@ Updated 9 November 2026 IST. The research-first pass is complete. The user subse
 | Render/frontend access    | Render integration suggested but connection unconfirmed; no services purchased or Figma UI created                |
 | Application               | Local H1 API/worker, 25-table schema, contracts, jobs, ledger/blob storage and demo auth; intelligence stubs only |
 | Local API                 | http://localhost:3110/docs/ and /healthz verified over HTTP against real PostgreSQL 16                            |
-| Git publication           | Local branch only; no remote push, main merge or submission performed                                             |
+| Git publication           | Incremental history published to `origin/Hriday` on 9 November; no main merge or submission performed             |
 
 The local checkout was initialized for the requested branch; no remote history was overwritten. Sandboxed shell refresh failed after initialization, so read/verification commands used reviewed execution with a per-command safe-directory setting. No global Git trust or author configuration was changed.
 

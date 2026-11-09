@@ -2,9 +2,15 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-09 — Hriday branch publication
+
+- Published the ten reviewed incremental commits to `origin/Hriday` at the user's request and set the local branch to track it. The first published tip was `52f7c84d4a83423c3fcda8b3998a2bb01e7f0834`, verified with `git ls-remote`.
+- Audited every published commit for private paths and credential patterns before the normal push. Internal documents, local credentials and working artifacts remain excluded. No force push or main-branch update was used.
+- Added this focused documentation follow-up to record publication. Application files and the existing test results are unchanged; Render deployment and PayPal sandbox checks remain pending.
+
 ## 2026-11-09 — Incremental H1 history reconstruction
 
-At the user's request, the unpublished H1 commit `d1f3055` is being replaced by focused dependency-ordered commits. The original research commit `b48f674` remains intact. This is a reorganization of previously implemented work, not its original development timeline. Application files are preserved; the first Render deployment and real PayPal checks remain pending.
+At the user's request, the unpublished H1 commit `d1f3055` was replaced by focused dependency-ordered commits. The original research commit `b48f674` remains intact. This is a reorganization of previously implemented work, not its original development timeline. Application files are preserved; the first Render deployment and real PayPal checks remain pending.
 
 | Step | Scope                                                                                              | Snapshot validation                                                                                                                                        |
 | ---- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
