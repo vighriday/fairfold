@@ -103,3 +103,9 @@ Status: **DEFERRED BY USER; NOT RUN**. The user confirmed accounts do not curren
 - The worker imports a ready `handlers` map and the API registers the intel plugin without options, so `packages/intelligence/src/runtime.ts` builds the database and a lazily-started pg-boss publisher from `DATABASE_URL` on first use. Tests inject their own runtime.
 - For Hriday: `/healthz` still reports `intelligence: 'stub'` and the worker logs `intelligence: 'stub'`; both are Hriday's files.
 - Contract change: adds `intel.ts` only.
+
+### I-D6 — Buyer Signal sentence is stored inside `buyer_signals.features` — 2026-11-09
+- `BuyerSignal` (section 10) has a `sentence`, but `buyer_signals` (section 7) has no column for it. The stored `features` JSON carries `{ ...features, sentence }`, so endpoint 9 returns the same sentence without a second model call.
+- Endpoint 34 also returns `signalId`, because a buyer needs it to call endpoint 35 (contest). The field is additive.
+- A missing model configuration now degrades to each component's template fallback (logged as `model_not_configured`) instead of failing the job.
+- Contract change: none (additive response field).

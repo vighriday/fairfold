@@ -1,5 +1,8 @@
 import type { FastifyPluginAsync } from 'fastify';
+import buyerSignalRoutes from './buyerSignal.js';
 
-// H1 registration boundary. Ishaan owns this plugin after the initial handoff.
-const intelligenceRoutes: FastifyPluginAsync = async () => {};
+// Ishaan's endpoints (section 11). Each feature registers its own plugin here.
+const intelligenceRoutes: FastifyPluginAsync = async (app) => {
+  await app.register(buyerSignalRoutes);
+};
 export default intelligenceRoutes;

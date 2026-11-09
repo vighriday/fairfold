@@ -6,3 +6,14 @@ export { attestPackingPhotos } from './evidence/attest.js';
 export type { Attestation, AttestDeps } from './evidence/attest.js';
 export type { AttestationRow, EvidenceStore } from './evidence/handlers.js';
 export { dbEvidenceStore } from './evidence/store.js';
+export {
+  buyerOwnSignal,
+  computeBuyerSignal,
+  computeBuyerSignalWith,
+  contestSignal,
+  listContests,
+  orderSignalForMerchant,
+  resolveContest,
+} from './buyerSignal/index.js';
+export { RECOMMENDATIONS, scoreBuyer } from './buyerSignal/points.js';
+export type { BuyerFeatures } from './buyerSignal/points.js';
