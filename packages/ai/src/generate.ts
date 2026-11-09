@@ -27,7 +27,8 @@ export interface StructuredArgs<T> {
   model?: LanguageModelV4;
 }
 
-export interface StructuredResult<T> { value: T; usedFallback: boolean }
+/** `model` is the model id that produced `value`, or 'fallback' when the fallback ran. */
+export interface StructuredResult<T> { value: T; usedFallback: boolean; model: string }
 
 /**
  * The only way Fairfold asks a model for anything: schema-validated output, temperature 0,
@@ -62,12 +63,12 @@ export async function generateStructured<T>(args: StructuredArgs<T>): Promise<St
       });
       logAi({ ...base, ok: true, latencyMs: Date.now() - started,
         inputTokens: res.usage.inputTokens ?? null, outputTokens: res.usage.outputTokens ?? null });
-      return { value: res.object as T, usedFallback: false };
+      return { value: res.object as T, usedFallback: false, model: model.modelId };
     } catch (err) {
       logAi({ ...base, ok: false, latencyMs: Date.now() - started, error: err instanceof Error ? err.name : 'unknown' });
     } finally {
       clearTimeout(timer);
     }
   }
-  return { value: args.fallback(), usedFallback: true };
+  return { value: args.fallback(), usedFallback: true, model: 'fallback' };
 }

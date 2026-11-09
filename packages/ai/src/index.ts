@@ -6,3 +6,4 @@ export type { StructuredArgs, StructuredResult } from './generate.ts';
 export { embed } from './embed.ts';
 export { wrapUntrusted } from './untrusted.ts';
 export { hashInput, logAi } from './log.ts';
+export type { LanguageModelV4 as LanguageModel, EmbeddingModelV4 as EmbeddingModel } from '@ai-sdk/provider';
