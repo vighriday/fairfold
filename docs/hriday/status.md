@@ -24,33 +24,33 @@ The local checkout was initialized for the requested branch; no remote history w
 
 ## Work board
 
-| ID        | Work item                                | State                         | Exit evidence                                                                                         |
-| --------- | ---------------------------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------- |
-| P1        | Source and architecture audit            | COMPLETE                      | Source map, original digests, diagram inspection                                                      |
-| P2        | Primary-source PayPal/hackathon research | COMPLETE FOR DOCUMENTED FACTS | R01–R23 and explicit limitations                                                                      |
-| P3        | Hriday execution and handoff documents   | COMPLETE                      | H1–H8 plan, 42 endpoints, 16 jobs, ownership and environment inventory                                |
-| P4        | Planning-package verification            | COMPLETE                      | 14 Markdown files, 20 valid local links, source counts/digests and private-file checks; see CHANGELOG |
-| RUNTIME-0 | Pre-H1 sandbox dispute discovery         | DEFERRED BY USER; NOT RUN     | Accounts absent; real capture/dispute snapshot still required later                                   |
-| H1        | Foundation and first deploy, 6 h         | IN PROGRESS                   | Local implementation/checks pass; first Render deployment remains open                                |
-| H2        | PayPal client and checkout, 5 h          | IN PROGRESS; LOCAL ONLY       | H2.2 operation groups verified; Q3/persistence next; A4 and real `/dev` remain NOT RUN                |
-| H3        | Verified webhooks and poll, 3 h          | NOT STARTED                   | A5 and verified real capture event                                                                    |
-| H4        | Disputes and approved actions, 5 h       | NOT STARTED                   | Real evidence/offer checks and A12                                                                    |
-| H5        | Pack Station and action execution, 5 h   | NOT STARTED                   | A6/A7/A11                                                                                             |
-| H6        | Watchdog and scan simulation, 2 h        | NOT STARTED                   | One deduplicated four-day-gap alert                                                                   |
-| H7        | MCP and shopping agent, 5 h              | NOT STARTED                   | A13 and sanitized agent transcript                                                                    |
-| H8        | Seed, final deploy, README, 2 h          | NOT STARTED                   | Fresh-clone run and A1–A14 on Render                                                                  |
+| ID        | Work item                                | State                         | Exit evidence                                                                                                |
+| --------- | ---------------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| P1        | Source and architecture audit            | COMPLETE                      | Source map, original digests, diagram inspection                                                             |
+| P2        | Primary-source PayPal/hackathon research | COMPLETE FOR DOCUMENTED FACTS | R01–R23 and explicit limitations                                                                             |
+| P3        | Hriday execution and handoff documents   | COMPLETE                      | H1–H8 plan, 42 endpoints, 16 jobs, ownership and environment inventory                                       |
+| P4        | Planning-package verification            | COMPLETE                      | 14 Markdown files, 20 valid local links, source counts/digests and private-file checks; see CHANGELOG        |
+| RUNTIME-0 | Pre-H1 sandbox dispute discovery         | DEFERRED BY USER; NOT RUN     | Accounts absent; real capture/dispute snapshot still required later                                          |
+| H1        | Foundation and first deploy, 6 h         | IN PROGRESS                   | Local implementation/checks pass; first Render deployment remains open                                       |
+| H2        | PayPal client and checkout, 5 h          | IN PROGRESS; LOCAL ONLY       | H2.2 operation groups verified; capture policy approved; persistence next; A4 and real `/dev` remain NOT RUN |
+| H3        | Verified webhooks and poll, 3 h          | NOT STARTED                   | A5 and verified real capture event                                                                           |
+| H4        | Disputes and approved actions, 5 h       | NOT STARTED                   | Real evidence/offer checks and A12                                                                           |
+| H5        | Pack Station and action execution, 5 h   | NOT STARTED                   | A6/A7/A11                                                                                                    |
+| H6        | Watchdog and scan simulation, 2 h        | NOT STARTED                   | One deduplicated four-day-gap alert                                                                          |
+| H7        | MCP and shopping agent, 5 h              | NOT STARTED                   | A13 and sanitized agent transcript                                                                           |
+| H8        | Seed, final deploy, README, 2 h          | NOT STARTED                   | Fresh-clone run and A1–A14 on Render                                                                         |
 
 The 33-hour estimates are inherited from the architecture. They exclude the pre-H1 spike, joint reviews/checkpoints, frontend work and video/submission. H1 now has actual local engineering evidence; no revised remaining-hours estimate has been claimed.
 
 ## Immediate next action
 
-H2.1 transport and all H2.2 operation groups (orders/tracking, carriers, refund/reporting) are implemented and locally verified: 136 offline tests pass. The prior 17 PostgreSQL checks remain in [H2.1 evidence](evidence/2026-11-09-h2-transport.md); [Orders](evidence/2026-11-09-h2-orders.md), [tracking](evidence/2026-11-09-h2-tracking.md) and [refund/reporting](evidence/2026-11-09-h2-payments-reporting.md) evidence record exact scope. Next is H2.3's database-priced checkout and capture persistence, with Q3 review required before retaining payload-derived data. The package is not wired into API/worker runtime and does not claim the complete PayPalClient/ForMerchant, a real sandbox call, A4 or completed H1 hosting. H3 remains unstarted.
+H2.1 transport and all H2.2 operation groups (orders/tracking, carriers, refund/reporting) are implemented and locally verified: 136 offline tests pass. The prior 17 PostgreSQL checks remain in [H2.1 evidence](evidence/2026-11-09-h2-transport.md); [Orders](evidence/2026-11-09-h2-orders.md), [tracking](evidence/2026-11-09-h2-tracking.md) and [refund/reporting](evidence/2026-11-09-h2-payments-reporting.md) evidence record exact scope. Next is H2.3's database-priced checkout and capture persistence, under the capture policy now approved by Hriday. The package is not wired into API/worker runtime and does not claim the complete PayPalClient/ForMerchant, a real sandbox call, A4 or completed H1 hosting. H3 remains unstarted.
 
 The user reports deleting a stale Blueprint; quota recovery/synchronization is unverified. Their supplied screenshot independently shows payment information is required for the existing paid plans. Waiting cannot be assumed to remove that billing gate. The [conditional Ishaan handoff](ishaan-deployment-handoff.md) is prepared but not sent or assigned. Render is already installed; account-management tools and the browser helper remain unavailable here. No service or billing action has been taken by this work. Use the [deployment guide](render-deployment.md) once the intended workspace can apply it, then record actual health, Swagger and worker readiness before closing H1.
 
 The [sandbox spike](sandbox-spike.md) remains deferred. Resume it when accounts exist; H1's local tests do not satisfy any PayPal-dependent gate. Review Q1–Q13 with Ishaan before affected tasks; the Figma frontend remains outside H1.
 
-The concrete [Q3 capture persistence proposal](capture-persistence-review.md) is prepared for review. It specifies the retained fields and exact email/address normalization, including transient address_line_2 handling. No approval or Ishaan review is implied; capture persistence remains pending until that decision is recorded.
+Hriday approved the concrete [Q3 capture persistence policy](capture-persistence-review.md) on 9 November: “Use the proposed capture policy.” The retained fields and exact email/address normalization, including transient address_line_2 handling, are authorized. The mapper is implemented for local verification; the atomic transaction is next. Ishaan’s broader review has not been received and the other Q3 boundaries remain open.
 
 ## Original checkpoints and present risk
 

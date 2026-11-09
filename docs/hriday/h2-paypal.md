@@ -4,13 +4,13 @@ Sources: original architecture sections 3, 8 F1/F6, 11–12 and 16 H2. D1, D3–
 
 ## Increment order
 
-| Increment | Deliverable                                                                                                                        | Current gate                                                                                                           |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| H2.1      | Merchant credential lookup/decryption, per-merchant OAuth cache, sandbox-only HTTP transport, bounded retries and sanitized errors | IMPLEMENTED AND LOCALLY VERIFIED; no endpoint or full `ForMerchant` client claimed                                     |
-| H2.2      | Real Orders create/capture/get/tracking bindings, exact decimal-string totals, refund/reporting helpers and seed-carrier mapping   | IMPLEMENTED AND LOCALLY VERIFIED in three focused commits; real sandbox fixtures remain NOT RUN                        |
-| H2.3      | Database-priced checkout creation and capture persistence, exactly-once ledger/job behavior, order reads and auth/ownership        | Resolve Q3 before storing vendor payloads; establish durable retry/reconciliation behavior, never trust browser totals |
-| H2.4      | Numbered endpoints 2–4, 7–8, 30–31 and unstyled `/dev` using sandbox JS SDK v6 with client ID only                                 | Connect source contracts and existing intelligence stubs; no Figma replacement                                         |
-| H2.5      | Real sandbox A4, Maya purchase, sanitized recorded create/capture fixtures and deployment integration                              | Requires sandbox merchant/buyer accounts and H1 hosted verification; retain failures honestly                          |
+| Increment | Deliverable                                                                                                                        | Current gate                                                                                                       |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| H2.1      | Merchant credential lookup/decryption, per-merchant OAuth cache, sandbox-only HTTP transport, bounded retries and sanitized errors | IMPLEMENTED AND LOCALLY VERIFIED; no endpoint or full `ForMerchant` client claimed                                 |
+| H2.2      | Real Orders create/capture/get/tracking bindings, exact decimal-string totals, refund/reporting helpers and seed-carrier mapping   | IMPLEMENTED AND LOCALLY VERIFIED in three focused commits; real sandbox fixtures remain NOT RUN                    |
+| H2.3      | Database-priced checkout creation and capture persistence, exactly-once ledger/job behavior, order reads and auth/ownership        | Capture policy approved by Hriday; implement minimized persistence and durable retries, never trust browser totals |
+| H2.4      | Numbered endpoints 2–4, 7–8, 30–31 and unstyled `/dev` using sandbox JS SDK v6 with client ID only                                 | Connect source contracts and existing intelligence stubs; no Figma replacement                                     |
+| H2.5      | Real sandbox A4, Maya purchase, sanitized recorded create/capture fixtures and deployment integration                              | Requires sandbox merchant/buyer accounts and H1 hosted verification; retain failures honestly                      |
 
 Each implementation increment has its own task-prefixed commit, tests, typecheck, changelog and evidence. Preserve the source task order; H3 is not started by this exception. Packages owned by Ishaan are unchanged.
 
@@ -60,12 +60,10 @@ The source carrier map handles DHL, FedEx, UPS, India Post, Delhivery and Blue D
 
 All history rows remain transient unknown[] objects. This code does not persist fields=all payloads or send them to models. [Refund/reporting evidence](evidence/2026-11-09-h2-payments-reporting.md) records 136 offline passes. Actual response/pagination behavior remains unverified without sandbox accounts; helpers are not yet wired to API/worker routes. Dispute/webhook methods and complete ForMerchant composition remain outside this H2.2 operation increment.
 
-## Persistence review still needed
+## H2.3a Approved capture mapper
 
-Review the [concrete capture persistence proposal](capture-persistence-review.md) before H2.3 writes capture-derived data. It lists the existing-schema allowlist, exact proposed normalization, missing-data behavior and transient address_line_2 handling. Status remains PROPOSED; no shared contract or persistence policy has been approved by this document.
+Hriday approved the [capture persistence policy](capture-persistence-review.md) on 9 November 2026 IST: “Use the proposed capture policy.” The application mapper now returns only the approved IDs, amount, payer display name/hashed email, account/protection fields and country/postal/address hash. It includes address_line_2 transiently without changing CaptureResult.shipping. Invalid response identity/status/amount shapes fail with a safe error. Fourteen synthetic cases pass; see [mapper evidence](evidence/2026-11-09-h2-capture-policy.md).
 
-Q3 identifies a conflict between `CaptureResult.raw`/`disputes.raw`/webhook payloads and the original no-email/no-street-address persistence rule. Preserve raw webhook bytes transiently for signature verification. Keep the exact capture contract transient; do not persist its raw object or add real fixtures before joint review.
-
-Prepare the explicit allowlist and mappings at H2.3: required PayPal/Fairfold identifiers, status, seller protection, account status, monetary amounts and item metadata; email only as a SHA-256 hash, street address only as a hash plus country/postal code. Review normalization, retained vendor fields and diagnostic samples with Hriday/Ishaan before implementation. Do not silently rename or remove `raw` from the shared contract. Database writes and real fixture capture remain gated; H2.1 can be tested with clearly synthetic data.
+The mapper does not write data or expose a route. Next is the order-locked transaction with amount/ownership guards and atomic buyer/order/ledger/job persistence. Raw remains transient; real vendor fixtures remain unrecorded. Ishaan’s broader privacy review and Q3’s webhook/dispute/reporting/action-response allowlists remain open. Raw webhook bytes must remain unchanged until verification.
 
 Primary references checked on 9 November 2026: [OAuth authentication](https://developer.paypal.com/api/rest/authentication/), [API request headers and sandbox origin](https://developer.paypal.com/api/rest/requests/), [API responses](https://developer.paypal.com/api/rest/responses/), [idempotency limits](https://developer.paypal.com/api/rest/reference/idempotency/). Operation-specific specs must be checked before H2.2 bindings.

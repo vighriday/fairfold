@@ -1,10 +1,10 @@
-# Q3 capture persistence proposal
+# Q3 capture persistence policy
 
-Status: **PROPOSED; REVIEW REQUIRED**. Prepared on 9 November 2026 IST for H2.3. This document does not approve persistence or change a shared interface. It resolves the capture portion of Q3 only; webhook/dispute retention still needs its own field review before H3/H4.
+Status: **APPROVED BY HRIDAY** on 9 November 2026 IST for H2.3. Hriday explicitly replied “Use the proposed capture policy” to the linked allowlist and exact normalization proposal. This authorizes this capture boundary without changing a shared interface; Ishaan’s review has not been received. It resolves the capture portion of Q3 only; webhook/dispute retention still needs its own field review before H3/H4.
 
 The original architecture sections 8 F1 and 12 require capture identity/protection data, buyer email as SHA-256 only, and street address as a hash plus country/postal code. The existing CaptureResult exposes a transient raw response; the existing database has no orders.raw column. This proposal maps those requirements to the actual current schema and fixes the previously unspecified normalization before code writes data.
 
-## Proposed retained fields
+## Approved retained fields
 
 | Destination                       | Retain                                                                                                                                                                                                                      | Exclude                                                                           |
 | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
@@ -18,7 +18,7 @@ The original architecture sections 8 F1 and 12 require capture identity/protecti
 
 No migration or shared DTO rename is proposed. Buyer identity is still keyed by PayPal payer ID as specified. Merchant history queries remain scoped to that merchant; this does not authorize pooling buyer histories across stores.
 
-## Proposed normalization and hash rules
+## Approved normalization and hash rules
 
 1. Email: if absent/empty, retain null. Otherwise apply Unicode NFC, trim surrounding whitespace and lowercase, then SHA-256 of UTF-8 bytes as lowercase hex. Keep only the hash; PayPal payer ID remains the primary identity. Do not add HMAC/salts or another identity service to the fixed design.
 2. Address: transiently select exactly address_line_1, address_line_2, admin_area_2, admin_area_1, postal_code and country_code from the captured purchase unit's shipping address. CaptureResult.shipping omits address_line_2, so select it from the existing raw response in memory without changing the shared type.
@@ -26,7 +26,7 @@ No migration or shared DTO rename is proposed. Buyer identity is still keyed by 
 4. Compute SHA-256 over the existing canonical JSON function applied to the six-key normalized address object, using UTF-8. If both street address lines are absent, keep ship_to_hash null rather than treating country/postal alone as a known street. Persist only country, postal code and the hash; discard the normalized plaintext object.
 5. Missing payer name remains null; display_name is the source-authorized name, not a manufactured identity. Do not substitute a shipping recipient for the payer. Keep uncertain account/protection values unknown rather than turning absence into a negative signal.
 
-These rules are review choices, not claims that the original document specified case/whitespace normalization. They must be accepted before implementing the capture mapper/persistence tests. They do not establish equivalence between differently written real-world addresses.
+These rules are review choices, not claims that the original document specified case/whitespace normalization. Hriday accepted them before implementation of the capture mapper/persistence tests. They do not establish equivalence between differently written real-world addresses.
 
 ## Required capture transaction behavior
 
@@ -38,7 +38,7 @@ No raw vendor payload is written to JSON columns, ledger, queues, logs or fixtur
 
 ## Review and remaining boundaries
 
-Confirm the allowlist, email normalization and six-component address hash. Record who reviewed and the actual decision in DECISIONS.md; do not mark Q3 globally resolved from a capture-only decision. Ishaan's review of the shared privacy boundary remains part of the handoff. No message has been sent to him.
+Hriday approved the allowlist, email normalization and six-component address hash on 9 November 2026 IST. The decision is recorded in DECISIONS.md; Q3 is not globally resolved by this capture-only decision. Ishaan's review of the shared privacy boundary remains part of the handoff. No message has been sent to him.
 
 Raw webhook bytes still remain transient and unchanged until signature verification. H3's event payload allowlist, H4's disputes.raw allowlist and approved-action PayPal response retention will be reviewed against the actual required fields before those writes. Reporting fields=all rows remain transient until an explicit import mapping is reviewed. The current proposal does not approve any future blanket raw-payload storage.
 

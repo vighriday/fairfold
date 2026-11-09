@@ -7,3 +7,7 @@ Reviewed original architecture 8 F1/12 against the current buyers/orders/order_i
 Status: PROPOSED; review decision NOT RECEIVED. Capture persistence, real vendor fixtures and its concurrency/privacy acceptance checks remain NOT IMPLEMENTED / NOT RUN. Q3's future webhook/dispute/reporting/action-response field reviews remain open. No source, schema, shared contract, application runtime, PayPal account or Render resource was modified by this documentation increment, and no message was sent to Ishaan.
 
 The last implementation suite passed 136 offline tests with 17 database checks explicitly skipped; this documentation increment does not claim new application-test execution. Local links and staged privacy checks are performed before publication.
+
+## Subsequent decision
+
+Hriday subsequently replied “Use the proposed capture policy” on 9 November 2026 IST. The linked policy and DECISIONS.md now record that capture-only approval. The PROPOSED / NOT RECEIVED status above describes the earlier preparation commit, not the present decision. Ishaan has not reviewed it in this session; the other payload boundaries remain open. See [mapper evidence](2026-11-09-h2-capture-policy.md) for subsequent implementation.

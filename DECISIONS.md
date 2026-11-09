@@ -75,9 +75,9 @@ Transaction Search uses the source-prescribed maximum 31-day request window and 
 
 Q2–Q13 are focused review items. None authorizes a new architecture, payment rail, safety verdict, or change to the idea. Where external behavior blocks a specified path, record the failure and use only a jointly accepted documented fallback.
 
-### Q3 capture review prepared
+### Q3 capture policy approved by Hriday
 
-The [capture persistence proposal](docs/hriday/capture-persistence-review.md) maps the existing schema/contracts to an explicit allowlist and proposed email/address normalization. It keeps raw transient and includes address_line_2 in the in-memory hash input without changing CaptureResult.shipping. Status: PROPOSED; no approval or Ishaan review is implied. Capture database writes remain pending; webhook/dispute/action-response retained fields need separate review before their tasks. Record the actual reviewer/decision here after a response.
+The [capture persistence proposal](docs/hriday/capture-persistence-review.md) maps the existing schema/contracts to an explicit allowlist and proposed email/address normalization. It keeps raw transient and includes address_line_2 in the in-memory hash input without changing CaptureResult.shipping. Status: APPROVED BY HRIDAY on 9 November 2026 IST. Hriday replied “Use the proposed capture policy” to this concrete proposal. Implement the capture mapper and transaction under that allowlist; Ishaan’s review has not been received. Webhook/dispute/action-response retained fields still need separate review before their tasks; Q3 remains open for those boundaries.
 
 ## Sandbox spike result
 

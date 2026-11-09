@@ -2,6 +2,13 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-09 — H2.3 approved capture retention mapper
+
+- Recorded Hriday’s explicit approval of the concrete capture policy; Ishaan’s review and Q3’s other payload boundaries remain open.
+- Added an application-layer capture mapper using NFC/lowercase email hashing and canonical six-component address hashing, including transient address_line_2. Only the approved fields leave the mapper.
+- Added synthetic tests for normalization, excluded plaintext, unknown fields, response consistency and invalid amounts. Database writes, routes and real sandbox acceptance are separate increments.
+- Validation results are recorded in the H2.3 mapper evidence.
+
 ## 2026-11-09 — Q3 capture persistence review package
 
 - Prepared a concrete existing-schema allowlist and proposed email/address hash normalization before H2.3. It includes address_line_2 only as transient hash input and keeps the shared CaptureResult unchanged.
