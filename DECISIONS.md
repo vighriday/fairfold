@@ -82,3 +82,9 @@ The [capture persistence proposal](docs/hriday/capture-persistence-review.md) ma
 ## Sandbox spike result
 
 Status: **DEFERRED BY USER; NOT RUN**. The user confirmed accounts do not currently exist and authorized H1 around that dependency. No sandbox transaction, dispute, webhook, evidence upload or offer has been observed. Fill the result fields in `docs/hriday/sandbox-spike.md` after the real run. No guessed PayPal identifiers or success responses belong here.
+
+## O17 — Checkout create and local persistence failure boundary
+
+Original F1 creates the PayPal order before inserting its non-null PayPal ID into orders. Keeping that source order and schema means a crash/database failure after vendor creation can leave an unpaid PayPal order without a local row. The local creation service does not repeat the vendor operation after a local write failure; it rolls back order/items together and reports only the generated Fairfold order ID and returned PayPal order ID when available. No raw response or shipping/contact fields enter diagnostics.
+
+The source deterministic ff-create-<order uuid> ID still governs retries inside the existing vendor operation. This does not claim durable HTTP request deduplication across newly generated order UUIDs or storage recovery after a process crash. H3’s source-defined unknown-order import/reconciliation remains future work, not implemented by the creation service. No shared request change, placeholder PayPal ID, new table or alternate architecture is introduced. Test evidence covers item-insert rollback after synthetic vendor creation and confirms one invocation, without claiming an actual sandbox success.

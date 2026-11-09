@@ -22,6 +22,7 @@ const result = spawnSync(
     'jobs.integration.test.ts',
     'credentials.integration.test.ts',
     'capture-store.integration.test.ts',
+    'create-order.integration.test.ts',
   ],
   { stdio: 'inherit', env: { ...process.env, FAIRFOLD_RUN_DB_TESTS: 'true' } },
 );

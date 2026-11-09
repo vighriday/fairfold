@@ -2,6 +2,14 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-09 — H2.3 database-priced checkout creation
+
+- Added checkout creation using the unchanged request DTO and merchant-owned product records. Browser item prices/names/listing versions are ignored; duplicate SKU quantities combine with SQL-integer and exact decimal total bounds.
+- Sent the specified reference/custom/invoice and ff-create request IDs, then atomically stored the created order/items using the exact price/listing snapshot sent to PayPal. Shipping remains transient until the approved capture mapping.
+- Added guards for missing/simulated merchants, foreign/unavailable products, mixed currencies, invalid quantities and zero/overflow totals before vendor calls. Vendor or credential failures leave no local order.
+- Documented the existing vendor-create/local-write recovery gap: failed local persistence returns safe identifiers and never automatically replays creation. No new schema, shared contract or background recovery system was introduced.
+- All 61 PostgreSQL checks passed, including 19 new creation cases. Offline suite/typecheck/lint/format evidence is recorded with the increment. Routes, ownership reads, /dev and real PayPal/Render gates remain pending.
+
 ## 2026-11-09 — H2.3 atomic capture persistence
 
 - Added the application capture store using a merchant-scoped order row lock and one checked-out PostgreSQL connection for buyer/order writes, ledger savepoint and pg-boss enqueue. No schema or shared DTO changed.
