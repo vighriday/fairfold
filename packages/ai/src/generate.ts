@@ -1,7 +1,7 @@
 import { generateObject } from 'ai';
 import type { LanguageModelV4 } from '@ai-sdk/provider';
 import type { z } from 'zod';
-import { getModel } from './config.js';
+import { getModel, hasModelConfig } from './config.js';
 import { hashInput, logAi, sha256Hex } from './log.js';
 import { wrapUntrusted } from './untrusted.js';
 
@@ -41,7 +41,21 @@ export interface StructuredResult<T> {
 export async function generateStructured<T>(args: StructuredArgs<T>): Promise<StructuredResult<T>> {
   const untrusted = args.untrusted ?? [];
   const images = args.images ?? [];
-  const model = args.model ?? getModel(args.kind ?? (images.length > 0 ? 'vision' : 'text'));
+  const kind = args.kind ?? (images.length > 0 ? 'vision' : 'text');
+  if (!args.model && !hasModelConfig(kind)) {
+    // A missing provider, model id or key degrades to the component's fallback, never to a failed job.
+    logAi({
+      event: 'ai_call',
+      component: args.component,
+      model: 'none',
+      attempt: 0,
+      ok: false,
+      latencyMs: 0,
+      error: 'model_not_configured',
+    });
+    return { value: args.fallback(), usedFallback: true, model: 'fallback' };
+  }
+  const model = args.model ?? getModel(kind);
   const system = untrusted.length > 0 ? `${args.system}\n\n${UNTRUSTED_SYSTEM_RULE}` : args.system;
   const text =
     untrusted.length > 0

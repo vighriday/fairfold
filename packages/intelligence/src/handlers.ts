@@ -1,5 +1,6 @@
 // The intelligence job handlers Hriday's worker registers (section 8 jobs, section 15 contract).
 import type { HandlerMap } from '@fairfold/contracts';
+import { computeBuyerSignalWith } from './buyerSignal/index.js';
 import { createEvidenceHandlers } from './evidence/handlers.js';
 import { dbEvidenceStore } from './evidence/store.js';
 import { getIntelRuntime, type IntelRuntime } from './runtime.js';
@@ -13,6 +14,9 @@ export function createHandlers(runtime: () => IntelRuntime): HandlerMap {
   return {
     'pack.photos_uploaded': (payload) => evidence()['pack.photos_uploaded'](payload),
     'inspection.uploaded': (payload) => evidence()['inspection.uploaded'](payload),
+    'order.captured': async ({ orderId }) => {
+      await computeBuyerSignalWith(runtime(), orderId);
+    },
   };
 }
 

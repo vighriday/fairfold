@@ -18,6 +18,28 @@ afterEach(() => {
 });
 
 describe('generateStructured', () => {
+  it('uses the fallback and logs when no model is configured, instead of throwing', async () => {
+    const write = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    vi.stubEnv('AI_PROVIDER', '');
+    const out = await generateStructured({
+      schema,
+      system: 's',
+      user: 'u',
+      fallback,
+      component: 'test',
+    });
+    expect(out).toEqual({
+      value: { colour: 'unknown', confidence: 0 },
+      usedFallback: true,
+      model: 'fallback',
+    });
+    const logged = write.mock.calls
+      .map((c) => String(c[0]))
+      .find((l) => l.includes('model_not_configured'));
+    expect(logged).toBeDefined();
+    vi.unstubAllEnvs();
+  });
+
   it('returns parsed object at temperature 0', async () => {
     const { model, calls } = mockModel(['{"colour":"navy","confidence":0.9}']);
     const out = await generateStructured({
