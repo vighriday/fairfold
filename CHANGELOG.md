@@ -2,6 +2,12 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-09 — H2 repeatable creation test fixture
+
+- Fixed the listing-change integration test’s reused synthetic PayPal order ID. Its fixed value collided with a prior successful test row on the second suite run; application behavior was unchanged.
+- Derived the fixture ID from the test’s fresh server-owned UUID. All 19 creation cases passed twice consecutively against the same database; typecheck passed.
+- Recorded the observed failure and recovery in the repeatability evidence. This does not advance PayPal sandbox or deployment acceptance.
+
 ## 2026-11-09 — H2.3 database-priced checkout creation
 
 - Added checkout creation using the unchanged request DTO and merchant-owned product records. Browser item prices/names/listing versions are ignored; duplicate SKU quantities combine with SQL-integer and exact decimal total bounds.

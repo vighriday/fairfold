@@ -83,3 +83,5 @@ Do not retroactively mark CP0 done or move the other checkpoints without a team 
 ## What is needed from the team
 
 Neel/Maya sandbox accounts are confirmed absent. The remaining setup facts are the intended Render workspace/project and Figma frontend owner. No secrets need to be shared in chat. Ishaan should review the shared contracts and the H1 handoff; no outbound message has been sent.
+
+The creation test fixture’s repeatability issue was corrected during the next H2 verification pass; [two consecutive 19-case runs](evidence/2026-11-09-h2-test-repeatability.md) passed against the same isolated database. Application behavior and real sandbox status were unchanged by that test-only fix.

@@ -186,7 +186,7 @@ describe.skipIf(!integrationUrl)('database-priced checkout creation', () => {
         .set({ unit_value: '99.99', name: 'Updated name', listing_version: 'v-new' })
         .where(eq(products.id, f.product.id));
       return {
-        id: 'UPDATEDLISTINGORDER',
+        id: 'O' + f.orderId.replaceAll('-', '').toUpperCase(),
         status: 'APPROVED',
         approveUrl: 'https://www.sandbox.paypal.com/checkoutnow?token=SYNTHETIC',
       };
