@@ -30,7 +30,7 @@ describe.skipIf(!url)('H3 normal worker lifecycle with actual pg-boss', () => {
     );
     return { worker, log };
   }
-  it('starts once, consumes a real event job, preserves the H4 pending label and closes once', async () => {
+  it('starts once, consumes a real event job, wires H4 synchronization and closes once', async () => {
     const { worker, log } = runtime();
     const merchantId = randomUUID(),
       eventId = 'WH-' + randomUUID();
@@ -61,7 +61,7 @@ describe.skipIf(!url)('H3 normal worker lifecycle with actual pg-boss', () => {
           phase: 'H3',
           handlerCount: 2,
           intelligence: 'stub',
-          disputeSync: 'H4_PENDING',
+          disputeSync: 'configured',
         }),
         'Worker ready',
       );

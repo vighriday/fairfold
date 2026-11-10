@@ -4,6 +4,7 @@ import { createJobs } from '@fairfold/jobs';
 import { handlers as intelligenceHandlers } from '@fairfold/intelligence/handlers';
 import {
   createPayPalClientFactory,
+  createDisputeSynchronizer,
   databaseCredentials,
   createPayPalEventHandler,
   createDisputesPoller,
@@ -55,17 +56,25 @@ export function createWorkerRuntime(
     clock: options.clock,
     logger: { warn: (fields, message) => options.log.error({ ...fields }, message) },
   });
+  const syncDispute =
+    options.syncDispute ??
+    createDisputeSynchronizer({
+      database,
+      jobs,
+      forMerchant,
+      clock: options.clock,
+    });
   const event = createPayPalEventHandler({
     database,
     jobs,
     forMerchant,
     clock: options.clock,
-    syncDispute: options.syncDispute,
+    syncDispute,
   });
   const poll = createDisputesPoller({
     forMerchant,
     clock: options.clock,
-    syncDispute: options.syncDispute,
+    syncDispute,
     isRealMerchant: async (id) =>
       !!(await database.db.query.merchants.findFirst({
         columns: { id: true },
@@ -137,7 +146,7 @@ export function createWorkerRuntime(
               phase: 'H3',
               handlerCount: Object.keys(handlers).length,
               intelligence: 'stub',
-              disputeSync: options.syncDispute ? 'configured' : 'H4_PENDING',
+              disputeSync: 'configured',
               ...schedules,
             },
             'Worker ready',

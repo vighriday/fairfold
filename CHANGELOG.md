@@ -9,6 +9,12 @@ All authored work in this checkout is on `Hriday`. Entries distinguish documenta
 - Added the pure approved dispute retention boundary: nested vendor fields are allowlisted, timestamps/money/symbols are validated, buyer/seller/arbiter text is normalized and conservatively redacted, and durable message fingerprints support idempotent buyer-message emission.
 - All 27 H4 guard/policy cases and typecheck passed. No dispute persistence, execution workflow or vendor call was introduced; Hriday approved the concrete Q3/Q4 policy/mapping for the next local increments.
 
+## 2026-11-10 — H4 authoritative dispute synchronization
+
+- Added the merchant-scoped synchronizer shared by verified webhook and poll callbacks. It re-fetches authoritative dispute details, applies the approved retention boundary, maps seller transactions or exact merchant invoices, upserts the dispute, appends first-open/resolution ledger effects and publishes `dispute.synced` in the same PostgreSQL transaction.
+- Wired the worker to use this synchronizer by default while retaining injected synchronizers for tests. Existing event-handler/poller regression cases, typecheck and targeted lint passed.
+- Database synchronizer integration cases and real PayPal dispute delivery/action evidence remain NOT RUN; no vendor mutation or real fixture was created.
+
 ## 2026-11-10 — H3 worker runtime and acceptance closeout
 
 - Wired both H3 handlers into the normal worker while preserving intelligence ownership, adding safe minimal configuration, schedule refresh and guarded startup/shutdown. The Blueprint worker references the API's existing encryption key; plans/resources are unchanged.
