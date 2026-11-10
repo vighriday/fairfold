@@ -1,3 +1,4 @@
+import { APICallError } from 'ai';
 import { MockEmbeddingModelV4, MockLanguageModelV4 } from 'ai/test';
 import type { LanguageModelV4CallOptions, LanguageModelV4GenerateResult } from '@ai-sdk/provider';
 
@@ -41,6 +42,27 @@ export function hangingModel() {
       calls.push(options);
       return new Promise((_, reject) => {
         options.abortSignal?.addEventListener('abort', () => reject(new Error('aborted')));
+      });
+    },
+  });
+  return { model, calls };
+}
+
+/** A mock model whose provider refuses every call with an HTTP error (e.g. 429 quota exhausted). */
+export function refusingModel(statusCode: number) {
+  const calls: LanguageModelV4CallOptions[] = [];
+  const model = new MockLanguageModelV4({
+    provider: 'mock',
+    modelId: 'refusing-model',
+    doGenerate: async (options) => {
+      calls.push(options);
+      throw new APICallError({
+        message: 'quota exceeded',
+        url: 'https://example.invalid/generate',
+        requestBodyValues: {},
+        statusCode,
+        responseBody: '{"error":{"status":"RESOURCE_EXHAUSTED"}}',
+        isRetryable: statusCode === 429,
       });
     },
   });

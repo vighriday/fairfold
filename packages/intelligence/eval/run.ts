@@ -1,5 +1,6 @@
 // pnpm --filter intelligence eval — prints the section 10 eval table as Markdown for the README.
 // Each phase registers its eval here as it lands; rows without one print "not run".
+import { fileURLToPath } from 'node:url';
 import { runBuyerEval } from './buyers.js';
 import { complaintEvalConfigured, runComplaintEval } from './complaints.js';
 import { runDisputeEval } from './disputes.js';
@@ -8,6 +9,10 @@ import { runB17Eval, runNullEval } from './sharedCause.js';
 import { renderEvalTable, type EvalRowId } from './table.js';
 
 type EvalFn = () => Promise<string>;
+
+// Model answers are cached by input hash so a run cut short by free-tier quota resumes without paying twice
+// (packages/ai cache, DECISIONS.md I-D15). The cache lives in the ignored .work/ directory.
+process.env.AI_CACHE_DIR ||= fileURLToPath(new URL('../../../.work/ai-cache', import.meta.url));
 
 const NOT_CONFIGURED = 'not run (set AI_PROVIDER, AI_MODEL_VISION and the provider key)';
 

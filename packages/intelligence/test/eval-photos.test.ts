@@ -91,6 +91,15 @@ describe('runPhotoEval', () => {
     );
   });
 
+  it('reports not measured when any attestation fell back, instead of a score', async () => {
+    const { model } = mockModel(['not json']);
+    const out = await runPhotoEval({ model });
+    expect(out.fellBack).toBe(21);
+    expect(out.summary).toBe(
+      'not measured: 21 of 21 model calls fell back (quota or errors); re-run to fill them from the cache',
+    );
+  });
+
   it('is configured only when a provider and its key are set', () => {
     expect(photoEvalConfigured({})).toBe(false);
     expect(

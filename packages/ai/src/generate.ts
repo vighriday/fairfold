@@ -1,6 +1,13 @@
-import { generateObject } from 'ai';
+import {
+  APICallError,
+  generateObject,
+  JSONParseError,
+  NoObjectGeneratedError,
+  TypeValidationError,
+} from 'ai';
 import type { LanguageModelV4 } from '@ai-sdk/provider';
 import type { z } from 'zod';
+import { cacheDir, cacheKey, readCached, writeCached } from './cache.js';
 import { getModel, hasModelConfig } from './config.js';
 import { hashInput, logAi, sha256Hex } from './log.js';
 import { wrapUntrusted } from './untrusted.js';
@@ -11,6 +18,15 @@ export const UNTRUSTED_SYSTEM_RULE =
 
 export const MODEL_TIMEOUT_MS = 30_000;
 const MAX_ATTEMPTS = 2; // a schema failure retries once, then the fallback runs
+
+/** Only an answer that fails the schema is retried; timeouts and provider refusals (e.g. 429 quota) are not. */
+function isSchemaFailure(err: unknown): boolean {
+  return (
+    NoObjectGeneratedError.isInstance(err) ||
+    TypeValidationError.isInstance(err) ||
+    JSONParseError.isInstance(err)
+  );
+}
 
 export interface StructuredArgs<T> {
   schema: z.ZodType<T>;
@@ -67,6 +83,17 @@ export async function generateStructured<T>(args: StructuredArgs<T>): Promise<St
     ...untrusted,
     ...images.map((i) => sha256Hex(i.bytes)),
   ]);
+  const dir = cacheDir();
+  const key = dir
+    ? cacheKey({ provider: model.provider, modelId: model.modelId, inputHash, schema: args.schema })
+    : null;
+  if (dir && key) {
+    const cached = readCached(dir, key, args.schema);
+    if (cached !== null) {
+      logAi({ event: 'ai_cache_hit', component: args.component, model: model.modelId, inputHash });
+      return { value: cached, usedFallback: false, model: model.modelId };
+    }
+  }
   const content = [
     { type: 'text' as const, text },
     ...images.map((i) => ({ type: 'image' as const, image: i.bytes, mediaType: i.mime })),
@@ -101,6 +128,7 @@ export async function generateStructured<T>(args: StructuredArgs<T>): Promise<St
         inputTokens: res.usage.inputTokens ?? null,
         outputTokens: res.usage.outputTokens ?? null,
       });
+      if (dir && key) writeCached(dir, key, res.object);
       return { value: res.object as T, usedFallback: false, model: model.modelId };
     } catch (err) {
       logAi({
@@ -108,7 +136,9 @@ export async function generateStructured<T>(args: StructuredArgs<T>): Promise<St
         ok: false,
         latencyMs: Date.now() - started,
         error: err instanceof Error ? err.name : 'unknown',
+        ...(APICallError.isInstance(err) && err.statusCode ? { status: err.statusCode } : {}),
       });
+      if (!isSchemaFailure(err)) break;
     } finally {
       clearTimeout(timer);
     }

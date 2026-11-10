@@ -100,6 +100,7 @@ export async function runPhotoEval(opts: { model?: LanguageModel } = {}) {
   const loadPhoto = library.loadPhoto;
   let handled = 0;
   let batchRead = 0;
+  let fellBack = 0;
   for (const [setIndex, set] of expected.sets.entries()) {
     const input: AttestInput = {
       orderId: null,
@@ -127,10 +128,9 @@ export async function runPhotoEval(opts: { model?: LanguageModel } = {}) {
       inspectionRule: null,
       expectedTrackingNumber: null,
     };
-    const score = scorePhotoSet(
-      set,
-      await attestPackingPhotos(input, { loadPhoto, model: opts.model }),
-    );
+    const attestation = await attestPackingPhotos(input, { loadPhoto, model: opts.model });
+    if (attestation.model === 'fallback') fellBack += 1;
+    const score = scorePhotoSet(set, attestation);
     if (score.handled) handled += 1;
     if (score.batchRead) batchRead += 1;
   }
@@ -156,10 +156,14 @@ export async function runPhotoEval(opts: { model?: LanguageModel } = {}) {
     { loadPhoto, model: opts.model },
   );
   const inspectionDefectVisible = inspection.inspection?.defectVisible === true;
+  if (inspection.model === 'fallback') fellBack += 1;
 
   const total = expected.sets.length;
-  const summary =
-    `${handled} of ${total}; ${batchRead} of ${total} batch labels read; open stitch ${inspectionDefectVisible ? 'seen' : 'missed'}` +
-    (expected.synthetic ? ' (synthetic photos)' : '');
-  return { total, handled, batchRead, inspectionDefectVisible, summary };
+  const calls = total + 1;
+  // A fallback is not the model's answer: a run with any fallback is not a measurement (DECISIONS.md I-D15).
+  const summary = fellBack
+    ? `not measured: ${fellBack} of ${calls} model calls fell back (quota or errors); re-run to fill them from the cache`
+    : `${handled} of ${total}; ${batchRead} of ${total} batch labels read; open stitch ${inspectionDefectVisible ? 'seen' : 'missed'}` +
+      (expected.synthetic ? ' (synthetic photos)' : '');
+  return { total, handled, batchRead, inspectionDefectVisible, fellBack, summary };
 }

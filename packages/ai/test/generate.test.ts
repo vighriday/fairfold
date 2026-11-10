@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { generateStructured, UNTRUSTED_SYSTEM_RULE } from '../src/generate.js';
 import { wrapUntrusted } from '../src/untrusted.js';
-import { hangingModel, mockModel } from './helpers.js';
+import { hangingModel, mockModel, refusingModel } from './helpers.js';
 
 const schema = z.object({ colour: z.string(), confidence: z.number().min(0).max(1) });
 const fallback = () => ({ colour: 'unknown', confidence: 0 });
@@ -96,7 +96,7 @@ describe('generateStructured', () => {
     expect(calls).toHaveLength(2);
   });
 
-  it('times out each attempt after 30 seconds and falls back', async () => {
+  it('times out after 30 seconds and falls back without a retry (only schema failures retry)', async () => {
     vi.useFakeTimers();
     const { model, calls } = hangingModel();
     const pending = generateStructured({
@@ -110,10 +110,26 @@ describe('generateStructured', () => {
     await vi.advanceTimersByTimeAsync(29_999);
     expect(calls).toHaveLength(1);
     await vi.advanceTimersByTimeAsync(1);
-    await vi.advanceTimersByTimeAsync(30_000);
     const out = await pending;
     expect(out.usedFallback).toBe(true);
-    expect(calls).toHaveLength(2);
+    expect(calls).toHaveLength(1);
+  });
+
+  it('does not retry a provider refusal such as a 429 quota error, and logs its status', async () => {
+    const write = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    const { model, calls } = refusingModel(429);
+    const out = await generateStructured({
+      schema,
+      system: 's',
+      user: 'u',
+      fallback,
+      model,
+      component: 'test',
+    });
+    expect(out.usedFallback).toBe(true);
+    expect(calls).toHaveLength(1);
+    const line = write.mock.calls.map((c) => String(c[0])).find((l) => l.includes('"ok":false'));
+    expect(JSON.parse(line!)).toMatchObject({ error: 'AI_APICallError', status: 429 });
   });
 
   it('wraps untrusted text and passes no tools', async () => {
