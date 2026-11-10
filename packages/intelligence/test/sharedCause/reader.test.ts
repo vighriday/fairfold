@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { cosine, assignClusters } from '../../src/sharedCause/grouping.js';
-import { draftMessage, templateMessage } from '../../src/sharedCause/drafter.js';
+import { draftTemplate, fillTemplate, templateMessage } from '../../src/sharedCause/drafter.js';
 import {
   embeddingText,
   extractComplaint,
@@ -103,8 +103,9 @@ describe('itemForComplaint', () => {
   });
 });
 
-describe('draftMessage', () => {
+describe('Message Drafter templates', () => {
   const order = { orderRef: 'FF-1234', productName: 'Block-print cotton hoodie' };
+  const other = { orderRef: 'FF-5678', productName: 'Hand-block T-shirt' };
   it('suspected and confirmed templates differ in tone', () => {
     const suspected = templateMessage(order, 'a possible seam fault', 'suspected');
     const confirmed = templateMessage(
@@ -116,37 +117,65 @@ describe('draftMessage', () => {
     expect(confirmed.body).toMatch(/we found a stitching fault in one production batch/i);
     expect(confirmed.body).toContain('FF-1234');
   });
-  it('uses the model draft when it is clean', async () => {
+  it("one model call writes a template that code fills with each buyer's own order", async () => {
     const { model, calls } = mockModel([
-      { subject: 'About your hoodie', body: 'We are checking a possible seam issue.' },
+      {
+        subject: 'About your {product}',
+        body: 'We are checking a possible seam issue. If order {order} shows it, reply here.',
+      },
     ]);
-    const out = await draftMessage(
-      order,
-      'a possible seam fault',
-      'suspected',
-      { otherBuyerNames: ['Maya K.'] },
-      model,
-    );
-    expect(out).toEqual({
-      subject: 'About your hoodie',
-      body: 'We are checking a possible seam issue.',
-      usedTemplate: false,
+    const t = await draftTemplate('possibly a seam fault', 'suspected', { buyerNames: [] }, model);
+    expect(calls).toHaveLength(1);
+    expect(t.usedTemplate).toBe(false);
+    expect(fillTemplate(t, order)).toEqual({
+      subject: 'About your Block-print cotton hoodie',
+      body: 'We are checking a possible seam issue. If order FF-1234 shows it, reply here.',
     });
-    expect(JSON.stringify(calls[0]!.prompt)).not.toContain('Maya');
+    expect(fillTemplate(t, other).body).toContain('FF-5678');
+    expect(fillTemplate(t, other).body).not.toContain('FF-1234');
   });
-  it("draft never contains other buyers' names", async () => {
+  it('the prompt carries no buyer name and no order reference', async () => {
+    const { model, calls } = mockModel([{ subject: 'Hoodie', body: 'Order {order}: checking.' }]);
+    await draftTemplate('possibly a seam fault', 'suspected', { buyerNames: ['Maya K.'] }, model);
+    const prompt = JSON.stringify(calls[0]!.prompt);
+    expect(prompt).not.toContain('Maya');
+    expect(prompt).not.toContain('FF-');
+    expect(prompt).toContain('possibly a seam fault');
+  });
+  it('a draft without {order} falls back to the fixed template', async () => {
+    const { model } = mockModel([{ subject: 'Hoodie', body: 'We are checking a seam issue.' }]);
+    const t = await draftTemplate('possibly a seam fault', 'suspected', { buyerNames: [] }, model);
+    expect(t.usedTemplate).toBe(true);
+    expect(fillTemplate(t, order)).toEqual({
+      subject: templateMessage(order, 'possibly a seam fault', 'suspected').subject,
+      body: templateMessage(order, 'possibly a seam fault', 'suspected').body,
+    });
+  });
+  it('a draft with any other placeholder falls back to the fixed template', async () => {
+    const { model } = mockModel([{ subject: 'Hi {name}', body: 'Order {order}: checking.' }]);
+    const t = await draftTemplate('possibly a seam fault', 'suspected', { buyerNames: [] }, model);
+    expect(t.usedTemplate).toBe(true);
+  });
+  it('a draft naming any buyer falls back to the fixed template', async () => {
     const { model } = mockModel([
-      { subject: 'Hoodie', body: 'Like Maya K. reported, the seam may open.' },
+      { subject: 'Hoodie', body: 'Like Maya reported, order {order} may be affected.' },
     ]);
-    const out = await draftMessage(
-      order,
-      'a possible seam fault',
-      'suspected',
-      { otherBuyerNames: ['Maya K.'] },
+    const t = await draftTemplate(
+      'possibly a seam fault',
+      'confirmed',
+      { buyerNames: ['Maya K.'] },
       model,
     );
-    expect(out.usedTemplate).toBe(true);
-    expect(out.body).not.toContain('Maya');
+    expect(t.usedTemplate).toBe(true);
+    expect(fillTemplate(t, order).body).not.toContain('Maya');
+    expect(fillTemplate(t, order).body).toMatch(/we found possibly a seam fault/i);
+  });
+  it('a filled template longer than the message limits falls back to the fixed template', async () => {
+    const { model } = mockModel([
+      { subject: 'Hoodie', body: `Order {order}. ${'x'.repeat(1190)}` },
+    ]);
+    const t = await draftTemplate('possibly a seam fault', 'suspected', { buyerNames: [] }, model);
+    expect(t.usedTemplate).toBe(true);
   });
 });
 

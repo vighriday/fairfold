@@ -18,7 +18,7 @@ import {
   order_items,
 } from '@fairfold/db';
 import { getIntelRuntime, type IntelRuntime } from '../runtime.js';
-import { draftMessage, type MessageLevel } from './drafter.js';
+import { draftTemplate, fillTemplate, type MessageLevel, type MessageTemplate } from './drafter.js';
 import { buyerWording } from './wording.js';
 
 type MessageRow = typeof messages.$inferSelect;
@@ -41,6 +41,8 @@ export function toMessage(row: MessageRow): Message {
 interface SendPayload {
   messageIds: string[];
   level?: MessageLevel;
+  /** The template every draft at this level is filled from, so a re-run spends no model call. */
+  template?: MessageTemplate;
 }
 
 /** The cluster's first readable extraction: the fault the buyer wording describes. */
@@ -59,8 +61,10 @@ async function clusterFault(rt: IntelRuntime, clusterId: string) {
 
 /**
  * Drafts one in-app message per buyer for the hypothesis's in-transit and delivered-without-complaint orders, at
- * `level`, under a proposed send_buyer_messages action ({ messageIds, level }). Buyers who already have a message
- * at this level for this hypothesis are skipped, so re-running adds only new buyers. Safety-flagged: no drafts.
+ * `level`, under a proposed send_buyer_messages action ({ messageIds, level, template }). Buyers who already have a
+ * message at this level for this hypothesis are skipped, so re-running adds only new buyers. Template-first: the
+ * Message Drafter is called at most once per hypothesis and level; its template is kept in the action payload and
+ * each buyer's message is that template filled with their own order. Safety-flagged: no drafts.
  */
 export async function draftBuyerMessagesWith(
   rt: IntelRuntime,
@@ -115,19 +119,19 @@ export async function draftBuyerMessagesWith(
     if (r.buyerId && !messaged.has(r.buyerId) && !targets.has(r.buyerId)) targets.set(r.buyerId, r);
   if (!targets.size) return [];
 
-  const fault = await clusterFault(rt, h.cluster_id);
-  const wording = buyerWording(level, DimensionSchema.parse(h.dimension), fault);
-  const drafts: Array<{ target: (typeof rows)[number]; subject: string; body: string }> = [];
-  for (const target of targets.values()) {
-    const draft = await draftMessage(
-      { orderRef: target.invoiceId, productName: target.productName },
-      wording,
-      level,
-      { otherBuyerNames: names.filter((n) => n !== target.displayName) },
-      rt.models.text,
-    );
-    drafts.push({ target, subject: draft.subject, body: draft.body });
+  const stored = sendActions
+    .map((a) => (a.payload as SendPayload).template)
+    .find((t): t is MessageTemplate => t !== undefined);
+  let template = stored;
+  if (!template) {
+    const fault = await clusterFault(rt, h.cluster_id);
+    const wording = buyerWording(level, DimensionSchema.parse(h.dimension), fault);
+    template = await draftTemplate(wording, level, { buyerNames: names }, rt.models.text);
   }
+  const drafts = [...targets.values()].map((target) => ({
+    target,
+    ...fillTemplate(template, { orderRef: target.invoiceId, productName: target.productName }),
+  }));
 
   const now = rt.clock.now();
   return rt.db.transaction(async (tx) => {
@@ -138,7 +142,7 @@ export async function draftBuyerMessagesWith(
         .values({
           hypothesis_id: h.id,
           type: 'send_buyer_messages',
-          payload: { messageIds: [], level } satisfies SendPayload,
+          payload: { messageIds: [], level, template } satisfies SendPayload,
           created_at: now,
         })
         .returning();
@@ -166,6 +170,7 @@ export async function draftBuyerMessagesWith(
         payload: {
           messageIds: [...payload.messageIds, ...inserted.map((m) => m.id)],
           level,
+          template: payload.template ?? template,
         } satisfies SendPayload,
       })
       .where(eq(actions.id, action!.id));

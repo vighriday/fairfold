@@ -10,6 +10,7 @@ import {
   orders,
 } from '@fairfold/db';
 import { setIntelRuntime } from '../../src/runtime.js';
+import { draftBuyerMessagesWith } from '../../src/sharedCause/actions.js';
 import { confirmHypothesis, dismissHypothesis } from '../../src/sharedCause/confirm.js';
 import { runSharedCauseScanWith } from '../../src/sharedCause/scan.js';
 import { hypothesisTrend, weekStart } from '../../src/sharedCause/trend.js';
@@ -17,6 +18,7 @@ import { hypothesisDetail, listHypotheses } from '../../src/sharedCause/views.js
 import {
   dbUrl,
   insertBatch,
+  insertBuyer,
   insertDispute,
   insertMerchant,
   insertOrder,
@@ -25,6 +27,7 @@ import {
   testRuntime,
 } from './harness.js';
 import { buildWorld } from './sharedCauseWorld.js';
+import { mockModel } from '../helpers/mockModel.js';
 
 const NOW = new Date('2026-11-09T12:00:00.000Z');
 
@@ -232,6 +235,68 @@ describe.skipIf(!dbUrl)('shared cause views, confirm, dismiss and trend against 
           .where(and(eq(actions.hypothesis_id, h.id), eq(actions.status, 'proposed')))
       ).map((a) => a.type),
     ).toEqual(['release_orders']);
+  });
+
+  it('buyer messages: one Message Drafter call per hypothesis and level, filled per buyer', async () => {
+    const w = await buildWorld(database.db, NOW);
+    const { model, calls } = mockModel([
+      {
+        subject: 'Your {product}',
+        body: 'We are checking a possible seam issue. If order {order} shows it, reply here.',
+      },
+    ]);
+    const { runtime } = testRuntime(database.db, {
+      clock: fixedClock(NOW),
+      models: { text: model },
+    });
+    const [h] = await runSharedCauseScanWith(runtime, w.merchant.id);
+    const drafted = await database.db.select().from(messages);
+    expect(drafted.length).toBeGreaterThan(1);
+    expect(calls).toHaveLength(1);
+    const orderRefs = await database.db
+      .select({ id: orders.id, invoice: orders.invoice_id })
+      .from(orders)
+      .where(
+        inArray(
+          orders.id,
+          drafted.map((m) => m.order_id!),
+        ),
+      );
+    const refOf = new Map(orderRefs.map((o) => [o.id, o.invoice]));
+    for (const m of drafted) {
+      expect(m.subject).toBe('Your Block-print cotton hoodie');
+      expect(m.body).toBe(
+        `We are checking a possible seam issue. If order ${refOf.get(m.order_id!)} shows it, reply here.`,
+      );
+    }
+
+    // a new affected buyer on a re-run reuses the stored template: no model call
+    const buyer = await insertBuyer(database.db, { display_name: 'Ravi P.' });
+    const { order } = await insertOrder(database.db, {
+      merchantId: w.merchant.id,
+      buyerId: buyer.id,
+      product: w.hoodie,
+      status: 'shipped',
+      batchCode: 'B17',
+      shippedAt: new Date('2026-11-07T00:00:00Z'),
+    });
+    const [row] = await database.db.select().from(hypotheses).where(eq(hypotheses.id, h!.id));
+    const affected = row!.affected as { inTransit: string[] };
+    await database.db
+      .update(hypotheses)
+      .set({ affected: { ...affected, inTransit: [...affected.inTransit, order.id] } })
+      .where(eq(hypotheses.id, h!.id));
+    const added = await draftBuyerMessagesWith(runtime, h!.id, 'suspected');
+    expect(added).toHaveLength(1);
+    expect(added[0]!.body).toBe(
+      `We are checking a possible seam issue. If order ${order.invoice_id} shows it, reply here.`,
+    );
+    expect(calls).toHaveLength(1);
+
+    // the confirmed level is a second template: one more call, however many buyers
+    await inspect(h!.id, [true]);
+    await confirmHypothesis(runtime, w.merchant.id, h!.id);
+    expect(calls).toHaveLength(2);
   });
 
   it('trend: weekly exposure-based rates for B17 and the later batch of the same product', async () => {

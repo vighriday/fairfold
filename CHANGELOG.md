@@ -2,6 +2,10 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-10 — Ishaan: intelligence Phase 2 robustness for the free model tier (`ishaan` branch)
+
+- I6: buyer messages are drafted template-first. The Message Drafter now makes at most one model call per hypothesis and level, writing a template with `{order}` and `{product}` placeholders that code fills with each buyer's own order; before, it made one call per buyer (38 for the seeded B17 hypothesis, about two days of Gemini's free text quota). The template is stored in the `send_buyer_messages` payload, so a re-scan that adds buyers costs no call; an unusable draft (no `{order}`, another placeholder, too long, or a buyer's name) falls back to the fixed template. Six new unit tests and one PostgreSQL test; DECISIONS.md I-D10 (amended).
+
 ## 2026-11-10 — Ishaan: intelligence Phase 1 fixes (`ishaan` branch)
 
 - I3: one Buyer Signal per order, computed at capture (section 10). `computeBuyerSignal(orderId)` now returns the stored signal when one exists, so Hriday's order-detail read no longer writes a row and spends a model call on every page view, and a redelivered `order.captured` job stores nothing new. Concurrent first calls are serialised per order with a transaction-scoped advisory lock (no schema change). Three new PostgreSQL tests; 233 intelligence tests, 238 offline tests, typecheck and lint pass. DECISIONS.md I-D17.
