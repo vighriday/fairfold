@@ -373,7 +373,14 @@ describe.skipIf(!dbUrl)('shared cause scan against Postgres', () => {
     expect(read!.embedding).toHaveLength(256);
     expect(jobs.debounced).toHaveLength(1);
 
+    // the sweep queues the merchant's scan; the scan job runs it
     await handlers['sharedcause.sweep']!({});
+    expect(jobs.published).toContainEqual({
+      name: 'sharedcause.scan',
+      payload: { merchantId: w.merchant.id },
+    });
+    expect(await database.db.select().from(hypotheses)).toEqual([]);
+    await handlers['sharedcause.scan']!({ merchantId: w.merchant.id });
     const [h] = await database.db.select().from(hypotheses);
     expect(h).toMatchObject({ dimension: 'batch_code', value: 'B17' });
     const [still] = await database.db.select().from(complaints).where(eq(complaints.id, id));

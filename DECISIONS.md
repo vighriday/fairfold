@@ -273,3 +273,11 @@ Status: **DEFERRED BY USER; NOT RUN**. The user confirmed accounts do not curren
 - Not in a transaction: the debounced `sharedcause.scan` after a complaint is read, because Hriday's `publishDebounced` has no transaction option. A lost one is covered by the nightly sweep's scan.
 - The nightly `sharedcause.sweep` first re-sends `complaint.created` for every complaint still unread more than an hour after it was stored (`UNREAD_GRACE_HOURS`), so a job that is merely still queued is not doubled.
 - Contract change: additive optional parameter on the intelligence-internal `Publisher`; new export `jobsPublisher`.
+
+### I-D33 — Concurrency: one scan per merchant, queued sweep scans, atomic upsert, conditional Confirm/Dismiss/resolve — 2026-11-10
+- Scan lock. A debounced `sharedcause.scan`, the sweep's scan and a direct `runSharedCauseScan` can overlap; two scans reading the same unassigned complaints each created clusters and a hypothesis (two B17 hypotheses in the new test). `runSharedCauseScan` now holds a session-level advisory lock per merchant (`pg_advisory_lock(hashtextextended('fairfold:scan:<merchant>'))`) on a dedicated pool connection for the whole scan; the scan's own transactions stay short. A second scan waits, then finds the first one's work and changes nothing.
+- The hypothesis update in the scan sets the status from the row's current value (`case when status = 'superseded' then 'open' else status end`) instead of the value read earlier, so a Confirm or Dismiss committed during a scan is never undone.
+- The nightly `sharedcause.sweep` queues one `sharedcause.scan` job per merchant with read complaints instead of running every scan inside the sweep job.
+- `upsertComplaint` is one `insert … on conflict (source, source_ref) do update` that appends the text; concurrent syncs of one dispute store one row with every text, and exactly one call reports `isNew` (Postgres `xmax = 0`). It used to select then insert, so concurrent calls failed on the unique key.
+- Confirm (`status = 'open'`), Dismiss (`status in ('open','confirmed')`) and contest resolution (`status = 'open'`) are conditional updates checked inside their transaction; the losing request of a double click gets 409 (`HYPOTHESIS_NOT_OPEN`, `CONTEST_RESOLVED`) and inserts no second `propose_offers`, `release_orders` or drafts.
+- Contract change: none.

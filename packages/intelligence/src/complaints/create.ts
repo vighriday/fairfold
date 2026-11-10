@@ -1,6 +1,6 @@
 // One complaint row per (source, source_ref) (section 7). Buyer reports, low reviews and disputes all land
 // here; the complaint.created job then extracts, embeds and schedules a shared-cause scan (task I6).
-import { and, eq, sql } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { complaints, order_items } from '@fairfold/db';
 import type { DatabaseExecutor } from '@fairfold/ledger';
 import type { IntelRuntime } from '../runtime.js';
@@ -25,23 +25,16 @@ async function singleItem(db: DatabaseExecutor, orderId: string | null) {
   return items.length === 1 ? items[0]! : null;
 }
 
-/** Inserts the complaint, or appends text to the existing one for the same source and ref. Returns its id and whether it is new. */
+/**
+ * Inserts the complaint, or appends text to the existing one for the same source and ref, in one statement
+ * (insert … on conflict do update), so concurrent calls for one dispute store one row with every text. Returns its
+ * id and whether this call created it.
+ */
 export async function upsertComplaint(
   rt: IntelRuntime,
   c: NewComplaint,
   db: DatabaseExecutor = rt.db,
 ): Promise<{ id: string; isNew: boolean }> {
-  const [existing] = await db
-    .select({ id: complaints.id })
-    .from(complaints)
-    .where(and(eq(complaints.source, c.source), eq(complaints.source_ref, c.sourceRef)));
-  if (existing) {
-    await db
-      .update(complaints)
-      .set({ text: sql`${complaints.text} || ${'\n\n' + c.text}` })
-      .where(eq(complaints.id, existing.id));
-    return { id: existing.id, isNew: false };
-  }
   const item = await singleItem(db, c.orderId);
   const [row] = await db
     .insert(complaints)
@@ -57,6 +50,10 @@ export async function upsertComplaint(
       image_shas: c.imageShas ?? [],
       created_at: rt.clock.now(),
     })
-    .returning({ id: complaints.id });
-  return { id: row!.id, isNew: true };
+    .onConflictDoUpdate({
+      target: [complaints.source, complaints.source_ref],
+      set: { text: sql`${complaints.text} || ${'\n\n'} || excluded.text` },
+    })
+    .returning({ id: complaints.id, isNew: sql<boolean>`(xmax = 0)` });
+  return { id: row!.id, isNew: row!.isNew };
 }

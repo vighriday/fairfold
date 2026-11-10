@@ -2,7 +2,7 @@
 // code embeds, groups, tests, picks the affected orders and proposes actions. Nothing here executes an action:
 // every hold, rule and message is a proposal the merchant approves and Hriday's module carries out.
 import { randomUUID } from 'node:crypto';
-import { and, asc, eq, gt, inArray, isNotNull, isNull, lt, ne } from 'drizzle-orm';
+import { and, asc, eq, gt, inArray, isNotNull, isNull, lt, ne, sql } from 'drizzle-orm';
 import { embed, getModel, hasModelConfig, logAi } from '@fairfold/ai';
 import {
   AffectedOrdersSchema,
@@ -348,10 +348,43 @@ async function alreadyHeld(tx: DatabaseExecutor, hypothesisId: string): Promise<
  * (cluster_id, dimension, value) with a replaced primary superseded, proposals for open hypotheses, alerts,
  * and a pack rebuild for disputes that now sit in a cluster with a live hypothesis. Re-running is idempotent.
  */
-export async function runSharedCauseScanWith(
+export function runSharedCauseScanWith(
   rt: IntelRuntime,
   merchantId: string,
 ): Promise<Hypothesis[]> {
+  return withScanLock(rt, merchantId, () => scanMerchant(rt, merchantId));
+}
+
+/**
+ * One scan per merchant at a time: a debounced job, the sweep's job and a direct call can overlap, and two scans
+ * reading the same complaints would each create clusters and hypotheses. A session-level advisory lock is held on a
+ * dedicated connection for the whole scan, so the scan's own transactions stay short; a second scan waits, then
+ * finds the first one's work and changes nothing.
+ */
+async function withScanLock<T>(
+  rt: IntelRuntime,
+  merchantId: string,
+  run: () => Promise<T>,
+): Promise<T> {
+  const key = `fairfold:scan:${merchantId}`;
+  const client = await rt.db.$client.connect();
+  let broken = false;
+  try {
+    await client.query('select pg_advisory_lock(hashtextextended($1, 0))', [key]);
+    try {
+      return await run();
+    } finally {
+      // A connection that cannot unlock is destroyed, which ends its session and releases the lock.
+      await client.query('select pg_advisory_unlock(hashtextextended($1, 0))', [key]).catch(() => {
+        broken = true;
+      });
+    }
+  } finally {
+    client.release(broken);
+  }
+}
+
+async function scanMerchant(rt: IntelRuntime, merchantId: string): Promise<Hypothesis[]> {
   const cfg = sharedCauseConfig(rt.env);
   const now = rt.clock.now();
   const rows = await embedMissing(
@@ -453,7 +486,11 @@ export async function runSharedCauseScanWith(
       const [saved] = existing
         ? await tx
             .update(hypotheses)
-            .set({ ...fields, status: existing.status === 'superseded' ? 'open' : existing.status })
+            // Decided on the row's current status, so a Confirm or Dismiss committed meanwhile is never undone.
+            .set({
+              ...fields,
+              status: sql`case when ${hypotheses.status} = 'superseded' then 'open' else ${hypotheses.status} end`,
+            })
             .where(eq(hypotheses.id, existing.id))
             .returning()
         : await tx
@@ -564,8 +601,9 @@ export const UNREAD_GRACE_HOURS = 1;
 
 /**
  * sharedcause.sweep (02:00 IST): re-sends complaint.created for every complaint that was never read (stored more
- * than UNREAD_GRACE_HOURS ago, so a job still in the queue is not doubled), then the scan for every merchant with
- * read complaints.
+ * than UNREAD_GRACE_HOURS ago, so a job still in the queue is not doubled), then queues a sharedcause.scan job for
+ * every merchant with read complaints. The scans run as their own jobs, one merchant at a time each, instead of
+ * one after another inside the sweep.
  */
 export async function sweepSharedCauses(rt: IntelRuntime): Promise<void> {
   const cutoff = new Date(rt.clock.now().getTime() - UNREAD_GRACE_HOURS * 3_600_000);
@@ -580,5 +618,5 @@ export async function sweepSharedCauses(rt: IntelRuntime): Promise<void> {
     .selectDistinct({ merchantId: complaints.merchant_id })
     .from(complaints)
     .where(isNotNull(complaints.extracted));
-  for (const { merchantId } of rows) await runSharedCauseScanWith(rt, merchantId);
+  for (const { merchantId } of rows) await rt.jobs.publish('sharedcause.scan', { merchantId });
 }

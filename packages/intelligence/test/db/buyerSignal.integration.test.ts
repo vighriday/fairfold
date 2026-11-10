@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { alerts, buyer_network_simulated, buyer_signals } from '@fairfold/db';
+import { alerts, buyer_network_simulated, buyer_signals, signal_contests } from '@fairfold/db';
 import { computeBuyerSignal, computeBuyerSignalWith } from '../../src/buyerSignal/index.js';
 import { createHandlers } from '../../src/handlers.js';
 import { setIntelRuntime } from '../../src/runtime.js';
@@ -357,6 +357,49 @@ describe.skipIf(!dbUrl)('buyer signal against Postgres', () => {
         merchantNote: 'Courier confirmed the loss.',
       });
       expect((await resolve(await as('merchant', merchant.id))).statusCode).toBe(409);
+      await app.close();
+    });
+
+    it('two resolutions of one contest sent at once resolve it once', async () => {
+      const { app, as, merchant, alex, order } = await setup();
+      await app.inject({
+        url: `/api/orders/${order.id}/buyer-signal`,
+        headers: await as('merchant', merchant.id),
+      });
+      const view = await app.inject({
+        url: `/api/buyer/signal?merchantId=${merchant.id}`,
+        headers: await as('buyer', alex.id),
+      });
+      const { contestId } = (
+        await app.inject({
+          method: 'POST',
+          url: '/api/buyer/signal/contest',
+          headers: await as('buyer', alex.id),
+          payload: {
+            signalId: view.json().signalId,
+            text: 'The lost dispute was a courier error.',
+          },
+        })
+      ).json();
+      const headers = await as('merchant', merchant.id);
+      const resolve = (status: 'upheld' | 'corrected') =>
+        app.inject({
+          method: 'POST',
+          url: `/api/merchant/signal-contests/${contestId}/resolve`,
+          headers,
+          payload: { status, merchantNote: `Resolved as ${status}.` },
+        });
+      const [first, second] = await Promise.all([resolve('upheld'), resolve('corrected')]);
+      expect([first.statusCode, second.statusCode].sort()).toEqual([200, 409]);
+      const winner = first.statusCode === 200 ? first : second;
+      const [row] = await database.db
+        .select()
+        .from(signal_contests)
+        .where(eq(signal_contests.id, contestId));
+      expect(row).toMatchObject({
+        status: winner.json().status,
+        merchant_note: winner.json().merchantNote,
+      });
       await app.close();
     });
 

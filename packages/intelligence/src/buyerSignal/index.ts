@@ -214,10 +214,12 @@ export async function resolveContest(
     throw new AppError('FORBIDDEN', 'This contest belongs to another store', 403);
   if (found.contest.status !== 'open')
     throw new AppError('CONTEST_RESOLVED', 'This contest is already resolved', 409);
+  // Conditional on the status, so two resolutions sent at once resolve the contest once.
   const [row] = await rt.db
     .update(signal_contests)
     .set({ status, merchant_note: merchantNote })
-    .where(eq(signal_contests.id, contestId))
+    .where(and(eq(signal_contests.id, contestId), eq(signal_contests.status, 'open')))
     .returning();
-  return toContest(row!);
+  if (!row) throw new AppError('CONTEST_RESOLVED', 'This contest is already resolved', 409);
+  return toContest(row);
 }

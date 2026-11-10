@@ -7,6 +7,9 @@ import type { IntelRuntime } from '../runtime.js';
 import { draftBuyerMessagesWith } from './actions.js';
 import { hypothesisDetail, ownedHypothesis } from './views.js';
 
+const notOpen = () =>
+  new AppError('HYPOTHESIS_NOT_OPEN', 'This shared cause was changed by another request', 409);
+
 /** Ten or more clean units with no defective one suggest Dismiss. */
 export const CLEAN_UNITS_SUGGEST_DISMISS = 10;
 
@@ -70,10 +73,13 @@ export async function confirmHypothesis(
   const disputeIds = await openClusterDisputes(rt, h.cluster_id);
   const now = rt.clock.now();
   await rt.db.transaction(async (tx) => {
-    await tx
+    // Conditional on the status, so a double click (two requests that both read "open") confirms once.
+    const [confirmed] = await tx
       .update(hypotheses)
       .set({ status: 'confirmed', confirmed_at: now })
-      .where(eq(hypotheses.id, h.id));
+      .where(and(eq(hypotheses.id, h.id), eq(hypotheses.status, 'open')))
+      .returning({ id: hypotheses.id });
+    if (!confirmed) throw notOpen();
     if (disputeIds.length) {
       await tx.insert(actions).values({
         hypothesis_id: h.id,
@@ -108,7 +114,12 @@ export async function dismissHypothesis(
     .orderBy(orders.id);
   const now = rt.clock.now();
   await rt.db.transaction(async (tx) => {
-    await tx.update(hypotheses).set({ status: 'dismissed' }).where(eq(hypotheses.id, h.id));
+    const [dismissed] = await tx
+      .update(hypotheses)
+      .set({ status: 'dismissed' })
+      .where(and(eq(hypotheses.id, h.id), inArray(hypotheses.status, ['open', 'confirmed'])))
+      .returning({ id: hypotheses.id });
+    if (!dismissed) throw notOpen();
     await tx
       .update(actions)
       .set({ status: 'failed', result: { withdrawn: 'hypothesis_dismissed', reason } })
