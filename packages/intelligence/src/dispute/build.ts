@@ -1,6 +1,6 @@
 // Dispute Agent (task I5): builds the evidence pack draft for a dispute. Code decides; the model only writes the
 // narrative from a fact list. Shared-cause context goes in sharedContext for the merchant, never into evidence.
-import { and, desc, eq, inArray } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import {
   AppError,
@@ -54,6 +54,38 @@ async function linkedHypothesis(rt: IntelRuntime, disputeId: string) {
   return { complaint, hypothesis };
 }
 
+/** At most this many of the buyer's own photos go into the evidence PDF. */
+export const MAX_BUYER_PHOTOS_IN_PDF = 6;
+
+/** What the Evidence Agent's buyer_photo check means, in the merchant's rationale and in the PDF. */
+const BUYER_PHOTO_CHECK: Record<string, string> = {
+  match: "The buyer's photos show the item that was ordered.",
+  mismatch:
+    "The buyer's photos may show a different item from the one ordered (its colour or size label differs); " +
+    "the evidence PDF shows them beside the packing photos, and PayPal's reviewer decides.",
+  could_not_verify: "The buyer's photos could not be checked against the order.",
+};
+
+/**
+ * The buyer's own photos of the order — from every complaint on it (problem reports, low reviews) — and the
+ * Evidence Agent's latest check of them (step buyer_photo).
+ */
+async function buyerPhotoEvidence(rt: IntelRuntime, orderId: string) {
+  const rows = await rt.db
+    .select({ shas: complaints.image_shas })
+    .from(complaints)
+    .where(eq(complaints.order_id, orderId))
+    .orderBy(asc(complaints.created_at), asc(complaints.id));
+  const shas = [...new Set(rows.flatMap((r) => r.shas))].slice(0, MAX_BUYER_PHOTOS_IN_PDF);
+  const [check] = await rt.db
+    .select({ status: attestations.status })
+    .from(attestations)
+    .where(and(eq(attestations.order_id, orderId), eq(attestations.step, 'buyer_photo')))
+    .orderBy(desc(attestations.created_at), desc(attestations.id))
+    .limit(1);
+  return { shas, check: check ? (BUYER_PHOTO_CHECK[check.status] ?? null) : null };
+}
+
 function exifFlag(payload: unknown): string | null {
   const p = (payload ?? {}) as { exifOutsideWindow?: boolean; exifUnreadable?: boolean };
   if (p.exifOutsideWindow) return 'photo EXIF time is more than 15 minutes from the upload time';
@@ -93,7 +125,8 @@ export async function buildEvidencePackWith(
         .limit(1)
     : [];
   const result = attestation?.result as AttestationResult | undefined;
-  const { complaint, hypothesis } = await linkedHypothesis(rt, disputeId);
+  const { hypothesis } = await linkedHypothesis(rt, disputeId);
+  const buyerPhotos = order ? await buyerPhotoEvidence(rt, order.id) : { shas: [], check: null };
 
   const amount = {
     currency_code: dispute.currency ?? order?.currency ?? 'USD',
@@ -166,7 +199,7 @@ export async function buildEvidencePackWith(
         ledger: ledger!,
         attestation,
         result,
-        complaint,
+        buyerPhotos,
         amount,
       }),
     );
@@ -180,7 +213,7 @@ export async function buildEvidencePackWith(
 
   const draft = EvidencePackDraftSchema.parse({
     recommendation: decision.recommendation,
-    rationale: decision.rationale,
+    rationale: buyerPhotos.check ? [...decision.rationale, buyerPhotos.check] : decision.rationale,
     evidences,
     files,
     actionParams: decision.actionParams,
@@ -226,7 +259,7 @@ async function pdfData(
     ledger: Ledger;
     attestation: typeof attestations.$inferSelect | undefined;
     result: AttestationResult | undefined;
-    complaint: typeof complaints.$inferSelect | null;
+    buyerPhotos: { shas: string[]; check: string | null };
     amount: { currency_code: string; value: string };
   },
 ): Promise<EvidencePdfData> {
@@ -256,7 +289,7 @@ async function pdfData(
     });
   }
   const buyerPhotos: EvidencePdfData['buyerPhotos'] = [];
-  for (const sha256 of s.complaint?.image_shas ?? []) {
+  for (const sha256 of s.buyerPhotos.shas) {
     const bytes = await bytesOf(sha256);
     if (bytes) buyerPhotos.push({ sha256, bytes });
   }
@@ -299,6 +332,7 @@ async function pdfData(
     })),
     packingPhotos,
     buyerPhotos,
+    buyerPhotoCheck: s.buyerPhotos.check,
     attestation:
       s.attestation && s.result
         ? {

@@ -166,6 +166,7 @@ describe('evidence PDF', () => {
           exifFlag: i === 0 ? 'EXIF time is more than 15 minutes from upload time' : null,
         })),
         buyerPhotos: [],
+        buyerPhotoCheck: null,
         attestation: {
           status: 'match',
           confidence: 0.92,

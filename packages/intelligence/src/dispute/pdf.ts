@@ -28,6 +28,8 @@ export interface EvidencePdfData {
     exifFlag: string | null;
   }>;
   buyerPhotos: Array<{ sha256: string; bytes: Uint8Array }>;
+  /** The Evidence Agent's check of the buyer's photos against the order (step buyer_photo), in words. */
+  buyerPhotoCheck: string | null;
   attestation: {
     status: string;
     confidence: number;
@@ -227,6 +229,7 @@ async function render(data: EvidencePdfData, photoSide: number | null): Promise<
   }
   if (data.buyerPhotos.length) {
     w.heading("Buyer's photos (for comparison)");
+    if (data.buyerPhotoCheck) w.text(data.buyerPhotoCheck);
     for (const p of data.buyerPhotos)
       await drawPhoto(w, await photo(p.bytes), [`SHA-256 ${p.sha256}`]);
   }

@@ -1,5 +1,6 @@
 import sharp from 'sharp';
 import { eq } from 'drizzle-orm';
+import { PDFDocument, PDFName, PDFRawStream } from 'pdf-lib';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fixedClock } from '@fairfold/contracts';
 import {
@@ -273,6 +274,71 @@ describe.skipIf(!dbUrl)('dispute agent against Postgres', () => {
     expect(Object.fromEntries(rows.map((r) => [r.id, r.status]))).toEqual({
       [first.packId]: 'superseded',
       [second.packId]: 'draft',
+    });
+  });
+
+  describe("the buyer's own photos (I5: shown beside the packing photos for the merchant)", () => {
+    /** The buyer reported the problem with one photo, which the Evidence Agent described with `status`. */
+    async function buyerReported(status: 'match' | 'mismatch') {
+      const packed = await packedOrder();
+      const sha = await createBlobStore(database.db).put(await jpeg(120), 'image/jpeg');
+      await database.db.insert(complaints).values({
+        merchant_id: packed.merchant.id,
+        order_id: packed.order.id,
+        buyer_id: packed.buyer.id,
+        source: 'buyer_report',
+        source_ref: 'report-1',
+        text: 'The seam came apart.',
+        image_shas: [sha],
+      });
+      await database.db.insert(attestations).values({
+        order_id: packed.order.id,
+        step: 'buyer_photo',
+        photo_shas: [sha],
+        photo_labels: ['buyer_photo'],
+        model: 'mock-vision',
+        status,
+        confidence: 0.85,
+        result: {
+          items: [],
+          batchLabelText: null,
+          shippingLabel: { visible: false, trackingNumberText: null },
+          defects: [],
+          inspection: null,
+          couldNotVerify: [],
+          confidence: 0.85,
+        },
+      });
+      return { ...packed, sha };
+    }
+
+    async function imagesIn(pdfSha: string): Promise<number> {
+      const blob = await createBlobStore(database.db).get(pdfSha);
+      const doc = await PDFDocument.load(blob.bytes!);
+      let images = 0;
+      for (const [, object] of doc.context.enumerateIndirectObjects())
+        if (
+          object instanceof PDFRawStream &&
+          object.dict.get(PDFName.of('Subtype')) === PDFName.of('Image')
+        )
+          images += 1;
+      return images;
+    }
+
+    it("the PDF carries the buyer's report photo beside the two packing photos", async () => {
+      const { dispute } = await buyerReported('match');
+      const { runtime } = testRuntime(database.db, { clock: fixedClock(NOW) });
+      const pack = await buildEvidencePackWith(runtime, dispute.id);
+      expect(await imagesIn(pack.files[0]!.sha256)).toBe(3);
+    });
+
+    it('a buyer photo that may show a different item is flagged to the merchant, not decided', async () => {
+      const { dispute } = await buyerReported('mismatch');
+      const { runtime } = testRuntime(database.db, { clock: fixedClock(NOW) });
+      const pack = await buildEvidencePackWith(runtime, dispute.id);
+      expect(pack.recommendation).toBe('provide_evidence');
+      expect(pack.rationale.join(' ')).toMatch(/buyer's photos may show a different item/);
+      expect(JSON.stringify(pack.evidences)).not.toMatch(/different item/);
     });
   });
 
