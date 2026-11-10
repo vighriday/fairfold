@@ -36,6 +36,7 @@ export function createCoreRoutes(options: {
   checkout: ReturnType<typeof createCheckoutService>;
   reads: ReturnType<typeof createOrderReads>;
   disputeReads?: ReturnType<typeof import('../../disputes/read.js').createDisputeReads>;
+  disputeApproval?: ReturnType<typeof import('../../disputes/approve.js').createDisputeApproval>;
   demoMode: boolean;
 }): FastifyPluginAsync {
   return async (server) => {
@@ -70,6 +71,38 @@ export function createCoreRoutes(options: {
           },
         },
         async (request) => disputeReads.detail(request.auth, request.params.id),
+      );
+    }
+    if (options.disputeApproval) {
+      const disputeApproval = options.disputeApproval;
+      app.post(
+        '/api/merchant/disputes/:disputeId/packs/:packId/approve',
+        {
+          preHandler: requireAuth('merchant'),
+          schema: {
+            tags: ['Disputes'],
+            security: bearer,
+            summary: 'Approve one merchant-owned evidence pack',
+            params: z.object({ disputeId: z.string().min(1).max(255), packId: UuidSchema }),
+            body: CoreRequests.approveAction,
+            response: {
+              200: z.object({
+                packId: UuidSchema,
+                disputeId: z.string(),
+                status: z.literal('approved'),
+                recommendation: z.enum(['provide_evidence', 'make_offer', 'accept_claim']),
+              }),
+              ...errors,
+            },
+          },
+        },
+        async (request) =>
+          disputeApproval(
+            request.auth,
+            request.params.disputeId,
+            request.params.packId,
+            request.body,
+          ),
       );
     }
     app.get(

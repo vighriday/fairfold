@@ -2,6 +2,12 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-10 — H4 merchant evidence-pack approval
+
+- Added endpoint 21 for merchant-owned evidence-pack approval. It validates draft state, dispute/pack ownership, actionable recommendations, offer/claim types, currency and bounded amounts, while rejecting `inspect_first`, `merchant_decides` and Q2 return-based actions.
+- Approval identity/time and edited action parameters are persisted in the same PostgreSQL transaction as the `evidence.submit` pg-boss enqueue. Concurrent approval attempts serialize on the pack row; a queue failure rolls the approval back.
+- The PostgreSQL/API suite passed 182 cases, including the approval route and queue assertion. Typecheck and targeted lint passed. Real PayPal action execution and A12 remain **NOT RUN**.
+
 ## 2026-11-10 — H4 current-state guards and concrete retention review
 
 - Began H4 against the original source after H3 local closeout. Prepared the complete delivery sequence and exact dispute/message/action-summary allowlist, redaction limits and Q4 amount/approval-edit mapping for review.

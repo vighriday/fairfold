@@ -17,6 +17,7 @@ import { createAuth } from '../src/auth.js';
 import { readConfig } from '../src/config.js';
 import { createOrderReads } from '../src/orders/read.js';
 import { createDisputeReads } from '../src/disputes/read.js';
+import { createDisputeApproval } from '../src/disputes/approve.js';
 import { createCoreRoutes } from '../src/routes/core/index.js';
 import { checkoutFixture, checkoutClock } from './checkout-fixture.js';
 
@@ -66,6 +67,7 @@ describe.skipIf(!integrationUrl)('H2 HTTP contracts with real database/client/qu
         checkout: f.service,
         reads: createOrderReads({ database: database.db, computeBuyerSignal }),
         disputeReads: createDisputeReads(database.db),
+        disputeApproval: createDisputeApproval({ database, jobs, clock: checkoutClock }),
       }),
     });
     apps.push(app);
@@ -100,6 +102,7 @@ describe.skipIf(!integrationUrl)('H2 HTTP contracts with real database/client/qu
       '/api/buyer/orders/{id}',
       '/api/merchant/disputes',
       '/api/merchant/disputes/{id}',
+      '/api/merchant/disputes/{disputeId}/packs/{packId}/approve',
     ])
       expect(spec.paths).toHaveProperty(path);
     expect(spec.paths['/api/merchant/orders'].get.security).toEqual([{ bearerAuth: [] }]);
@@ -443,5 +446,51 @@ describe.skipIf(!integrationUrl)('H2 HTTP contracts with real database/client/qu
         })
       ).statusCode,
     ).toBe(403);
+  });
+  it('approves a draft pack atomically and queues evidence submission', async () => {
+    const f = await fixture();
+    const disputeId = 'PP-D-APPROVE-' + randomUUID().replaceAll('-', '').toUpperCase();
+    await database.db.insert(disputes).values({
+      id: disputeId,
+      merchant_id: f.merchant.id,
+      order_id: null,
+      reason: 'MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED',
+      status: 'WAITING_FOR_SELLER_RESPONSE',
+      life_cycle_stage: 'INQUIRY',
+      amount_value: '38.00',
+      currency: 'USD',
+      raw: {},
+    });
+    const [pack] = await database.db
+      .insert(evidence_packs)
+      .values({
+        dispute_id: disputeId,
+        recommendation: 'provide_evidence',
+        evidences: [],
+        files: [],
+        narrative: 'Synthetic approval pack',
+        confidence: 0.9,
+      })
+      .returning();
+    const response = await f.app.inject({
+      method: 'POST',
+      url: `/api/merchant/disputes/${disputeId}/packs/${pack!.id}/approve`,
+      headers: await f.headers('merchant'),
+      payload: {},
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      packId: pack!.id,
+      disputeId,
+      status: 'approved',
+      recommendation: 'provide_evidence',
+    });
+    const [saved] = await database.db
+      .select()
+      .from(evidence_packs)
+      .where(eq(evidence_packs.id, pack!.id));
+    expect(saved?.status).toBe('approved');
+    const jobsForPack = await jobs.boss.findJobs<{ packId: string }>('evidence.submit');
+    expect(jobsForPack.some((job) => job.data.packId === pack!.id)).toBe(true);
   });
 });
