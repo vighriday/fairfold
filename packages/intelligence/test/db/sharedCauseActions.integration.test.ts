@@ -11,7 +11,7 @@ import {
 } from '@fairfold/db';
 import { setIntelRuntime } from '../../src/runtime.js';
 import { confirmHypothesis, dismissHypothesis } from '../../src/sharedCause/confirm.js';
-import { runSharedCauseScan } from '../../src/sharedCause/scan.js';
+import { runSharedCauseScanWith } from '../../src/sharedCause/scan.js';
 import { hypothesisTrend, weekStart } from '../../src/sharedCause/trend.js';
 import { hypothesisDetail, listHypotheses } from '../../src/sharedCause/views.js';
 import {
@@ -54,7 +54,7 @@ describe.skipIf(!dbUrl)('shared cause views, confirm, dismiss and trend against 
   async function scanned() {
     const w = await buildWorld(database.db, NOW);
     const { runtime, jobs } = testRuntime(database.db, { clock: fixedClock(NOW) });
-    const [h] = await runSharedCauseScan(runtime, w.merchant.id);
+    const [h] = await runSharedCauseScanWith(runtime, w.merchant.id);
     return { w, runtime, jobs, h: h! };
   }
 
@@ -182,7 +182,7 @@ describe.skipIf(!dbUrl)('shared cause views, confirm, dismiss and trend against 
 
     // a re-scan of a confirmed hypothesis updates its stats but proposes nothing new
     const before = (await database.db.select().from(actions)).length;
-    await runSharedCauseScan(runtime, w.merchant.id);
+    await runSharedCauseScanWith(runtime, w.merchant.id);
     expect((await database.db.select().from(actions)).length).toBe(before);
   });
 
@@ -222,7 +222,7 @@ describe.skipIf(!dbUrl)('shared cause views, confirm, dismiss and trend against 
       'HYPOTHESIS_NOT_OPEN',
     );
     // a dismissed hypothesis stays dismissed on re-scan and gets no new proposals
-    const [again] = await runSharedCauseScan(runtime, w.merchant.id);
+    const [again] = await runSharedCauseScanWith(runtime, w.merchant.id);
     expect(again!.status).toBe('dismissed');
     expect(
       (

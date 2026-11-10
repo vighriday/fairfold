@@ -199,3 +199,9 @@ Status: **DEFERRED BY USER; NOT RUN**. The user confirmed accounts do not curren
 - An upload whose `batchCodes` is empty keeps the batch code recorded on the latest pack attestation, so the batch's active inspection rule (and its required photo) still reaches the agent.
 - One model call per upload, as before; each upload still writes one attestation and one ledger entry.
 - Contract change: none (job payload unchanged).
+
+### I-D22 — Section 15 signatures restored, with a compile-time check — 2026-11-10
+- Section 15 lists the functions Ishaan provides. Four had drifted to take an `IntelRuntime` (or extra dependencies) first, so code written against the contract — Hriday's H8 seed "ends by running one sharedcause.scan", H7's tools — would not compile: `readComplaint`, `runSharedCauseScan`, `draftBuyerMessages`, `attestPackingPhotos`.
+- They now keep the documented signatures and use the process runtime (`getIntelRuntime()`), like `computeBuyerSignal`, `buildStoreReport`, `buildEvidencePack` and `searchCatalog` already did. The runtime-injected forms used by handlers, routes and tests are `readComplaintWith(rt, id)`, `runSharedCauseScanWith(rt, merchantId)`, `draftBuyerMessagesWith(rt, hypothesisId, level)` and `attestPackingPhotosWith(input, deps)`. `readComplaint` returns `Promise<void>` as documented; `draftBuyerMessages` defaults to the suspected level; `attestPackingPhotos` returns the attestation result plus its `status` and `model` (a superset of `AttestationResult`).
+- `packages/intelligence/test/db/contract.integration.test.ts` assigns the package to a `Section15` interface, so `pnpm typecheck` fails whenever an export stops matching the contract — the guarantee `@fairfold/contracts/stubs` gave before I-D13 retired it — and exercises the four runtime-bound functions against PostgreSQL.
+- Contract change: none (restores section 15).

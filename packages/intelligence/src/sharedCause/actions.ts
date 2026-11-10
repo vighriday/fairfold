@@ -17,7 +17,7 @@ import {
   orders,
   order_items,
 } from '@fairfold/db';
-import type { IntelRuntime } from '../runtime.js';
+import { getIntelRuntime, type IntelRuntime } from '../runtime.js';
 import { draftMessage, type MessageLevel } from './drafter.js';
 import { buyerWording } from './wording.js';
 
@@ -62,7 +62,7 @@ async function clusterFault(rt: IntelRuntime, clusterId: string) {
  * `level`, under a proposed send_buyer_messages action ({ messageIds, level }). Buyers who already have a message
  * at this level for this hypothesis are skipped, so re-running adds only new buyers. Safety-flagged: no drafts.
  */
-export async function draftBuyerMessages(
+export async function draftBuyerMessagesWith(
   rt: IntelRuntime,
   hypothesisId: string,
   level: MessageLevel,
@@ -171,4 +171,12 @@ export async function draftBuyerMessages(
       .where(eq(actions.id, action!.id));
     return inserted.map(toMessage);
   });
+}
+
+/** Section 15: draftBuyerMessages(hypothesisId, level) on the process runtime; suspected unless confirmed. */
+export function draftBuyerMessages(
+  hypothesisId: string,
+  level: MessageLevel = 'suspected',
+): Promise<Message[]> {
+  return draftBuyerMessagesWith(getIntelRuntime(), hypothesisId, level);
 }

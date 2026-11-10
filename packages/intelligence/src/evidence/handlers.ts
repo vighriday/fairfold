@@ -2,7 +2,7 @@
 // Storage goes through EvidenceStore so the handler logic does not depend on how packages/db is wired.
 import type { LanguageModel } from '@fairfold/ai';
 import { JobSchemas, type AttestationResult, type AttestInput } from '@fairfold/contracts';
-import { attestPackingPhotos, MAX_PHOTOS } from './attest.js';
+import { attestPackingPhotosWith, MAX_PHOTOS } from './attest.js';
 import type { AttestationStatus } from './match.js';
 
 /** One row of the attestations table (section 7). */
@@ -125,7 +125,7 @@ export function createEvidenceHandlers({ store, model }: EvidenceDeps) {
         inspectionRule: order.inspectionRule,
         expectedTrackingNumber: null,
       };
-      const a = await attestPackingPhotos(input, { loadPhoto: store.loadPhoto, model });
+      const a = await attestPackingPhotosWith(input, { loadPhoto: store.loadPhoto, model });
       const { status, model: modelId, ...result } = a;
       const photoShas = photos.map((photo) => photo.sha256);
       await store.insertAttestation(
@@ -169,7 +169,7 @@ export function createEvidenceHandlers({ store, model }: EvidenceDeps) {
         inspectionRule: rule,
         expectedTrackingNumber: null,
       };
-      const a = await attestPackingPhotos(input, { loadPhoto: store.loadPhoto, model });
+      const a = await attestPackingPhotosWith(input, { loadPhoto: store.loadPhoto, model });
       const { status, model: modelId, ...result } = a;
       await store.insertAttestation({
         orderId: null,

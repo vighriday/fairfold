@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { hasModelConfig, type Env, type LanguageModel } from '@fairfold/ai';
 import type { AttestInput } from '@fairfold/contracts';
-import { attestPackingPhotos, type Attestation } from '../src/evidence/attest.js';
+import { attestPackingPhotosWith, type Attestation } from '../src/evidence/attest.js';
 
 const PHOTOS = join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'photos');
 
@@ -128,7 +128,7 @@ export async function runPhotoEval(opts: { model?: LanguageModel } = {}) {
       inspectionRule: null,
       expectedTrackingNumber: null,
     };
-    const attestation = await attestPackingPhotos(input, { loadPhoto, model: opts.model });
+    const attestation = await attestPackingPhotosWith(input, { loadPhoto, model: opts.model });
     if (attestation.model === 'fallback') fellBack += 1;
     const score = scorePhotoSet(set, attestation);
     if (score.handled) handled += 1;
@@ -136,7 +136,7 @@ export async function runPhotoEval(opts: { model?: LanguageModel } = {}) {
   }
 
   const ins = expected.inspection;
-  const inspection = await attestPackingPhotos(
+  const inspection = await attestPackingPhotosWith(
     {
       orderId: null,
       hypothesisId: null,

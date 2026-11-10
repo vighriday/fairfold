@@ -5,7 +5,7 @@
 import { and, eq } from 'drizzle-orm';
 import { attestations } from '@fairfold/db';
 import type { IntelRuntime } from '../runtime.js';
-import { attestPackingPhotos, MAX_PHOTOS } from './attest.js';
+import { attestPackingPhotosWith, MAX_PHOTOS } from './attest.js';
 import { dbEvidenceStore } from './store.js';
 
 export const BUYER_PHOTO_LABEL = 'buyer_photo';
@@ -33,7 +33,7 @@ export async function attestBuyerPhotos(
   const store = dbEvidenceStore(rt);
   const { items } = await store.loadOrderForAttestation(orderId, []);
   const labels = shas.map(() => BUYER_PHOTO_LABEL);
-  const a = await attestPackingPhotos(
+  const a = await attestPackingPhotosWith(
     {
       orderId,
       hypothesisId: null,

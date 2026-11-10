@@ -5,7 +5,7 @@ import { attestations, inspection_rules, complaint_clusters, hypotheses } from '
 import { createBlobStore, createLedger } from '@fairfold/ledger';
 import { upsertComplaint } from '../../src/complaints/create.js';
 import { createHandlers } from '../../src/handlers.js';
-import { readComplaint } from '../../src/sharedCause/scan.js';
+import { readComplaintWith } from '../../src/sharedCause/scan.js';
 import { mockModel } from '../helpers/mockModel.js';
 import {
   dbUrl,
@@ -144,10 +144,10 @@ describe.skipIf(!dbUrl)('evidence agent against Postgres', () => {
       imageShas: shas,
     });
 
-    await readComplaint(runtime, id);
+    await readComplaintWith(runtime, id);
     const again = mockModel([extraction]);
     runtime.models.vision = again.model;
-    await readComplaint(runtime, id); // a redelivered complaint.created job
+    await readComplaintWith(runtime, id); // a redelivered complaint.created job
 
     const rows = await database.db
       .select()

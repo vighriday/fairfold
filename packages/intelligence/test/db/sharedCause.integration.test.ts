@@ -12,7 +12,7 @@ import {
 import { upsertComplaint } from '../../src/complaints/create.js';
 import { createHandlers } from '../../src/handlers.js';
 import { setIntelRuntime } from '../../src/runtime.js';
-import { readComplaint, runSharedCauseScan } from '../../src/sharedCause/scan.js';
+import { readComplaintWith, runSharedCauseScanWith } from '../../src/sharedCause/scan.js';
 import { mockModel } from '../helpers/mockModel.js';
 import {
   dbUrl,
@@ -58,7 +58,7 @@ describe.skipIf(!dbUrl)('shared cause scan against Postgres', () => {
   it('A1 shape: the seed world gives batch_code = B17 with the 18 unshipped orders, proposals and an alert', async () => {
     const w = await buildWorld(database.db, NOW);
     const { runtime } = testRuntime(database.db, { clock: fixedClock(NOW) });
-    const found = await runSharedCauseScan(runtime, w.merchant.id);
+    const found = await runSharedCauseScanWith(runtime, w.merchant.id);
 
     expect(found).toHaveLength(1);
     const h = found[0]!;
@@ -114,15 +114,15 @@ describe.skipIf(!dbUrl)('shared cause scan against Postgres', () => {
   it('re-running the scan is idempotent', async () => {
     const w = await buildWorld(database.db, NOW);
     const { runtime } = testRuntime(database.db, { clock: fixedClock(NOW) });
-    const [first] = await runSharedCauseScan(runtime, w.merchant.id);
+    const [first] = await runSharedCauseScanWith(runtime, w.merchant.id);
     const before = await counts(first!.id);
-    const [second] = await runSharedCauseScan(runtime, w.merchant.id);
+    const [second] = await runSharedCauseScanWith(runtime, w.merchant.id);
     expect(second!.id).toBe(first!.id);
     expect(await counts(first!.id)).toEqual(before);
     const clusterIds = async () =>
       (await database.db.select().from(complaints).orderBy(complaints.id)).map((c) => c.cluster_id);
     const clustered = await clusterIds();
-    const again = await runSharedCauseScan(runtime, w.merchant.id);
+    const again = await runSharedCauseScanWith(runtime, w.merchant.id);
     expect(again.map((h) => h.id)).toEqual([first!.id]);
     expect(await clusterIds()).toEqual(clustered);
   });
@@ -133,7 +133,7 @@ describe.skipIf(!dbUrl)('shared cause scan against Postgres', () => {
       clock: fixedClock(NOW),
       models: { text: mockModel([SEAM]).model },
     });
-    const [before] = await runSharedCauseScan(runtime, w.merchant.id);
+    const [before] = await runSharedCauseScanWith(runtime, w.merchant.id);
 
     const maya = await insertBuyer(database.db, { display_name: 'Maya K.' });
     const { order } = await insertOrder(database.db, {
@@ -160,11 +160,11 @@ describe.skipIf(!dbUrl)('shared cause scan against Postgres', () => {
       sourceRef: dispute.id,
       text: 'The hoodie arrived with the stitching on the left sleeve seam coming apart.',
     });
-    const extraction = await readComplaint(runtime, id);
+    const extraction = await readComplaintWith(runtime, id);
     expect(extraction.category).toBe('product_defect');
     expect(jobs.debounced).toEqual([{ name: 'sharedcause.scan', key: w.merchant.id, seconds: 60 }]);
 
-    const [after] = await runSharedCauseScan(runtime, w.merchant.id);
+    const [after] = await runSharedCauseScanWith(runtime, w.merchant.id);
     expect(after!.id).toBe(before!.id);
     expect(after!.stats.primary).toMatchObject({ n: 40, k: 6 });
     expect(after!.stats.primary.rateRatio).toBeGreaterThanOrEqual(28);
@@ -179,7 +179,7 @@ describe.skipIf(!dbUrl)('shared cause scan against Postgres', () => {
   it('a safety complaint flags the hypothesis, raises safety_complaint and produces no drafts', async () => {
     const w = await buildWorld(database.db, NOW, { safety: true });
     const { runtime } = testRuntime(database.db, { clock: fixedClock(NOW) });
-    const [h] = await runSharedCauseScan(runtime, w.merchant.id);
+    const [h] = await runSharedCauseScanWith(runtime, w.merchant.id);
     const [row] = await database.db.select().from(hypotheses).where(eq(hypotheses.id, h!.id));
     expect(row!.safety_flag).toBe(true);
     expect((await counts(h!.id)).alerts).toEqual(['safety_complaint', 'shared_cause']);
@@ -215,8 +215,8 @@ describe.skipIf(!dbUrl)('shared cause scan against Postgres', () => {
       text: 'The zip pull snapped and cut my hand.',
     });
 
-    await readComplaint(runtime, id);
-    await readComplaint(runtime, id); // a redelivered complaint.created job
+    await readComplaintWith(runtime, id);
+    await readComplaintWith(runtime, id); // a redelivered complaint.created job
 
     const raised = await database.db
       .select()

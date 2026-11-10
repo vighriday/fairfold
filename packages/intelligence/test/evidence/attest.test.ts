@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AttestationResult, AttestInput } from '@fairfold/contracts';
-import { attestPackingPhotos, MAX_PHOTOS } from '../../src/evidence/attest.js';
+import { attestPackingPhotosWith, MAX_PHOTOS } from '../../src/evidence/attest.js';
 import { uid } from '../helpers/ids.js';
 import { mockModel, promptOf } from '../helpers/mockModel.js';
 
@@ -59,10 +59,10 @@ beforeEach(() => {
   vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 });
 
-describe('attestPackingPhotos', () => {
+describe('attestPackingPhotosWith', () => {
   it('passes batchLabelText and trackingNumberText through, trimmed', async () => {
     const { model } = mockModel([good]);
-    const out = await attestPackingPhotos(input, { loadPhoto, model });
+    const out = await attestPackingPhotosWith(input, { loadPhoto, model });
     expect(out.batchLabelText).toBe('B18');
     expect(out.shippingLabel.trackingNumberText).toBe('FF100000001');
     expect(out.status).toBe('match');
@@ -71,7 +71,7 @@ describe('attestPackingPhotos', () => {
 
   it('sends every photo, in order, as an image', async () => {
     const { model, calls } = mockModel([good]);
-    await attestPackingPhotos(input, { loadPhoto, model });
+    await attestPackingPhotosWith(input, { loadPhoto, model });
     expect(loadPhoto.mock.calls.map((c) => c[0])).toEqual([
       'sha-item',
       'sha-size',
@@ -87,7 +87,7 @@ describe('attestPackingPhotos', () => {
 
   it('prompt lists items with colour and size but never the entered batch code or tracking number', async () => {
     const { model, calls } = mockModel([good]);
-    await attestPackingPhotos(input, { loadPhoto, model });
+    await attestPackingPhotosWith(input, { loadPhoto, model });
     const p = promptOf(calls[0]!);
     expect(p.userText).toContain(I1);
     expect(p.userText).toContain('navy');
@@ -106,7 +106,7 @@ describe('attestPackingPhotos', () => {
       ],
     };
     const { model } = mockModel([wrongColour]);
-    const out = await attestPackingPhotos(input, { loadPhoto, model });
+    const out = await attestPackingPhotosWith(input, { loadPhoto, model });
     expect(out.status).toBe('mismatch');
     expect(out.items[0]?.matches).toBe(false);
   });
@@ -134,7 +134,7 @@ describe('attestPackingPhotos', () => {
       inspection: { instruction: rule.instruction, defectVisible: true, matchesCluster: true },
     };
     const { model, calls } = mockModel([answer]);
-    const out = await attestPackingPhotos(inspectInput, { loadPhoto, model });
+    const out = await attestPackingPhotosWith(inspectInput, { loadPhoto, model });
     const p = promptOf(calls[0]!);
     expect(p.userText + p.system).toContain('Photograph the left sleeve seam close up.');
     expect(p.userText + p.system).toContain('sleeve seam opening');
@@ -149,7 +149,7 @@ describe('attestPackingPhotos', () => {
     const { model } = mockModel([
       { ...good, inspection: { instruction: 'x', defectVisible: true, matchesCluster: true } },
     ]);
-    const out = await attestPackingPhotos(input, { loadPhoto, model });
+    const out = await attestPackingPhotosWith(input, { loadPhoto, model });
     expect(out.inspection).toBeNull();
   });
 
@@ -160,7 +160,7 @@ describe('attestPackingPhotos', () => {
       clusterLabel: 'sleeve seam opening',
     };
     const { model } = mockModel([{ ...good, items: [], inspection: null }]);
-    const out = await attestPackingPhotos(
+    const out = await attestPackingPhotosWith(
       { ...input, items: [], inspectionRule: rule, step: 'inspection' },
       { loadPhoto, model },
     );
@@ -170,7 +170,7 @@ describe('attestPackingPhotos', () => {
 
   it('fallback yields could_not_verify after two bad answers', async () => {
     const { model, calls } = mockModel(['not json', '{"items": 3}']);
-    const out = await attestPackingPhotos(input, { loadPhoto, model });
+    const out = await attestPackingPhotosWith(input, { loadPhoto, model });
     expect(calls).toHaveLength(2);
     expect(out.status).toBe('could_not_verify');
     expect(out.couldNotVerify).toContain('model_unavailable');
@@ -185,22 +185,22 @@ describe('attestPackingPhotos', () => {
       mime: 'image/jpeg',
     }));
     const { model } = mockModel([good]);
-    await expect(attestPackingPhotos({ ...input, photos }, { loadPhoto, model })).rejects.toThrow(
-      /TOO_MANY_PHOTOS/,
-    );
+    await expect(
+      attestPackingPhotosWith({ ...input, photos }, { loadPhoto, model }),
+    ).rejects.toThrow(/TOO_MANY_PHOTOS/);
     expect(MAX_PHOTOS).toBe(6);
   });
 
   it('no photos rejected', async () => {
     const { model } = mockModel([good]);
     await expect(
-      attestPackingPhotos({ ...input, photos: [] }, { loadPhoto, model }),
+      attestPackingPhotosWith({ ...input, photos: [] }, { loadPhoto, model }),
     ).rejects.toThrow(/NO_PHOTOS/);
   });
 
   it('buyer photos are described without expecting a shipping label', async () => {
     const { model, calls } = mockModel([good]);
-    await attestPackingPhotos({ ...input, step: 'buyer_photo' }, { loadPhoto, model });
+    await attestPackingPhotosWith({ ...input, step: 'buyer_photo' }, { loadPhoto, model });
     expect(promptOf(calls[0]!).system).toMatch(/buyer/i);
   });
 
@@ -212,7 +212,7 @@ describe('attestPackingPhotos', () => {
       ],
     };
     const { model } = mockModel([seam]);
-    const a = await attestPackingPhotos(
+    const a = await attestPackingPhotosWith(
       { ...input, step: 'buyer_photo', batchCodes: {}, expectedTrackingNumber: null },
       { loadPhoto, model },
     );

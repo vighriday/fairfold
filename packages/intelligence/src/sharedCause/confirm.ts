@@ -4,7 +4,7 @@ import { and, eq, inArray, isNull, ne } from 'drizzle-orm';
 import { AppError, AttestationResultSchema, type HypothesisDetail } from '@fairfold/contracts';
 import { actions, attestations, complaints, disputes, hypotheses, orders } from '@fairfold/db';
 import type { IntelRuntime } from '../runtime.js';
-import { draftBuyerMessages } from './actions.js';
+import { draftBuyerMessagesWith } from './actions.js';
 import { hypothesisDetail, ownedHypothesis } from './views.js';
 
 /** Ten or more clean units with no defective one suggest Dismiss. */
@@ -82,7 +82,7 @@ export async function confirmHypothesis(
         created_at: now,
       });
   });
-  await draftBuyerMessages(rt, h.id, 'confirmed');
+  await draftBuyerMessagesWith(rt, h.id, 'confirmed');
   if (disputeIds.length) await rt.jobs.publish('evidence.rebuild', { disputeIds });
   return hypothesisDetail(rt, merchantId, h.id);
 }

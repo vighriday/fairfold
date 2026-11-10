@@ -5,7 +5,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import { fixedClock } from '@fairfold/contracts';
 import { complaints } from '@fairfold/db';
 import { setIntelRuntime } from '../../src/runtime.js';
-import { runSharedCauseScan } from '../../src/sharedCause/scan.js';
+import { runSharedCauseScanWith } from '../../src/sharedCause/scan.js';
 import { buildApi } from '../routes/api.js';
 import {
   dbUrl,
@@ -66,7 +66,7 @@ describe.skipIf(!dbUrl)('shared cause and report-problem routes against Postgres
   it('A1 over HTTP: GET /api/shared-causes?merchantId=<neel> lists batch_code = B17 with 18 unshipped orders', async () => {
     const w = await buildWorld(database.db, NOW);
     const { runtime } = testRuntime(database.db, { clock: fixedClock(NOW) });
-    await runSharedCauseScan(runtime, w.merchant.id);
+    await runSharedCauseScanWith(runtime, w.merchant.id);
     setIntelRuntime(runtime);
     const { app, as } = await buildApi();
     const merchant = await as('merchant', w.merchant.id);

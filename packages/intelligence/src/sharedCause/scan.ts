@@ -25,8 +25,8 @@ import {
 import { createBlobStore, type DatabaseExecutor } from '@fairfold/ledger';
 import { raiseAlertOnce } from '../alerts.js';
 import { attestBuyerPhotos } from '../evidence/buyerPhotos.js';
-import type { IntelRuntime } from '../runtime.js';
-import { draftBuyerMessages } from './actions.js';
+import { getIntelRuntime, type IntelRuntime } from '../runtime.js';
+import { draftBuyerMessagesWith } from './actions.js';
 import { affectedOrders } from './affected.js';
 import { assignClusters, eligibleClusters, type ClusterState } from './grouping.js';
 import { localise } from './localise.js';
@@ -74,7 +74,7 @@ async function embedOne(rt: IntelRuntime, text: string): Promise<number[]> {
  * orders directly, else the item the text names, else the first), embeds "category | component | failure_mode",
  * saves, then schedules a debounced scan for the merchant. A complaint's cluster is never changed here.
  */
-export async function readComplaint(
+export async function readComplaintWith(
   rt: IntelRuntime,
   complaintId: string,
 ): Promise<ComplaintExtraction> {
@@ -146,6 +146,11 @@ export async function readComplaint(
     );
   await rt.jobs.publishDebounced('sharedcause.scan', c.merchant_id, SCAN_DEBOUNCE_SECONDS);
   return extraction;
+}
+
+/** Section 15: readComplaint(complaintId) — extract and embed one complaint on the process runtime. */
+export async function readComplaint(complaintId: string): Promise<void> {
+  await readComplaintWith(getIntelRuntime(), complaintId);
 }
 
 type ComplaintRow = typeof complaints.$inferSelect;
@@ -301,7 +306,7 @@ async function alreadyHeld(tx: DatabaseExecutor, hypothesisId: string): Promise<
  * (cluster_id, dimension, value) with a replaced primary superseded, proposals for open hypotheses, alerts,
  * and a pack rebuild for disputes that now sit in a cluster with a live hypothesis. Re-running is idempotent.
  */
-export async function runSharedCauseScan(
+export async function runSharedCauseScanWith(
   rt: IntelRuntime,
   merchantId: string,
 ): Promise<Hypothesis[]> {
@@ -479,7 +484,7 @@ export async function runSharedCauseScan(
     });
 
     // Drafts are written outside the transaction (one model call each); a safety flag means no drafts.
-    if (row.status === 'open' && !safety) await draftBuyerMessages(rt, row.id, 'suspected');
+    if (row.status === 'open' && !safety) await draftBuyerMessagesWith(rt, row.id, 'suspected');
 
     if (row.status === 'open' || row.status === 'confirmed') {
       const openIds = new Set(affected.openDisputes);
@@ -494,11 +499,16 @@ export async function runSharedCauseScan(
   return result;
 }
 
+/** Section 15: runSharedCauseScan(merchantId) on the process runtime. */
+export function runSharedCauseScan(merchantId: string): Promise<Hypothesis[]> {
+  return runSharedCauseScanWith(getIntelRuntime(), merchantId);
+}
+
 /** sharedcause.sweep (02:00 IST): the scan for every merchant with complaints. */
 export async function sweepSharedCauses(rt: IntelRuntime): Promise<void> {
   const rows = await rt.db
     .selectDistinct({ merchantId: complaints.merchant_id })
     .from(complaints)
     .where(isNotNull(complaints.extracted));
-  for (const { merchantId } of rows) await runSharedCauseScan(rt, merchantId);
+  for (const { merchantId } of rows) await runSharedCauseScanWith(rt, merchantId);
 }

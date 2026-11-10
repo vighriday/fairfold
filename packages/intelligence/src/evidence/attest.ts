@@ -3,7 +3,9 @@ import { generateStructured, type LanguageModel } from '@fairfold/ai';
 import type { AttestationResult, AttestInput } from '@fairfold/contracts';
 import { AttestationResultSchema } from '@fairfold/contracts';
 import { applyItemMatching, deriveStatus, type AttestationStatus } from './match.js';
+import { getIntelRuntime } from '../runtime.js';
 import { buildAttestPrompt } from './prompt.js';
+import { dbEvidenceStore } from './store.js';
 
 export const MAX_PHOTOS = 6;
 
@@ -33,7 +35,7 @@ function fallbackResult(): AttestationResult {
 
 const trimOrNull = (s: string | null) => (s === null || s.trim() === '' ? null : s.trim());
 
-export async function attestPackingPhotos(
+export async function attestPackingPhotosWith(
   input: AttestInput,
   deps: AttestDeps,
 ): Promise<Attestation> {
@@ -74,4 +76,16 @@ export async function attestPackingPhotos(
 
   const checked = applyItemMatching(input, raw);
   return { ...checked, status: deriveStatus(checked, input.step), model: out.model };
+}
+
+/**
+ * Section 15: attestPackingPhotos(input) on the process runtime — photos are read from the blob store by SHA-256 and
+ * the vision model comes from the environment (or the runtime's injected model).
+ */
+export function attestPackingPhotos(input: AttestInput): Promise<Attestation> {
+  const rt = getIntelRuntime();
+  return attestPackingPhotosWith(input, {
+    loadPhoto: dbEvidenceStore(rt).loadPhoto,
+    model: rt.models.vision,
+  });
 }
