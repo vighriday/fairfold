@@ -1,5 +1,6 @@
 // One plain sentence explaining a Buyer Signal (section 10). The model sees reason codes and labels only —
-// never names, emails or addresses — and a template takes over if it fails.
+// never names, emails or addresses — and a template takes over if it fails or if its wording tells the merchant to
+// cancel or refuse the order (the band recommends a fulfilment action and never "cancel").
 import { z } from 'zod';
 import { generateStructured, type LanguageModel } from '@fairfold/ai';
 import { truncateSentences } from '../text.js';
@@ -14,6 +15,14 @@ const SYSTEM = [
   'Use only the band and reasons given. Do not add facts, numbers, names or advice of your own.',
   'Never suggest cancelling the order. Say "simulated network data" if a reason is marked simulated.',
 ].join(' ');
+
+/** cancel, cancelling, cancellation; "do not ship", "don't ship"; refuse, refusal. */
+const CANCEL_WORDING = /\bcancel|\bdo\s+not\s+ship\b|\bdon['\u2019]?t\s+ship\b|\brefus/i;
+
+/** Post-check: the sentence must not tell the merchant to cancel or refuse the order. */
+export function sentenceAllowed(sentence: string): boolean {
+  return !CANCEL_WORDING.test(sentence);
+}
 
 const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
@@ -47,5 +56,6 @@ export async function explainSignal(s: ScoredSignal, model?: LanguageModel): Pro
     fallback: () => ({ sentence: templateSentence(s) }),
     model,
   });
-  return truncateSentences(out.value.sentence, MAX_SENTENCE);
+  const sentence = truncateSentences(out.value.sentence, MAX_SENTENCE);
+  return sentenceAllowed(sentence) ? sentence : templateSentence(s);
 }
