@@ -4,8 +4,11 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { fixedClock } from '@fairfold/contracts';
 import {
   attestations,
+  complaint_clusters,
   createDatabase,
+  hypotheses,
   inventory_batches,
+  inspection_rules,
   merchants,
   migrateDatabase,
   order_items,
@@ -16,6 +19,7 @@ import {
 import { createJobs, type Jobs } from '@fairfold/jobs';
 import { testDatabaseUrl } from '../../../packages/db/test/environment.js';
 import { createPackingService } from '../src/packing/service.js';
+import { createInspectionService } from '../src/packing/inspection.js';
 
 const integrationUrl = testDatabaseUrl();
 const clock = fixedClock('2026-11-10T12:00:00.000Z');
@@ -97,7 +101,45 @@ describe.skipIf(!integrationUrl)('H5 Pack Station persistence', () => {
         qty_remaining: 2,
       })
       .returning();
-    return { merchant: merchant!, order: order!, item: item!, batch: batch! };
+    const [cluster] = await database.db
+      .insert(complaint_clusters)
+      .values({
+        merchant_id: merchant!.id,
+        product_id: product!.id,
+        category: 'product_defect',
+        label: 'seam',
+        centroid: [1],
+      })
+      .returning();
+    const [hypothesis] = await database.db
+      .insert(hypotheses)
+      .values({
+        merchant_id: merchant!.id,
+        cluster_id: cluster!.id,
+        dimension: 'batch_code',
+        value: batch!.batch_code,
+        strength: 'strong',
+        stats: {},
+        alternatives: [],
+        affected: {},
+        explanation: 'Synthetic H5 hypothesis',
+      })
+      .returning();
+    await database.db.insert(inspection_rules).values({
+      merchant_id: merchant!.id,
+      product_id: product!.id,
+      batch_code: batch!.batch_code,
+      instruction: 'Inspect the seam',
+      required_photo_label: 'seam_closeup',
+      created_by_hypothesis_id: hypothesis!.id,
+    });
+    return {
+      merchant: merchant!,
+      order: order!,
+      item: item!,
+      batch: batch!,
+      hypothesis: hypothesis!,
+    };
   }
 
   async function photo() {
@@ -109,6 +151,9 @@ describe.skipIf(!integrationUrl)('H5 Pack Station persistence', () => {
 
   it('stores normalized photos, publishes one attestation job, and reports exact pack state', async () => {
     const f = await fixture();
+    await database.db
+      .delete(inspection_rules)
+      .where(eq(inspection_rules.batch_code, f.batch.batch_code));
     const service = createPackingService({ database, jobs, clock });
     const result = await service.uploadPhotos(
       { role: 'merchant', subjectId: f.merchant.id },
@@ -143,6 +188,9 @@ describe.skipIf(!integrationUrl)('H5 Pack Station persistence', () => {
 
   it('seals once under concurrent attempts and never decrements stock twice', async () => {
     const f = await fixture();
+    await database.db
+      .delete(inspection_rules)
+      .where(eq(inspection_rules.batch_code, f.batch.batch_code));
     const service = createPackingService({ database, jobs, clock });
     const input = {
       batchCodes: { [f.item.id]: f.batch.batch_code },
@@ -170,5 +218,25 @@ describe.skipIf(!integrationUrl)('H5 Pack Station persistence', () => {
         .from(orders)
         .where(and(eq(orders.id, f.order.id), eq(orders.status, 'sealed'))),
     ).toHaveLength(1);
+  });
+
+  it('stores shared-cause inspection photos and queues Ishaan attestation', async () => {
+    const f = await fixture();
+    const service = createInspectionService({ database, jobs });
+    const result = await service.upload(
+      { role: 'merchant', subjectId: f.merchant.id },
+      f.hypothesis.id,
+      f.batch.batch_code,
+      [{ bytes: await photo(), mime: 'image/png', label: 'seam_closeup' }],
+      ['seam_closeup'],
+    );
+    expect(result.requiredPhotoLabel).toBe('seam_closeup');
+    expect(result.photoShas).toHaveLength(1);
+    expect(
+      (await jobs.boss.findJobs('inspection.uploaded')).some((job) => {
+        const data = job.data as { hypothesisId: string; batchCode: string };
+        return data.hypothesisId === f.hypothesis.id && data.batchCode === f.batch.batch_code;
+      }),
+    ).toBe(true);
   });
 });

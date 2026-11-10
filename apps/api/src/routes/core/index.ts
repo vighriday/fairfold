@@ -18,6 +18,7 @@ import { createDevRoutes } from '../../dev/routes.js';
 import { type createCheckoutService } from '../../checkout/service.js';
 import { OrderListQuerySchema, type createOrderReads } from '../../orders/read.js';
 import { type createPackingService } from '../../packing/service.js';
+import { type createInspectionService } from '../../packing/inspection.js';
 
 const PayPalOrderIdSchema = z.string().regex(/^[A-Z0-9]{1,36}$/);
 const errors = {
@@ -42,6 +43,7 @@ export function createCoreRoutes(options: {
     typeof import('../../disputes/demo-adjudicate.js').createDemoDisputeAdjudication
   >;
   packing?: ReturnType<typeof createPackingService>;
+  inspection?: ReturnType<typeof createInspectionService>;
   demoMode: boolean;
 }): FastifyPluginAsync {
   return async (server) => {
@@ -201,6 +203,52 @@ export function createCoreRoutes(options: {
                 );
               } catch {
                 throw new AppError('BATCH_CODES_INVALID', 'batchCodes must be a JSON object', 400);
+              }
+              if (options.inspection) {
+                const inspection = options.inspection;
+                app.post(
+                  '/api/shared-causes/:id/inspections',
+                  {
+                    preHandler: requireAuth('merchant'),
+                    schema: {
+                      tags: ['Shared Causes'],
+                      security: bearer,
+                      summary: 'Upload merchant-owned inspection photos',
+                      params: z.object({ id: UuidSchema }),
+                      querystring: z.object({ batchCode: z.string().min(1).max(255) }),
+                      response: {
+                        202: z.object({
+                          photoShas: z.array(z.string().regex(/^[a-f0-9]{64}$/)),
+                          requiredPhotoLabel: z.string(),
+                        }),
+                        ...errors,
+                      },
+                    },
+                  },
+                  async (request, reply) => {
+                    const files: Array<{ bytes: Buffer; mime: string }> = [];
+                    const labels: string[] = [];
+                    for await (const part of request.parts()) {
+                      if (part.type === 'file')
+                        files.push({ bytes: await part.toBuffer(), mime: part.mimetype });
+                      else if (part.fieldname === 'labels') labels.push(String(part.value));
+                    }
+                    if (files.length !== labels.length)
+                      throw new AppError(
+                        'PHOTO_LABEL_COUNT_MISMATCH',
+                        'Each inspection photo requires one label',
+                        400,
+                      );
+                    const result = await inspection.upload(
+                      request.auth!,
+                      request.params.id,
+                      request.query.batchCode,
+                      files.map((file, index) => ({ ...file, label: labels[index]! })),
+                      labels,
+                    );
+                    return reply.status(202).send(result);
+                  },
+                );
               }
             }
           }

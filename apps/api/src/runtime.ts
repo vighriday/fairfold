@@ -16,6 +16,7 @@ import { createDisputeReads } from './disputes/read.js';
 import { createDisputeApproval } from './disputes/approve.js';
 import { createDemoDisputeAdjudication } from './disputes/demo-adjudicate.js';
 import { createPackingService } from './packing/service.js';
+import { createInspectionService } from './packing/inspection.js';
 import { createCoreRoutes } from './routes/core/index.js';
 import { createWebhookRoutes } from './routes/core/webhooks.js';
 
@@ -37,6 +38,7 @@ export async function createRuntime(config: Config, options: { recording?: Order
     const disputeApproval = createDisputeApproval({ database, jobs });
     const demoAdjudicate = createDemoDisputeAdjudication({ database: database.db, forMerchant });
     const packing = createPackingService({ database, jobs });
+    const inspection = createInspectionService({ database, jobs });
     const app = await createApi({
       config,
       phase: 'H5',
@@ -49,6 +51,7 @@ export async function createRuntime(config: Config, options: { recording?: Order
             disputeApproval,
             demoAdjudicate,
             packing,
+            inspection,
             demoMode: config.demoMode,
           }),
         );
