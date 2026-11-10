@@ -22,6 +22,7 @@ const result = spawnSync(
     'jobs.integration.test.ts',
     'credentials.integration.test.ts',
     'registration.integration.test.ts',
+    'dispute-execution.integration.test.ts',
     'webhooks.integration.test.ts',
     'event-handler.integration.test.ts',
     'poll-schedules.integration.test.ts',

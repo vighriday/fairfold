@@ -2,6 +2,12 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-10 — H4 approved action execution
+
+- Added the worker-owned `evidence.submit` executor for approved evidence, offer and claim packs. It re-fetches authoritative dispute state/options, validates the approved pack and content-addressed blobs, uses deterministic PayPal request IDs, and sends no vendor request for stale or invalid state.
+- Added claim-before-POST idempotency. Successful responses retain only a bounded operation/status summary; definitive provider failures mark the pack failed and queue `evidence.rebuild`; network/unknown outcomes remain explicitly uncertain and are not replayed automatically.
+- Added four PostgreSQL execution cases covering exact multipart bytes, stale-stage rebuild, unknown-outcome no-repeat behavior and definitive 422 recovery. The full database suite passed 186 tests, with typecheck and targeted lint also passing. Real PayPal action execution remains **NOT RUN**.
+
 ## 2026-11-10 — H4 merchant evidence-pack approval
 
 - Added endpoint 21 for merchant-owned evidence-pack approval. It validates draft state, dispute/pack ownership, actionable recommendations, offer/claim types, currency and bounded amounts, while rejecting `inspect_first`, `merchant_decides` and Q2 return-based actions.

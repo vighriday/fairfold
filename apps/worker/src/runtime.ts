@@ -8,6 +8,7 @@ import {
   databaseCredentials,
   createPayPalEventHandler,
   createDisputesPoller,
+  createEvidenceSubmitHandler,
   syncDisputePollSchedules,
   type DisputeSynchronizer,
 } from '@fairfold/paypal';
@@ -127,6 +128,12 @@ export function createWorkerRuntime(
             ...intelligenceHandlers,
             'paypal.event': event,
             'disputes.poll': poll,
+            'evidence.submit': createEvidenceSubmitHandler({
+              database,
+              jobs,
+              forMerchant,
+              clock: options.clock,
+            }),
           };
           await jobs.start();
           if (closing) throw new AppError('WORKER_CLOSED', 'Worker closed during startup');

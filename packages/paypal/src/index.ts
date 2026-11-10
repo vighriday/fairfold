@@ -26,6 +26,7 @@ export {
   type SanitizedDisputeMessage,
 } from './dispute-policy.js';
 export { createDisputeSynchronizer } from './dispute-sync.js';
+export { createEvidenceSubmitHandler } from './dispute-execution.js';
 export { createWebhookOperations } from './webhooks.js';
 export { createCheckoutClientFactory, type CheckoutClient } from './checkout.js';
 export {
