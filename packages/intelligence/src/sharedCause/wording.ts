@@ -107,6 +107,37 @@ export function inspectionInstruction(batchCode: string, e: Fault): string {
   return `Photograph a close-up of the ${component} on each unit of batch ${batchCode} and check for: ${failure}.`;
 }
 
+/** Words that end a component's head noun phrase: "print on the front panel" is about the print. */
+const PREPOSITIONS = new Set([
+  'on',
+  'of',
+  'at',
+  'in',
+  'near',
+  'by',
+  'along',
+  'around',
+  'under',
+  'over',
+  'with',
+  'from',
+  'inside',
+  'behind',
+]);
+
+/**
+ * The label of the photo an inspection rule requires (F2's INSPECTION_REQUIRED), named after the faulty part so the
+ * Pack Station asks for the right close-up: "left sleeve seam" → `seam_closeup`, "drawstring eyelet" →
+ * `eyelet_closeup`. The part is the last word before any preposition; `defect_closeup` when none is usable.
+ */
+export function inspectionPhotoLabel(e: Pick<ComplaintExtraction, 'component'>): string {
+  const words = (cleanPhrase(e.component) ?? '').split(/[\s,/-]+/).filter(Boolean);
+  const cut = words.findIndex((w) => PREPOSITIONS.has(w));
+  const head = (cut < 0 ? words : words.slice(0, cut)).at(-1) ?? '';
+  const part = head.replace(/[^a-z0-9]/g, '').slice(0, 24);
+  return `${part || 'defect'}_closeup`;
+}
+
 /** The approved wording the Message Drafter receives (section 10): no buyer, no statistics. */
 export function buyerWording(level: 'suspected' | 'confirmed', dimension: Dimension, e: Fault) {
   const issue = issuePhrase(e);

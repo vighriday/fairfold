@@ -49,7 +49,13 @@ export interface WorldOrder {
   deliveredAt: Date | null;
 }
 
-export async function buildWorld(db: Db, now: Date, opts: { safety?: boolean } = {}) {
+export async function buildWorld(
+  db: Db,
+  now: Date,
+  opts: { safety?: boolean; fault?: Partial<ComplaintExtraction> } = {},
+) {
+  // The shared fault of the B17 complaints (and the one B15 complaint): the seam by default.
+  const fault: ComplaintExtraction = { ...SEAM, ...opts.fault };
   const merchant = await insertMerchant(db);
   const hoodie = await insertProduct(db, merchant.id);
   for (const code of ['B14', 'B15', 'B16']) await insertBatch(db, merchant.id, hoodie.id, code, 0);
@@ -166,10 +172,10 @@ export async function buildWorld(db: Db, now: Date, opts: { safety?: boolean } =
   const complaintsSpec: Array<{ order: WorldOrder; e: ComplaintExtraction; afterDays: number }> = [
     ...[3, 5, 7, 9, 12].map((afterDays, i) => ({
       order: delivered('B17')[i * 3]!,
-      e: opts.safety && i === 0 ? { ...SEAM, severity: 'safety' as const } : SEAM,
+      e: opts.safety && i === 0 ? { ...fault, severity: 'safety' as const } : fault,
       afterDays,
     })),
-    { order: delivered('B15')[0]!, e: SEAM, afterDays: 6 },
+    { order: delivered('B15')[0]!, e: fault, afterDays: 6 },
     { order: delivered('B14')[1]!, e: SIZE, afterDays: 4 },
     { order: delivered('B15')[2]!, e: SIZE, afterDays: 2 },
     { order: delivered('B16')[3]!, e: SIZE, afterDays: 5 },

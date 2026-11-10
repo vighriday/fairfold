@@ -192,6 +192,19 @@ describe.skipIf(!dbUrl)('shared cause scan against Postgres', () => {
     ).toEqual([]);
   });
 
+  it('the inspection rule asks for a close-up of the faulty part, not always the seam', async () => {
+    const w = await buildWorld(database.db, NOW, {
+      fault: { component: 'drawstring eyelet', failureMode: 'metal ring fell out' },
+    });
+    const { runtime } = testRuntime(database.db, { clock: fixedClock(NOW) });
+    const [h] = await runSharedCauseScanWith(runtime, w.merchant.id);
+    const [rule] = await database.db
+      .select()
+      .from(actions)
+      .where(and(eq(actions.hypothesis_id, h!.id), eq(actions.type, 'add_inspection_rule')));
+    expect(rule!.payload).toMatchObject({ batchCode: 'B17', requiredPhotoLabel: 'eyelet_closeup' });
+  });
+
   it('a single safety-severity complaint raises safety_complaint as soon as it is read, once (section 12)', async () => {
     const merchant = await insertMerchant(database.db);
     const product = await insertProduct(database.db, merchant.id);

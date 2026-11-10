@@ -46,10 +46,10 @@ import {
   explanation,
   headline,
   inspectionInstruction,
+  inspectionPhotoLabel,
 } from './wording.js';
 
 export const SCAN_DEBOUNCE_SECONDS = 60;
-export const INSPECTION_PHOTO_LABEL = 'seam_closeup';
 
 async function embedOne(rt: IntelRuntime, text: string): Promise<number[]> {
   const model =
@@ -459,7 +459,7 @@ export async function runSharedCauseScanWith(
               {
                 batchCode: loc.primary.value,
                 instruction: inspectionInstruction(loc.primary.value, fault),
-                requiredPhotoLabel: INSPECTION_PHOTO_LABEL,
+                requiredPhotoLabel: inspectionPhotoLabel(fault),
               },
               now,
             );

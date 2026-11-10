@@ -8,6 +8,7 @@ import {
   explanation,
   headline,
   inspectionInstruction,
+  inspectionPhotoLabel,
 } from '../../src/sharedCause/wording.js';
 
 const seam = {
@@ -95,5 +96,26 @@ describe('shared cause wording', () => {
     expect(buyerWording('confirmed', 'batch_code', seam)).toBe(
       'a fault in one production batch (stitching came apart at the left sleeve seam)',
     );
+  });
+});
+
+describe('inspectionPhotoLabel: the photo the Pack Station must take is named after the faulty part', () => {
+  it('the B17 seam fault asks for seam_closeup', () => {
+    expect(inspectionPhotoLabel(seam)).toBe('seam_closeup');
+  });
+
+  it('uses the head of the component, before any preposition', () => {
+    expect(inspectionPhotoLabel({ ...seam, component: 'drawstring eyelet' })).toBe(
+      'eyelet_closeup',
+    );
+    expect(inspectionPhotoLabel({ ...seam, component: 'print on the front panel' })).toBe(
+      'print_closeup',
+    );
+    expect(inspectionPhotoLabel({ ...seam, component: 'Zip pull!' })).toBe('pull_closeup');
+  });
+
+  it('falls back to defect_closeup when no usable component was read', () => {
+    expect(inspectionPhotoLabel({ ...seam, component: null })).toBe('defect_closeup');
+    expect(inspectionPhotoLabel({ ...seam, component: 'कॉलर' })).toBe('defect_closeup');
   });
 });
