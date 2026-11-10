@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { closeSync, openSync, readFileSync, readSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { ComplaintExtractionSchema } from '@fairfold/contracts';
 
 function load<T>(rel: string): T {
   return JSON.parse(readFileSync(fileURLToPath(new URL(rel, import.meta.url)), 'utf8')) as T;
@@ -21,6 +22,8 @@ type SeedComplaint = {
   carrier: string;
   category: string;
   daysAfterDelivery: number;
+  model: string;
+  extracted: unknown;
 };
 type ReviewFx = {
   id: string;
@@ -88,6 +91,21 @@ describe('complaints.json', () => {
     expect(late).toHaveLength(2);
     expect(new Set(late.map((c) => c.carrier)).size).toBe(2);
     expect(fx.seed.filter((c) => c.category === 'not_as_pictured')).toHaveLength(1);
+  });
+
+  it('every seed complaint carries a pre-read extraction marked model seed', () => {
+    for (const c of fx.seed) {
+      expect(c.model).toBe('seed');
+      const e = ComplaintExtractionSchema.parse(c.extracted);
+      expect(e.category).toBe(c.category);
+    }
+    // the six seam complaints share one fault, so they group together as section 19 expects
+    const seam = fx.seed.filter((c) => c.category === 'product_defect');
+    const faults = seam.map((c) => {
+      const e = ComplaintExtractionSchema.parse(c.extracted);
+      return `${e.component} | ${e.failureMode}`;
+    });
+    expect(new Set(faults)).toEqual(new Set(['sleeve seam | stitching came apart']));
   });
 });
 

@@ -51,22 +51,26 @@ import {
 
 export const SCAN_DEBOUNCE_SECONDS = 60;
 
-async function embedOne(rt: IntelRuntime, text: string): Promise<number[]> {
+/** Embeds texts in one request (batched by the provider's limit), in input order. */
+async function embedTexts(rt: IntelRuntime, texts: string[]): Promise<number[][]> {
+  if (!texts.length) return [];
   const model =
     rt.models.embedding ??
     (hasModelConfig('embedding', rt.env) ? getModel('embedding', rt.env) : null);
-  if (model) {
-    const [vector] = await embed([text], { model, component: 'complaint_reader' });
-    return vector!;
-  }
+  if (model) return embed(texts, { model, component: 'complaint_reader' });
   // DECISIONS.md I-D7: no embedding provider configured (xAI has none), so embed locally.
   logAi({
     event: 'ai_embed',
     component: 'complaint_reader',
     embedding: 'local',
     dimensions: LOCAL_EMBEDDING_DIM,
+    count: texts.length,
   });
-  return localEmbedding(text);
+  return texts.map(localEmbedding);
+}
+
+async function embedOne(rt: IntelRuntime, text: string): Promise<number[]> {
+  return (await embedTexts(rt, [text]))[0]!;
 }
 
 /**
@@ -173,6 +177,32 @@ export function toHypothesis(row: HypothesisRow): Hypothesis {
     stats: HypothesisStatsSchema.parse(row.stats),
     affected: AffectedOrdersSchema.parse(row.affected),
   };
+}
+
+/**
+ * Read complaints without an embedding — the seed's pre-read rows (section 19 fixtures, model 'seed'), stored with
+ * their extraction and no complaint.created — are embedded together in one request before grouping, so seeding
+ * makes no Complaint Reader call and one embedding request. Category other never groups, so it is not embedded.
+ */
+async function embedMissing(rt: IntelRuntime, rows: ComplaintRow[]): Promise<ComplaintRow[]> {
+  const missing = rows.flatMap((r) => {
+    const e = r.embedding ? null : extractionOf(r);
+    return e && e.category !== 'other' ? [{ id: r.id, text: embeddingText(e) }] : [];
+  });
+  if (!missing.length) return rows;
+  const vectors = await embedTexts(
+    rt,
+    missing.map((m) => m.text),
+  );
+  const byId = new Map(missing.map((m, i) => [m.id, vectors[i]!]));
+  await rt.db.transaction(async (tx) => {
+    for (const [id, embedding] of byId)
+      await tx
+        .update(complaints)
+        .set({ embedding })
+        .where(and(eq(complaints.id, id), isNull(complaints.embedding)));
+  });
+  return rows.map((r) => (byId.has(r.id) ? { ...r, embedding: byId.get(r.id)! } : r));
 }
 
 /** Stage 3: place unassigned complaints; persist new clusters, moved centroids and the new assignments. */
@@ -312,10 +342,13 @@ export async function runSharedCauseScanWith(
 ): Promise<Hypothesis[]> {
   const cfg = sharedCauseConfig(rt.env);
   const now = rt.clock.now();
-  const rows = await rt.db
-    .select()
-    .from(complaints)
-    .where(and(eq(complaints.merchant_id, merchantId), isNotNull(complaints.extracted)));
+  const rows = await embedMissing(
+    rt,
+    await rt.db
+      .select()
+      .from(complaints)
+      .where(and(eq(complaints.merchant_id, merchantId), isNotNull(complaints.extracted))),
+  );
   const { assignments, clusterRows } = await groupComplaints(
     rt,
     merchantId,

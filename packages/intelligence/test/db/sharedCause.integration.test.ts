@@ -13,6 +13,9 @@ import { upsertComplaint } from '../../src/complaints/create.js';
 import { createHandlers } from '../../src/handlers.js';
 import { setIntelRuntime } from '../../src/runtime.js';
 import { readComplaintWith, runSharedCauseScanWith } from '../../src/sharedCause/scan.js';
+import { readFileSync } from 'node:fs';
+import { MockEmbeddingModelV4 } from 'ai/test';
+import { LOCAL_EMBEDDING_DIM, localEmbedding } from '../../src/sharedCause/reader.js';
 import { mockModel } from '../helpers/mockModel.js';
 import {
   dbUrl,
@@ -28,6 +31,9 @@ import {
 import { buildWorld, SEAM } from './sharedCauseWorld.js';
 
 const NOW = new Date('2026-11-09T12:00:00.000Z');
+const seedFixture = JSON.parse(
+  readFileSync(new URL('../../eval/fixtures/complaints.json', import.meta.url), 'utf8'),
+) as { seed: Array<{ text: string; extracted: unknown }> };
 
 describe.skipIf(!dbUrl)('shared cause scan against Postgres', () => {
   let database: Awaited<ReturnType<typeof openTestDb>>;
@@ -109,6 +115,44 @@ describe.skipIf(!dbUrl)('shared cause scan against Postgres', () => {
     expect(raised).toHaveLength(1);
     expect(raised[0]).toMatchObject({ type: 'shared_cause', ref_id: h.id });
     expect(raised[0]!.message).toMatch(/^Possible shared product issue: batch B17/);
+  });
+
+  it('seeded complaints with pre-read extractions need no Complaint Reader and one embedding request', async () => {
+    const w = await buildWorld(database.db, NOW);
+    // scripts/seed.ts (section 19) stores each fixture extraction as read and publishes no complaint.created
+    const seed = seedFixture.seed.slice(0, w.complaints.length);
+    for (const [i, c] of w.complaints.entries())
+      await database.db
+        .update(complaints)
+        .set({ text: seed[i]!.text, extracted: seed[i]!.extracted, embedding: null })
+        .where(eq(complaints.id, c.id));
+    const embedding = new MockEmbeddingModelV4({
+      provider: 'mock',
+      modelId: 'mock-embedding',
+      maxEmbeddingsPerCall: 100, // as Gemini's embedding model
+      doEmbed: async ({ values }) => ({
+        embeddings: values.map((v) => localEmbedding(v)),
+        warnings: [],
+      }),
+    });
+    const text = mockModel([{ subject: 'About your {product}', body: 'Order {order}: checking.' }]);
+    const { runtime } = testRuntime(database.db, {
+      clock: fixedClock(NOW),
+      models: { embedding, text: text.model },
+    });
+
+    const [h] = await runSharedCauseScanWith(runtime, w.merchant.id);
+    expect(h).toMatchObject({ dimension: 'batch_code', value: 'B17', status: 'open' });
+    expect(h!.stats.primary).toMatchObject({ n: 39, k: 5, kRest: 1, nRest: 200 });
+    expect(embedding.doEmbedCalls).toHaveLength(1);
+    expect(embedding.doEmbedCalls[0]!.values).toHaveLength(w.complaints.length);
+    const rows = await database.db.select().from(complaints);
+    expect(rows.every((r) => r.embedding?.length === LOCAL_EMBEDDING_DIM)).toBe(true);
+    // the only text-model call is the one buyer-message template (task I6), none reads a complaint
+    expect(text.calls).toHaveLength(1);
+
+    await runSharedCauseScanWith(runtime, w.merchant.id);
+    expect(embedding.doEmbedCalls).toHaveLength(1);
   });
 
   it('re-running the scan is idempotent', async () => {

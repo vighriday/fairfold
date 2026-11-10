@@ -227,3 +227,11 @@ Status: **DEFERRED BY USER; NOT RUN**. The user confirmed accounts do not curren
 - A fallback (no themes because the model failed) is stored without the hash, so the next refresh asks again instead of keeping an empty theme list.
 - `themesInputHash` lives inside `store_reports.report` next to the StoreReport fields. It is not part of the StoreReport contract: `StoreReportSchema` strips it on read, so endpoint 5 and `get_store_report` never return it. No column was added (section 7 unchanged).
 - Contract change: none.
+
+### I-D26 — Seed complaints are pre-read; the scan embeds read complaints that have no vector — 2026-11-10
+- Section 19 has `scripts/seed.ts` (Hriday, H8) read the complaint texts from `packages/intelligence/eval/fixtures/complaints.json`. Reading the 12 seed complaints through the Complaint Reader would spend 12 generative calls, more than half of the free tier's daily text quota, before the demo starts.
+- Each seed complaint in the fixture now carries `extracted`, a hand-written ComplaintExtraction (validated by a test against `ComplaintExtractionSchema`), and `model: "seed"`, the marker section 19 uses for seeded attestations. `complaints` has no model column, so the marker stays in the fixture. The six seam complaints share the fault `sleeve seam | stitching came apart`, so they group together however the embedding model scores paraphrases.
+- For H8: insert each seed complaint with `extracted` set from the fixture (and `order_item_id` / `product_id` from the seeded order) and do not publish `complaint.created`; the final `sharedcause.scan` for Neel does the rest.
+- `runSharedCauseScan` now embeds every read complaint without an embedding (category `other` excepted) in one `embed()` request before grouping, and stores the vectors. Seeding therefore makes no Complaint Reader call and one embedding request (none when the local embedding is used). The seed's vectors come from the same embedding model as the live complaints, so Maya's live dispute is compared in the same space. The same step re-embeds a complaint whose embedding was never stored.
+- The scan's own proposals still cost what they cost: one Message Drafter call for the suspected template (I-D10) and none for the themes when the reviews are unchanged (I-D25).
+- Contract change: additive fields in Ishaan's fixture JSON.

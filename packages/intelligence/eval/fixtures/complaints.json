@@ -1,5 +1,5 @@
 {
-  "_note": "Synthetic complaint texts. 'eval' feeds the clustering-precision eval (3 true clusters plus noise). 'seed' feeds scripts/seed.ts for Neel Block Prints (section 19). All people and stores are fictional.",
+  "_note": "Synthetic complaint texts. 'eval' feeds the clustering-precision eval (3 true clusters plus noise). 'seed' feeds scripts/seed.ts for Neel Block Prints (section 19); each seed complaint carries a hand-written, pre-read ComplaintExtraction marked model 'seed', so the seed stores it in complaints.extracted and makes no Complaint Reader call. All people and stores are fictional.",
   "eval": [
     {
       "id": "ce-01",
@@ -178,7 +178,17 @@
       "carrier": "DHL",
       "category": "product_defect",
       "daysAfterDelivery": 3,
-      "text": "The left sleeve seam opened after I wore the hoodie twice."
+      "text": "The left sleeve seam opened after I wore the hoodie twice.",
+      "model": "seed",
+      "extracted": {
+        "category": "product_defect",
+        "component": "sleeve seam",
+        "failureMode": "stitching came apart",
+        "locationOnItem": "left sleeve",
+        "severity": "functional",
+        "summary": "The left sleeve seam opened after two wears.",
+        "language": "en"
+      }
     },
     {
       "id": "cs-02",
@@ -187,7 +197,17 @@
       "carrier": "FEDEX",
       "category": "product_defect",
       "daysAfterDelivery": 5,
-      "text": "Stitching on the sleeve is coming apart near the cuff."
+      "text": "Stitching on the sleeve is coming apart near the cuff.",
+      "model": "seed",
+      "extracted": {
+        "category": "product_defect",
+        "component": "sleeve seam",
+        "failureMode": "stitching came apart",
+        "locationOnItem": "near the cuff",
+        "severity": "functional",
+        "summary": "Stitching on the sleeve is coming apart near the cuff.",
+        "language": "en"
+      }
     },
     {
       "id": "cs-03",
@@ -196,7 +216,17 @@
       "carrier": "UPS",
       "category": "product_defect",
       "daysAfterDelivery": 7,
-      "text": "Sleeve seam split after the first wash, small hole by the elbow."
+      "text": "Sleeve seam split after the first wash, small hole by the elbow.",
+      "model": "seed",
+      "extracted": {
+        "category": "product_defect",
+        "component": "sleeve seam",
+        "failureMode": "stitching came apart",
+        "locationOnItem": "by the elbow",
+        "severity": "functional",
+        "summary": "The sleeve seam split after the first wash, leaving a small hole.",
+        "language": "en"
+      }
     },
     {
       "id": "cs-04",
@@ -205,7 +235,17 @@
       "carrier": "OTHER",
       "category": "product_defect",
       "daysAfterDelivery": 9,
-      "text": "The arm seam is unravelling, loose threads all along it."
+      "text": "The arm seam is unravelling, loose threads all along it.",
+      "model": "seed",
+      "extracted": {
+        "category": "product_defect",
+        "component": "sleeve seam",
+        "failureMode": "stitching came apart",
+        "locationOnItem": "along the arm",
+        "severity": "functional",
+        "summary": "The arm seam is unravelling with loose threads.",
+        "language": "en"
+      }
     },
     {
       "id": "cs-05",
@@ -214,7 +254,17 @@
       "carrier": "DHL",
       "category": "product_defect",
       "daysAfterDelivery": 12,
-      "text": "Seam where the sleeve joins the shoulder has pulled open."
+      "text": "Seam where the sleeve joins the shoulder has pulled open.",
+      "model": "seed",
+      "extracted": {
+        "category": "product_defect",
+        "component": "sleeve seam",
+        "failureMode": "stitching came apart",
+        "locationOnItem": "where the sleeve joins the shoulder",
+        "severity": "functional",
+        "summary": "The seam where the sleeve joins the shoulder pulled open.",
+        "language": "en"
+      }
     },
     {
       "id": "cs-06",
@@ -223,7 +273,17 @@
       "carrier": "FEDEX",
       "category": "product_defect",
       "daysAfterDelivery": 6,
-      "text": "A few stitches on the sleeve seam came loose."
+      "text": "A few stitches on the sleeve seam came loose.",
+      "model": "seed",
+      "extracted": {
+        "category": "product_defect",
+        "component": "sleeve seam",
+        "failureMode": "stitching came apart",
+        "locationOnItem": null,
+        "severity": "functional",
+        "summary": "A few stitches on the sleeve seam came loose.",
+        "language": "en"
+      }
     },
     {
       "id": "cs-07",
@@ -232,7 +292,17 @@
       "carrier": "UPS",
       "category": "size_fit",
       "daysAfterDelivery": 4,
-      "text": "Runs small, the medium fits like a small."
+      "text": "Runs small, the medium fits like a small.",
+      "model": "seed",
+      "extracted": {
+        "category": "size_fit",
+        "component": "chest",
+        "failureMode": "runs small",
+        "locationOnItem": null,
+        "severity": "cosmetic",
+        "summary": "Runs small; the medium fits like a small.",
+        "language": "en"
+      }
     },
     {
       "id": "cs-08",
@@ -241,7 +311,17 @@
       "carrier": "DHL",
       "category": "size_fit",
       "daysAfterDelivery": 2,
-      "text": "Sizing is tight across the chest, size up."
+      "text": "Sizing is tight across the chest, size up.",
+      "model": "seed",
+      "extracted": {
+        "category": "size_fit",
+        "component": "chest",
+        "failureMode": "runs small",
+        "locationOnItem": null,
+        "severity": "cosmetic",
+        "summary": "Tight across the chest; the buyer suggests sizing up.",
+        "language": "en"
+      }
     },
     {
       "id": "cs-09",
@@ -250,7 +330,17 @@
       "carrier": "FEDEX",
       "category": "size_fit",
       "daysAfterDelivery": 8,
-      "text": "A bit small for the size on the label."
+      "text": "A bit small for the size on the label.",
+      "model": "seed",
+      "extracted": {
+        "category": "size_fit",
+        "component": "chest",
+        "failureMode": "runs small",
+        "locationOnItem": null,
+        "severity": "cosmetic",
+        "summary": "Smaller than the size on the label.",
+        "language": "en"
+      }
     },
     {
       "id": "cs-10",
@@ -259,7 +349,17 @@
       "carrier": "UPS",
       "category": "late",
       "daysAfterDelivery": 0,
-      "text": "Arrived ten days after the estimated date."
+      "text": "Arrived ten days after the estimated date.",
+      "model": "seed",
+      "extracted": {
+        "category": "late",
+        "component": null,
+        "failureMode": "arrived late",
+        "locationOnItem": null,
+        "severity": "cosmetic",
+        "summary": "Arrived ten days after the estimated date.",
+        "language": "en"
+      }
     },
     {
       "id": "cs-11",
@@ -268,7 +368,17 @@
       "carrier": "OTHER",
       "category": "late",
       "daysAfterDelivery": 0,
-      "text": "Delivery was very late, no updates for a week."
+      "text": "Delivery was very late, no updates for a week.",
+      "model": "seed",
+      "extracted": {
+        "category": "late",
+        "component": null,
+        "failureMode": "arrived late",
+        "locationOnItem": null,
+        "severity": "cosmetic",
+        "summary": "Delivery was very late with no updates for a week.",
+        "language": "en"
+      }
     },
     {
       "id": "cs-12",
@@ -277,7 +387,17 @@
       "carrier": "DHL",
       "category": "not_as_pictured",
       "daysAfterDelivery": 3,
-      "text": "The ochre looks more brown than in the photos."
+      "text": "The ochre looks more brown than in the photos.",
+      "model": "seed",
+      "extracted": {
+        "category": "not_as_pictured",
+        "component": "colour",
+        "failureMode": "looks more brown than pictured",
+        "locationOnItem": null,
+        "severity": "cosmetic",
+        "summary": "The ochre colour looks more brown than in the photos.",
+        "language": "en"
+      }
     }
   ],
   "liveDispute": {
