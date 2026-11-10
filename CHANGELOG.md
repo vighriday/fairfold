@@ -13,7 +13,8 @@ All authored work in this checkout is on `Hriday`. Entries distinguish documenta
 
 - Added the merchant-scoped synchronizer shared by verified webhook and poll callbacks. It re-fetches authoritative dispute details, applies the approved retention boundary, maps seller transactions or exact merchant invoices, upserts the dispute, appends first-open/resolution ledger effects and publishes `dispute.synced` in the same PostgreSQL transaction.
 - Wired the worker to use this synchronizer by default while retaining injected synchronizers for tests. Existing event-handler/poller regression cases, typecheck and targeted lint passed.
-- Database synchronizer integration cases and real PayPal dispute delivery/action evidence remain NOT RUN; no vendor mutation or real fixture was created.
+- Added five PostgreSQL synchronizer cases for capture/invoice mapping, message dedupe, resolution timestamps/ledger effects, queue rollback and detail-ID isolation. All five passed with the pure H4 suite, typecheck and targeted lint.
+- Real PayPal dispute delivery/action evidence remains NOT RUN; no vendor mutation or real fixture was created.
 
 ## 2026-11-10 — H3 worker runtime and acceptance closeout
 

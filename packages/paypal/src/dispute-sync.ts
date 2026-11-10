@@ -59,6 +59,8 @@ export function createDisputeSynchronizer(options: {
     disputeId(inputId);
     const paypal = await options.forMerchant(merchantId);
     const source = sourceObject(await paypal.disputes.get(inputId), 'body');
+    if (source.dispute_id !== inputId)
+      throw new AppError('DISPUTE_DETAIL_INVALID', 'Dispute detail ID does not match request', 502);
     const transactions = sourceTransactions(source.disputed_transactions);
     const client = await options.database.pool.connect();
     try {
