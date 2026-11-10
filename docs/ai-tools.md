@@ -44,7 +44,7 @@ Produced by `pnpm --filter @fairfold/intelligence eval` on 2026-11-10 with Googl
 
 **The section 19 demo numbers, through the real pipeline.** Run against PostgreSQL 16 on a seed-shaped synthetic world (200 delivered B14–B16 hoodie orders, 39 delivered and 4 in-transit B17 orders, 18 unshipped orders, 5 B17 seam complaints, 1 B15 seam complaint and 6 noise complaints): the scan raised one hypothesis, batch_code = B17, **strong** — 5 of 39 orders, rate ratio 25.6, p 0.00060, q 0.0078 with 13 values tested — and listed **18 unshipped orders to hold**, 4 in transit and 34 delivered without a complaint for messages. When a sixth seam complaint arrives as a dispute on a B17 order delivered that day, the same hypothesis updates to 6 of 40, **rate ratio 30.8**, p 0.00011, q 0.0015, and the dispute's evidence pack is queued for rebuild as `inspect_first`. This world is built by the integration tests, not by `pnpm seed` (Hriday's seed script is not written yet); all of it is synthetic.
 
-Automated checks: the intelligence package's 228 tests (unit and PostgreSQL integration) pass, including prompt-injection, double schema-failure, zero-count statistics, invented-number narrative and grey-not-red cases.
+Automated checks: the intelligence package's 230 tests (unit and PostgreSQL integration) pass, including prompt-injection, double schema-failure, zero-count statistics, invented-number narrative and grey-not-red cases.
 
 ## Cost note
 
