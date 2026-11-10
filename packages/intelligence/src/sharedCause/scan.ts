@@ -2,7 +2,7 @@
 // code embeds, groups, tests, picks the affected orders and proposes actions. Nothing here executes an action:
 // every hold, rule and message is a proposal the merchant approves and Hriday's module carries out.
 import { randomUUID } from 'node:crypto';
-import { and, asc, eq, gt, inArray, isNotNull, isNull, lt, ne, sql } from 'drizzle-orm';
+import { and, asc, eq, gt, inArray, isNotNull, isNull, lt, ne, notInArray, sql } from 'drizzle-orm';
 import { embed, getModel, hasModelConfig, logAi } from '@fairfold/ai';
 import {
   AffectedOrdersSchema,
@@ -21,12 +21,14 @@ import {
   hypotheses,
   inventory_batches,
   order_items,
+  orders,
 } from '@fairfold/db';
 import { createBlobStore, type DatabaseExecutor } from '@fairfold/ledger';
 import { raiseAlertOnce } from '../alerts.js';
 import { attestBuyerPhotos } from '../evidence/buyerPhotos.js';
 import { getIntelRuntime, type IntelRuntime } from '../runtime.js';
 import { draftBuyerMessagesWith } from './actions.js';
+import { RETIRED_REASON, withdrawAndProposeRelease, withdrawPendingRelease } from './lifecycle.js';
 import { affectedOrders } from './affected.js';
 import { assignClusters, eligibleClusters, type ClusterState } from './grouping.js';
 import { localise } from './localise.js';
@@ -43,6 +45,7 @@ import { sharedCauseConfig } from './stats.js';
 import {
   cleanPhrase,
   clusterLabel,
+  DIMENSION_LABEL,
   explanation,
   headline,
   inspectionInstruction,
@@ -328,19 +331,56 @@ async function proposeOnce(
       .values({ hypothesis_id: hypothesisId, type, payload, created_at: now });
 }
 
-/** Orders already covered by an approved or finished hold for this hypothesis. */
+/**
+ * Orders this hypothesis holds now, or whose hold the merchant approved and Hriday has yet to carry out. A withdrawn
+ * or released hold covers nothing, so a reopened hypothesis proposes those orders again.
+ */
 async function alreadyHeld(tx: DatabaseExecutor, hypothesisId: string): Promise<Set<string>> {
-  const rows = await tx
+  const held = await tx
+    .select({ id: orders.id })
+    .from(orders)
+    .where(eq(orders.held_by_hypothesis_id, hypothesisId));
+  const approved = await tx
     .select({ payload: actions.payload })
     .from(actions)
     .where(
       and(
         eq(actions.hypothesis_id, hypothesisId),
         eq(actions.type, 'hold_orders'),
-        ne(actions.status, 'proposed'),
+        eq(actions.status, 'approved'),
       ),
     );
-  return new Set(rows.flatMap((r) => (r.payload as { orderIds?: string[] }).orderIds ?? []));
+  return new Set([
+    ...held.map((o) => o.id),
+    ...approved.flatMap((r) => (r.payload as { orderIds?: string[] }).orderIds ?? []),
+  ]);
+}
+
+/**
+ * Open hypotheses of the merchant that this scan did not find again — their cluster is no longer eligible or no value
+ * is significant any more — are retired (status superseded, so they reopen if they become significant again).
+ */
+async function retireStale(rt: IntelRuntime, merchantId: string, live: string[], now: Date) {
+  const stale = await rt.db
+    .select({ id: hypotheses.id })
+    .from(hypotheses)
+    .where(
+      and(
+        eq(hypotheses.merchant_id, merchantId),
+        eq(hypotheses.status, 'open'),
+        live.length ? notInArray(hypotheses.id, live) : undefined,
+      ),
+    );
+  for (const { id } of stale)
+    await rt.db.transaction(async (tx) => {
+      const [retired] = await tx
+        .update(hypotheses)
+        .set({ status: 'superseded' })
+        .where(and(eq(hypotheses.id, id), eq(hypotheses.status, 'open')))
+        .returning({ id: hypotheses.id });
+      if (retired)
+        await withdrawAndProposeRelease(tx, id, 'hypothesis_retired', RETIRED_REASON, now);
+    });
 }
 
 /**
@@ -408,7 +448,10 @@ async function scanMerchant(rt: IntelRuntime, merchantId: string): Promise<Hypot
   const eligible = eligibleClusters(
     members.map((m) => ({ clusterId: m.clusterId, orderId: m.order_id })),
   );
-  if (!eligible.length) return [];
+  if (!eligible.length) {
+    await retireStale(rt, merchantId, [], now);
+    return [];
+  }
 
   const allOrders = await loadScanOrders(rt, merchantId);
   const result: Hypothesis[] = [];
@@ -504,7 +547,9 @@ async function scanMerchant(rt: IntelRuntime, merchantId: string): Promise<Hypot
               created_at: now,
             })
             .returning();
-      await tx
+      // The cluster's earlier open primaries are superseded; their proposals are withdrawn and their holds and
+      // inspection rule proposed for release.
+      const superseded = await tx
         .update(hypotheses)
         .set({ status: 'superseded' })
         .where(
@@ -513,7 +558,18 @@ async function scanMerchant(rt: IntelRuntime, merchantId: string): Promise<Hypot
             ne(hypotheses.id, saved!.id),
             eq(hypotheses.status, 'open'),
           ),
+        )
+        .returning({ id: hypotheses.id });
+      for (const s of superseded)
+        await withdrawAndProposeRelease(
+          tx,
+          s.id,
+          'hypothesis_superseded',
+          `The shared cause now points to ${DIMENSION_LABEL[loc.primary.dimension]} ${loc.primary.value}.`,
+          now,
         );
+      if (existing?.status === 'superseded' && saved!.status === 'open')
+        await withdrawPendingRelease(tx, saved!.id);
 
       if (saved!.status === 'open') {
         if (loc.primary.dimension === 'batch_code') {
@@ -526,11 +582,16 @@ async function scanMerchant(rt: IntelRuntime, merchantId: string): Promise<Hypot
             toHold.length ? { orderIds: toHold } : null,
             now,
           );
+          // A withdrawn or failed rule proposal does not count: a reopened hypothesis proposes the rule again.
           const [rule] = await tx
             .select({ id: actions.id })
             .from(actions)
             .where(
-              and(eq(actions.hypothesis_id, saved!.id), eq(actions.type, 'add_inspection_rule')),
+              and(
+                eq(actions.hypothesis_id, saved!.id),
+                eq(actions.type, 'add_inspection_rule'),
+                inArray(actions.status, ['proposed', 'approved', 'done']),
+              ),
             );
           if (!rule)
             await proposeOnce(
@@ -588,6 +649,12 @@ async function scanMerchant(rt: IntelRuntime, merchantId: string): Promise<Hypot
     if (row.status === 'open' && !safety) await draftBuyerMessagesWith(rt, row.id, 'suspected');
     result.push(toHypothesis(row));
   }
+  await retireStale(
+    rt,
+    merchantId,
+    result.map((h) => h.id),
+    now,
+  );
   return result;
 }
 

@@ -84,8 +84,10 @@ export async function draftBuyerMessagesWith(
       .from(actions)
       .where(and(eq(actions.hypothesis_id, h.id), eq(actions.type, 'send_buyer_messages')))
   ).filter((a) => (a.payload as SendPayload).level === level);
+  // Drafts under a withdrawn (failed) action were never sent: those buyers are drafted again if the hypothesis reopens.
+  const live = sendActions.filter((a) => a.status !== 'failed');
   const messaged = new Set(
-    sendActions.length
+    live.length
       ? (
           await rt.db
             .select({ buyerId: messages.buyer_id })
@@ -93,7 +95,7 @@ export async function draftBuyerMessagesWith(
             .where(
               inArray(
                 messages.action_id,
-                sendActions.map((a) => a.id),
+                live.map((a) => a.id),
               ),
             )
         ).map((m) => m.buyerId)

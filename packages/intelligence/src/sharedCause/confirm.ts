@@ -2,9 +2,10 @@
 // come only from the inspection attestations; the merchant presses the button, code checks the evidence.
 import { and, eq, inArray, isNull, ne } from 'drizzle-orm';
 import { AppError, AttestationResultSchema, type HypothesisDetail } from '@fairfold/contracts';
-import { actions, attestations, complaints, disputes, hypotheses, orders } from '@fairfold/db';
+import { actions, attestations, complaints, disputes, hypotheses } from '@fairfold/db';
 import type { IntelRuntime } from '../runtime.js';
 import { draftBuyerMessagesWith } from './actions.js';
+import { withdrawAndProposeRelease } from './lifecycle.js';
 import { hypothesisDetail, ownedHypothesis } from './views.js';
 
 const notOpen = () =>
@@ -95,8 +96,9 @@ export async function confirmHypothesis(
 }
 
 /**
- * Endpoint 27: sets dismissed, proposes release_orders for the orders this hypothesis held, and withdraws its
- * still-proposed actions (status failed, result { withdrawn: 'hypothesis_dismissed', reason }).
+ * Endpoint 27: sets dismissed, withdraws its still-proposed actions (status failed, result { withdrawn:
+ * 'hypothesis_dismissed', reason }) and proposes release_orders { orderIds, inspectionRuleIds, reason } for the orders
+ * it holds and for switching off the inspection rule it created.
  */
 export async function dismissHypothesis(
   rt: IntelRuntime,
@@ -107,11 +109,6 @@ export async function dismissHypothesis(
   const h = await ownedHypothesis(rt, merchantId, hypothesisId);
   if (h.status !== 'open' && h.status !== 'confirmed')
     throw new AppError('HYPOTHESIS_NOT_OPEN', `This shared cause is ${h.status}`, 409);
-  const held = await rt.db
-    .select({ id: orders.id })
-    .from(orders)
-    .where(eq(orders.held_by_hypothesis_id, h.id))
-    .orderBy(orders.id);
   const now = rt.clock.now();
   await rt.db.transaction(async (tx) => {
     const [dismissed] = await tx
@@ -120,17 +117,7 @@ export async function dismissHypothesis(
       .where(and(eq(hypotheses.id, h.id), inArray(hypotheses.status, ['open', 'confirmed'])))
       .returning({ id: hypotheses.id });
     if (!dismissed) throw notOpen();
-    await tx
-      .update(actions)
-      .set({ status: 'failed', result: { withdrawn: 'hypothesis_dismissed', reason } })
-      .where(and(eq(actions.hypothesis_id, h.id), eq(actions.status, 'proposed')));
-    if (held.length)
-      await tx.insert(actions).values({
-        hypothesis_id: h.id,
-        type: 'release_orders',
-        payload: { orderIds: held.map((o) => o.id), reason },
-        created_at: now,
-      });
+    await withdrawAndProposeRelease(tx, h.id, 'hypothesis_dismissed', reason, now);
   });
   return hypothesisDetail(rt, merchantId, h.id);
 }
