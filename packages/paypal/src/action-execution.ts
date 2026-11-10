@@ -37,20 +37,33 @@ export function createActionHandler(options: {
     const orderIds = Array.isArray(payload.orderIds)
       ? payload.orderIds.filter((id): id is string => typeof id === 'string')
       : [];
-    if (
-      ['hold_orders', 'release_orders', 'proactive_refund'].includes(row.action.type) &&
-      !orderIds.length
-    )
+    // release_orders may also (or only) switch off the inspection rules the hypothesis created (I-D34).
+    const inspectionRuleIds =
+      row.action.type === 'release_orders' && Array.isArray(payload.inspectionRuleIds)
+        ? payload.inspectionRuleIds.filter((id): id is string => typeof id === 'string')
+        : [];
+    if (['hold_orders', 'proactive_refund'].includes(row.action.type) && !orderIds.length)
       throw new AppError('ACTION_PAYLOAD_INVALID', 'Action order list is required', 409);
+    if (row.action.type === 'release_orders' && !orderIds.length && !inspectionRuleIds.length)
+      throw new AppError(
+        'ACTION_PAYLOAD_INVALID',
+        'A release needs orders or inspection rules',
+        409,
+      );
     if (row.action.type === 'hold_orders' || row.action.type === 'release_orders') {
       await options.database.db.transaction(async (tx) => {
-        const owned = await tx
-          .select()
-          .from(orders)
-          .where(
-            and(eq(orders.merchant_id, row.hypothesis.merchant_id), inArray(orders.id, orderIds)),
-          )
-          .for('update');
+        const owned = orderIds.length
+          ? await tx
+              .select()
+              .from(orders)
+              .where(
+                and(
+                  eq(orders.merchant_id, row.hypothesis.merchant_id),
+                  inArray(orders.id, orderIds),
+                ),
+              )
+              .for('update')
+          : [];
         if (owned.length !== orderIds.length)
           throw new AppError(
             'ACTION_OWNERSHIP_FAILED',
@@ -83,9 +96,34 @@ export function createActionHandler(options: {
             });
           }
         }
+        if (inspectionRuleIds.length) {
+          const switchedOff = await tx
+            .update(inspection_rules)
+            .set({ active: false })
+            .where(
+              and(
+                eq(inspection_rules.merchant_id, row.hypothesis.merchant_id),
+                inArray(inspection_rules.id, inspectionRuleIds),
+              ),
+            )
+            .returning({ id: inspection_rules.id });
+          if (switchedOff.length !== inspectionRuleIds.length)
+            throw new AppError(
+              'ACTION_OWNERSHIP_FAILED',
+              'Action includes another merchant inspection rule',
+              409,
+            );
+        }
         await tx
           .update(actions)
-          .set({ status: 'done', result: { orderIds, completedAt: clock.now().toISOString() } })
+          .set({
+            status: 'done',
+            result: {
+              orderIds,
+              ...(row.action.type === 'release_orders' ? { inspectionRuleIds } : {}),
+              completedAt: clock.now().toISOString(),
+            },
+          })
           .where(eq(actions.id, actionId));
       });
       return;
