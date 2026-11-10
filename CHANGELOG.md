@@ -19,6 +19,7 @@ All authored work in this checkout is on `Hriday`. Entries distinguish documenta
 - Added the deterministic `pnpm seed` command for fictional catalogue merchants/products. It is explicitly PayPal-free and reports the missing B17/Ishaan fixture and real sandbox-ID gates instead of fabricating them.
 - Added authenticated MCP HTTP contract coverage and explicit `MCP_METHOD_NOT_FOUND`/`MCP_TOOL_NOT_FOUND` responses instead of generic server errors for unsupported requests.
 - Added an injected authenticated MCP transport for the shopper policy loop. It validates JSON-RPC tool results, preserves explicit MCP error codes, requires a bearer token, and keeps the transport independent of model/provider execution.
+- Added PostgreSQL-backed end-to-end coverage that drives the shopper policy through the authenticated MCP route and verifies the sandbox context passed to checkout.
 - Added PostgreSQL coverage for photo persistence, inspection queue publication and concurrent sealing. **192 database tests passed**; typecheck, targeted lint and formatting passed. I2 attestation/actions, real PayPal tracking and A6/A7/A11 remain **NOT RUN**.
 
 ## 2026-11-10 — H4 approved action execution
