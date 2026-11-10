@@ -5,6 +5,7 @@ All authored work in this checkout is on `Hriday`. Entries distinguish documenta
 ## 2026-11-10 — Ishaan: intelligence Phase 1 fixes (`ishaan` branch)
 
 - I3: one Buyer Signal per order, computed at capture (section 10). `computeBuyerSignal(orderId)` now returns the stored signal when one exists, so Hriday's order-detail read no longer writes a row and spends a model call on every page view, and a redelivered `order.captured` job stores nothing new. Concurrent first calls are serialised per order with a transaction-scoped advisory lock (no schema change). Three new PostgreSQL tests; 233 intelligence tests, 238 offline tests, typecheck and lint pass. DECISIONS.md I-D17.
+- I6: a safety-severity complaint now raises a `safety_complaint` alert as soon as the Complaint Reader reads it (section 12), not only when it joins a significant shared cause. The extraction and the alert are saved in one transaction; alerts are deduplicated per merchant, type and ref under an advisory lock, shared by the reader and the scan. One new PostgreSQL test; 234 intelligence tests pass. DECISIONS.md I-D18.
 
 ## 2026-11-09 — H1 initial hosted URL bootstrap
 

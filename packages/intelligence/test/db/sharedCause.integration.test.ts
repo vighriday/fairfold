@@ -18,7 +18,9 @@ import {
   dbUrl,
   insertBuyer,
   insertDispute,
+  insertMerchant,
   insertOrder,
+  insertProduct,
   openTestDb,
   resetTables,
   testRuntime,
@@ -188,6 +190,46 @@ describe.skipIf(!dbUrl)('shared cause scan against Postgres', () => {
         .from(actions)
         .where(and(eq(actions.hypothesis_id, h!.id), eq(actions.type, 'send_buyer_messages'))),
     ).toEqual([]);
+  });
+
+  it('a single safety-severity complaint raises safety_complaint as soon as it is read, once (section 12)', async () => {
+    const merchant = await insertMerchant(database.db);
+    const product = await insertProduct(database.db, merchant.id);
+    const buyer = await insertBuyer(database.db);
+    const { order } = await insertOrder(database.db, {
+      merchantId: merchant.id,
+      buyerId: buyer.id,
+      product,
+      status: 'delivered',
+    });
+    const { runtime } = testRuntime(database.db, {
+      clock: fixedClock(NOW),
+      models: { text: mockModel([{ ...SEAM, severity: 'safety' }]).model },
+    });
+    const { id } = await upsertComplaint(runtime, {
+      merchantId: merchant.id,
+      orderId: order.id,
+      buyerId: buyer.id,
+      source: 'buyer_report',
+      sourceRef: 'report-1',
+      text: 'The zip pull snapped and cut my hand.',
+    });
+
+    await readComplaint(runtime, id);
+    await readComplaint(runtime, id); // a redelivered complaint.created job
+
+    const raised = await database.db
+      .select()
+      .from(alerts)
+      .where(eq(alerts.type, 'safety_complaint'));
+    expect(raised).toHaveLength(1);
+    expect(raised[0]).toMatchObject({
+      merchant_id: merchant.id,
+      order_id: order.id,
+      ref_id: id,
+    });
+    expect(raised[0]!.message).toMatch(/safety/i);
+    expect(await database.db.select().from(hypotheses)).toEqual([]);
   });
 
   it('complaint.created reads the complaint; sharedcause.scan and sweep run the scan through the handler map', async () => {

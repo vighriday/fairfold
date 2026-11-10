@@ -15,7 +15,6 @@ import {
 } from '@fairfold/contracts';
 import {
   actions,
-  alerts,
   complaint_clusters,
   complaints,
   disputes,
@@ -24,6 +23,7 @@ import {
   order_items,
 } from '@fairfold/db';
 import { createBlobStore, type DatabaseExecutor } from '@fairfold/ledger';
+import { raiseAlertOnce } from '../alerts.js';
 import type { IntelRuntime } from '../runtime.js';
 import { draftBuyerMessages } from './actions.js';
 import { affectedOrders } from './affected.js';
@@ -39,7 +39,13 @@ import {
   MAX_COMPLAINT_PHOTOS,
 } from './reader.js';
 import { sharedCauseConfig } from './stats.js';
-import { clusterLabel, explanation, headline, inspectionInstruction } from './wording.js';
+import {
+  cleanPhrase,
+  clusterLabel,
+  explanation,
+  headline,
+  inspectionInstruction,
+} from './wording.js';
 
 export const SCAN_DEBOUNCE_SECONDS = 60;
 export const INSPECTION_PHOTO_LABEL = 'seam_closeup';
@@ -110,10 +116,26 @@ export async function readComplaint(
   }
 
   const embedding = await embedOne(rt, embeddingText(extraction));
-  await rt.db
-    .update(complaints)
-    .set({ extracted: extraction, embedding, order_item_id: itemId, product_id: productId })
-    .where(eq(complaints.id, c.id));
+  await rt.db.transaction(async (tx) => {
+    await tx
+      .update(complaints)
+      .set({ extracted: extraction, embedding, order_item_id: itemId, product_id: productId })
+      .where(eq(complaints.id, c.id));
+    // Section 12: a safety complaint alerts the merchant at once, whether or not it ever joins a shared cause.
+    if (extraction.severity === 'safety') {
+      const component = cleanPhrase(extraction.component);
+      await raiseAlertOnce(tx, {
+        merchantId: c.merchant_id,
+        type: 'safety_complaint',
+        refId: c.id,
+        orderId: c.order_id,
+        message:
+          `A buyer complaint reports a possible safety risk${component ? ` (${component})` : ''}. ` +
+          'Review it now; product-safety reporting duties may apply.',
+        now: rt.clock.now(),
+      });
+    }
+  });
   await rt.jobs.publishDebounced('sharedcause.scan', c.merchant_id, SCAN_DEBOUNCE_SECONDS);
   return extraction;
 }
@@ -264,26 +286,6 @@ async function alreadyHeld(tx: DatabaseExecutor, hypothesisId: string): Promise<
       ),
     );
   return new Set(rows.flatMap((r) => (r.payload as { orderIds?: string[] }).orderIds ?? []));
-}
-
-async function raiseAlert(
-  tx: DatabaseExecutor,
-  merchantId: string,
-  type: 'shared_cause' | 'safety_complaint',
-  refId: string,
-  message: string,
-  now: Date,
-) {
-  const [existing] = await tx
-    .select({ id: alerts.id })
-    .from(alerts)
-    .where(
-      and(eq(alerts.merchant_id, merchantId), eq(alerts.type, type), eq(alerts.ref_id, refId)),
-    );
-  if (!existing)
-    await tx
-      .insert(alerts)
-      .values({ merchant_id: merchantId, type, ref_id: refId, message, created_at: now });
 }
 
 /**
@@ -449,23 +451,21 @@ export async function runSharedCauseScan(
               now,
             );
         }
-        await raiseAlert(
-          tx,
+        await raiseAlertOnce(tx, {
           merchantId,
-          'shared_cause',
-          saved!.id,
-          `${headline('open', cluster.category, loc.primary.dimension, loc.primary.value)} — ${loc.primary.k} complaints about "${cluster.label}".`,
+          type: 'shared_cause',
+          refId: saved!.id,
+          message: `${headline('open', cluster.category, loc.primary.dimension, loc.primary.value)} — ${loc.primary.k} complaints about "${cluster.label}".`,
           now,
-        );
+        });
         if (safety)
-          await raiseAlert(
-            tx,
+          await raiseAlertOnce(tx, {
             merchantId,
-            'safety_complaint',
-            saved!.id,
-            `A complaint in "${cluster.label}" reports a safety risk. Product-safety reporting duties may apply.`,
+            type: 'safety_complaint',
+            refId: saved!.id,
+            message: `A complaint in "${cluster.label}" reports a safety risk. Product-safety reporting duties may apply.`,
             now,
-          );
+          });
       }
       return { row: saved!, isNew: !existing || existing.status === 'superseded' };
     });

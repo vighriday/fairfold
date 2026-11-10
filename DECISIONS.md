@@ -173,3 +173,9 @@ Status: **DEFERRED BY USER; NOT RUN**. The user confirmed accounts do not curren
 - The `order.captured` handler and endpoint 9 use the same path, so a redelivered job stores nothing new. Concurrent first calls take a transaction-scoped advisory lock on the order (`pg_advisory_xact_lock`) and re-check before inserting, so exactly one row is written without a schema change.
 - An order with no buyer cannot be stored (`buyer_signals.buyer_id` is required) and is scored on each call.
 - Contract change: none (the function keeps its section 15 signature; behaviour now matches section 10).
+
+### I-D18 — Safety complaints alert immediately — 2026-11-10
+- Section 12 (owner Ishaan): "A complaint with severity = safety raises an immediate alert and blocks automatic buyer messaging." Before this change the alert was raised only when the complaint's cluster produced a significant hypothesis, so a lone safety complaint alerted nobody.
+- `readComplaint` now raises `safety_complaint` with `ref_id` = the complaint id and the complaint's order, in the same transaction that stores the extraction. The scan still raises its own `safety_complaint` for a safety-flagged hypothesis (`ref_id` = hypothesis id), and a safety flag still means no buyer message drafts.
+- Alerts are raised once per (merchant, type, ref_id). `alerts` has no unique key (Hriday owns the migration), so the check and insert run under a transaction-scoped advisory lock on that triple.
+- Contract change: none.
