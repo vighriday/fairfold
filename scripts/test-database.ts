@@ -19,6 +19,7 @@ const result = spawnSync(
     'run',
     'schema.integration.test.ts',
     'storage.integration.test.ts',
+    'retention.integration.test.ts',
     'jobs.integration.test.ts',
     'credentials.integration.test.ts',
     'registration.integration.test.ts',

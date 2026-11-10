@@ -14,6 +14,7 @@ import {
   syncDisputePollSchedules,
   type DisputeSynchronizer,
 } from '@fairfold/paypal';
+import { createRetentionHandler } from '@fairfold/ledger';
 
 export function readWorkerConfig(environment: NodeJS.ProcessEnv = process.env) {
   try {
@@ -146,6 +147,10 @@ export function createWorkerRuntime(
               database,
               jobs,
               forMerchant,
+              clock: options.clock,
+            }),
+            'retention.sweep': createRetentionHandler({
+              database: database.db,
               clock: options.clock,
             }),
           };

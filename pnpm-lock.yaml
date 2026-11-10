@@ -271,6 +271,9 @@ importers:
       '@fairfold/jobs':
         specifier: workspace:*
         version: link:../../packages/jobs
+      '@fairfold/ledger':
+        specifier: workspace:*
+        version: link:../../packages/ledger
       '@fairfold/paypal':
         specifier: workspace:*
         version: link:../../packages/paypal
