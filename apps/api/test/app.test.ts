@@ -1,6 +1,7 @@
 import { Writable } from 'node:stream';
 import { afterEach, describe, expect, it } from 'vitest';
 import { DemoSubjects, fixedClock } from '@fairfold/contracts';
+import { INTEL_ROUTES } from '@fairfold/contracts/intel';
 import { createApi } from '../src/app.js';
 import { createAuth, requireAuth, requireSubject } from '../src/auth.js';
 import { readConfig } from '../src/config.js';
@@ -48,6 +49,21 @@ describe('H1 API foundation', () => {
     const response = await unavailable.inject('/healthz');
     expect(response.statusCode).toBe(503);
     expect(response.body).not.toContain('private connection');
+  });
+  it('registers all 18 intelligence endpoints of section 11 beside the platform routes', async () => {
+    const app = await appFixture();
+    const paths = (await app.inject('/docs/json')).json().paths as Record<
+      string,
+      Record<string, unknown>
+    >;
+    const routes = Object.values(INTEL_ROUTES);
+    expect(routes).toHaveLength(18);
+    for (const route of routes) {
+      const openApiPath = route.path.replace(/:([A-Za-z]+)/g, '{$1}');
+      expect(paths[openApiPath], `${route.method} ${route.path}`).toHaveProperty(
+        route.method.toLowerCase(),
+      );
+    }
   });
   it('allows only the seeded role/subject pairs and validates login bodies', async () => {
     const app = await appFixture();
