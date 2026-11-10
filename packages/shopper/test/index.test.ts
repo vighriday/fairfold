@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { beginShopperRun, completeShopperRun, sanitizeTranscript } from '../src/index.js';
+import {
+  beginShopperRun,
+  completeShopperRun,
+  createMcpShopperTools,
+  McpToolError,
+  sanitizeTranscript,
+} from '../src/index.js';
 
 const item = (merchantId: string, storeBand: 'verified' | 'standard' | 'caution') => ({
   merchantId,
@@ -27,6 +33,64 @@ const report = (merchantId: string, band: 'verified' | 'standard' | 'caution') =
 });
 
 describe('shopper policy loop', () => {
+  it('adapts authenticated MCP tool calls without exposing the bearer token', async () => {
+    const fetchImpl = vi.fn(async (_input, init) => {
+      expect(init?.headers).toMatchObject({ 'content-type': 'application/json' });
+      expect(init?.headers?.authorization).toBe('Bearer secret-token');
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          jsonrpc: '2.0',
+          id: 'shopper-search_catalog',
+          result: {
+            content: [{ type: 'text', text: JSON.stringify([item('merchant-1', 'verified')]) }],
+          },
+        }),
+      };
+    });
+    const tools = createMcpShopperTools({
+      endpoint: 'http://localhost:3110/mcp',
+      bearerToken: 'secret-token',
+      fetchImpl,
+    });
+    await expect(tools('search_catalog', { query: 'hoodie', maxPrice: '45.00' })).resolves.toEqual([
+      item('merchant-1', 'verified'),
+    ]);
+  });
+
+  it('surfaces MCP error envelopes and malformed tool results', async () => {
+    const errorTools = createMcpShopperTools({
+      endpoint: 'http://localhost:3110/mcp',
+      bearerToken: 'secret-token',
+      fetchImpl: vi.fn(async () => ({
+        ok: false,
+        status: 400,
+        json: async () => ({
+          error: { code: 'MCP_TOOL_NOT_FOUND', message: 'Unsupported MCP tool' },
+        }),
+      })),
+    });
+    await expect(errorTools('search_catalog', { query: 'hoodie' })).rejects.toMatchObject({
+      name: 'McpToolError',
+      code: 'MCP_TOOL_NOT_FOUND',
+      status: 400,
+    } satisfies Partial<McpToolError>);
+
+    const malformedTools = createMcpShopperTools({
+      endpoint: 'http://localhost:3110/mcp',
+      bearerToken: 'secret-token',
+      fetchImpl: vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({ result: { content: [{ type: 'text', text: 'not-json' }] } }),
+      })),
+    });
+    await expect(malformedTools('search_catalog', { query: 'hoodie' })).rejects.toMatchObject({
+      code: 'MCP_RESULT_INVALID',
+    });
+  });
+
   it('skips caution stores and pauses before PayPal approval', async () => {
     const createOrder = vi.fn(async () => ({
       orderId: 'order-1',

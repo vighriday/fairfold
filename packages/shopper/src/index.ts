@@ -10,6 +10,92 @@ export type ShopperTool = (
   name: 'search_catalog' | 'get_store_report',
   args: Record<string, string>,
 ) => Promise<unknown>;
+
+export type McpFetch = (
+  input: string,
+  init?: { method?: string; headers?: Record<string, string>; body?: string },
+) => Promise<{
+  ok: boolean;
+  status: number;
+  json(): Promise<unknown>;
+}>;
+
+export class McpToolError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly code: string,
+  ) {
+    super(message);
+    this.name = 'McpToolError';
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+export function createMcpShopperTools(options: {
+  endpoint: string;
+  bearerToken: string;
+  fetchImpl?: McpFetch;
+}): ShopperTool {
+  const fetchImpl = options.fetchImpl ?? (globalThis.fetch as McpFetch | undefined);
+  if (!fetchImpl) throw new McpToolError('Fetch is unavailable', 0, 'MCP_FETCH_UNAVAILABLE');
+  if (!options.bearerToken)
+    throw new McpToolError('Bearer token is required', 0, 'MCP_TOKEN_REQUIRED');
+
+  return async (name, args) => {
+    const response = await fetchImpl(options.endpoint, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${options.bearerToken}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: `shopper-${name}`,
+        method: 'tools/call',
+        params: { name, arguments: args },
+      }),
+    });
+    const payload = await response.json();
+    if (!isRecord(payload)) {
+      throw new McpToolError('MCP request failed', response.status, 'MCP_REQUEST_FAILED');
+    }
+    if ('error' in payload) {
+      const error = isRecord(payload.error) ? payload.error : {};
+      throw new McpToolError(
+        typeof error.message === 'string' ? error.message : 'MCP tool failed',
+        response.status,
+        typeof error.code === 'string' ? error.code : 'MCP_TOOL_FAILED',
+      );
+    }
+    if (!response.ok) {
+      throw new McpToolError('MCP request failed', response.status, 'MCP_REQUEST_FAILED');
+    }
+    const result = payload.result;
+    if (!isRecord(result) || !Array.isArray(result.content)) {
+      throw new McpToolError('MCP response was malformed', response.status, 'MCP_RESPONSE_INVALID');
+    }
+    const text = result.content.find(
+      (entry): entry is { type: 'text'; text: string } =>
+        isRecord(entry) && entry.type === 'text' && typeof entry.text === 'string',
+    )?.text;
+    if (text === undefined) {
+      throw new McpToolError(
+        'MCP response contained no tool result',
+        response.status,
+        'MCP_RESULT_INVALID',
+      );
+    }
+    try {
+      return JSON.parse(text) as unknown;
+    } catch {
+      throw new McpToolError('MCP tool result was not JSON', response.status, 'MCP_RESULT_INVALID');
+    }
+  };
+}
 export type CheckoutAdapter = {
   createOrder(input: {
     merchantId: string;
