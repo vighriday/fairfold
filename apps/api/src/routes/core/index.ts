@@ -37,11 +37,14 @@ export function createCoreRoutes(options: {
   reads: ReturnType<typeof createOrderReads>;
   disputeReads?: ReturnType<typeof import('../../disputes/read.js').createDisputeReads>;
   disputeApproval?: ReturnType<typeof import('../../disputes/approve.js').createDisputeApproval>;
+  demoAdjudicate?: ReturnType<
+    typeof import('../../disputes/demo-adjudicate.js').createDemoDisputeAdjudication
+  >;
   demoMode: boolean;
 }): FastifyPluginAsync {
   return async (server) => {
     const app = server.withTypeProvider<ZodTypeProvider>();
-    await app.register(createDevRoutes(options.demoMode));
+    await app.register(createDevRoutes(options.demoMode, { adjudicate: options.demoAdjudicate }));
     if (options.disputeReads) {
       const disputeReads = options.disputeReads;
       app.get(

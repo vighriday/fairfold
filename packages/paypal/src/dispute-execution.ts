@@ -9,7 +9,7 @@ import {
 } from '@fairfold/contracts';
 import { disputes, evidence_packs, schema, type createDatabase } from '@fairfold/db';
 import { type Jobs } from '@fairfold/jobs';
-import { createBlobStore } from '@fairfold/ledger';
+import { createBlobStore, createLedger } from '@fairfold/ledger';
 import { assertDisputeActionAvailable } from './dispute-guards.js';
 import { PayPalError } from './errors.js';
 
@@ -84,10 +84,10 @@ function requestId(packId: string): string {
   return `fairfold-evidence-${packId}`;
 }
 
-function safeResponse(value: unknown, disputeId: string) {
+function safeResponse(value: unknown, disputeId: string, operation: string) {
   const row = object(value);
   const summary: Record<string, unknown> = {
-    operation: 'provide_evidence',
+    operation,
     disputeId,
     outcome: 'submitted',
   };
@@ -98,9 +98,14 @@ function safeResponse(value: unknown, disputeId: string) {
   return summary;
 }
 
-function failureSummary(disputeId: string, outcome: 'failed' | 'outcome_unknown', error: unknown) {
+function failureSummary(
+  disputeId: string,
+  operation: string,
+  outcome: 'failed' | 'outcome_unknown',
+  error: unknown,
+) {
   const summary: Record<string, unknown> = {
-    operation: 'dispute_action',
+    operation,
     disputeId,
     outcome,
   };
@@ -157,11 +162,17 @@ export function createEvidenceSubmitHandler(options: {
     const action = actionFor(initial.pack, initial.dispute.id);
     const paypal = await options.forMerchant(initial.dispute.merchant_id);
     const fresh = await paypal.disputes.get(initial.dispute.id);
+    let vendorCompleted = false;
     try {
       assertDisputeActionAvailable(fresh, {
         disputeId: initial.dispute.id,
         operation: action.operation,
-        variant: action.actionParams.offerType ?? action.actionParams.acceptClaimType,
+        variant:
+          action.operation === 'make_offer'
+            ? action.actionParams.offerType
+            : action.operation === 'accept_claim'
+              ? action.actionParams.acceptClaimType
+              : undefined,
       });
     } catch (error) {
       if (error instanceof AppError && error.code === 'STAGE_CHANGED') {
@@ -262,15 +273,42 @@ export function createEvidenceSubmitHandler(options: {
           { requestId: requestId(packId) },
         );
       }
-      const summary = safeResponse(response, claimed.dispute.id);
-      await options.database.db
-        .update(evidence_packs)
-        .set({ paypal_response: summary })
-        .where(eq(evidence_packs.id, packId));
+      vendorCompleted = true;
+      const summary = safeResponse(response, claimed.dispute.id, action.operation);
+      const client = await options.database.pool.connect();
+      try {
+        await drizzle(client, { schema }).transaction(async (tx) => {
+          await tx
+            .update(evidence_packs)
+            .set({ paypal_response: summary })
+            .where(eq(evidence_packs.id, packId));
+          if (claimed.dispute.order_id) {
+            const type =
+              action.operation === 'provide_evidence'
+                ? 'evidence_submitted'
+                : action.operation === 'make_offer'
+                  ? 'offer_made'
+                  : 'claim_accepted';
+            await createLedger(tx, clock).append(claimed.dispute.order_id, {
+              type,
+              actor: 'merchant:' + claimed.dispute.merchant_id,
+              payload: {
+                disputeId: claimed.dispute.id,
+                packId,
+                operation: action.operation,
+                outcome: 'submitted',
+              },
+            });
+          }
+        });
+      } finally {
+        client.release();
+      }
     } catch (error) {
-      const unknown = error instanceof PayPalError && error.outcomeUnknown;
+      const unknown = vendorCompleted || (error instanceof PayPalError && error.outcomeUnknown);
       const summary = failureSummary(
         claimed.dispute.id,
+        action.operation,
         unknown ? 'outcome_unknown' : 'failed',
         error,
       );

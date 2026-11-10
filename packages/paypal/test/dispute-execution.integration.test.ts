@@ -7,13 +7,16 @@ import {
   disputes,
   evidence_blobs,
   evidence_packs,
+  ledger_entries,
   merchants,
   migrateDatabase,
+  orders,
 } from '@fairfold/db';
 import { fixedClock, type ForMerchant, type PayPalClient } from '@fairfold/contracts';
 import type { Jobs } from '@fairfold/jobs';
 import { testDatabaseUrl } from '../../db/test/environment.js';
 import { createEvidenceSubmitHandler } from '../src/dispute-execution.js';
+import { createProvideDisputeEvidenceTool } from '../src/dispute-tool.js';
 import { PayPalError } from '../src/errors.js';
 
 const url = testDatabaseUrl();
@@ -39,10 +42,22 @@ describe.skipIf(!url)('H4 approved dispute action execution', () => {
       domain: 'execution.invalid',
       country: 'US',
     });
+    const [order] = await database.db
+      .insert(orders)
+      .values({
+        merchant_id: merchantId,
+        paypal_order_id: 'O' + randomUUID().replaceAll('-', '').toUpperCase(),
+        invoice_id: 'FF-' + randomUUID(),
+        status: 'captured',
+        amount_value: '38.00',
+        currency: 'USD',
+      })
+      .returning();
     const disputeId = 'PP-D-EXEC-' + randomUUID().replaceAll('-', '').toUpperCase();
     await database.db.insert(disputes).values({
       id: disputeId,
       merchant_id: merchantId,
+      order_id: order!.id,
       reason: 'MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED',
       status: 'WAITING_FOR_SELLER_RESPONSE',
       life_cycle_stage: 'INQUIRY',
@@ -73,7 +88,7 @@ describe.skipIf(!url)('H4 approved dispute action execution', () => {
         status: 'approved',
       })
       .returning();
-    const detail = {
+    const detail: Record<string, unknown> = {
       dispute_id: disputeId,
       status: 'WAITING_FOR_SELLER_RESPONSE',
       dispute_life_cycle_stage: 'INQUIRY',
@@ -84,9 +99,17 @@ describe.skipIf(!url)('H4 approved dispute action execution', () => {
       status: 'UNDER_REVIEW',
       links: [],
     }));
+    const makeOffer = vi.fn<PayPalClient['disputes']['makeOffer']>(async () => ({
+      dispute_id: disputeId,
+      status: 'OFFERED',
+    }));
+    const acceptClaim = vi.fn<PayPalClient['disputes']['acceptClaim']>(async () => ({
+      dispute_id: disputeId,
+      status: 'ACCEPTED',
+    }));
     const get = vi.fn<PayPalClient['disputes']['get']>(async () => structuredClone(detail));
     const forMerchant = vi.fn(async () => ({
-      disputes: { get, provideEvidence },
+      disputes: { get, provideEvidence, makeOffer, acceptClaim },
     })) as unknown as ForMerchant;
     const publish = vi.fn<Jobs['publish']>(async () => 'job-' + randomUUID());
     const handler = createEvidenceSubmitHandler({
@@ -96,13 +119,17 @@ describe.skipIf(!url)('H4 approved dispute action execution', () => {
       clock,
     });
     return {
+      merchantId,
       disputeId,
+      order: order!,
       pack: pack!,
       sha256,
       bytes,
       detail,
       get,
       provideEvidence,
+      makeOffer,
+      acceptClaim,
       publish,
       handler,
     };
@@ -130,6 +157,11 @@ describe.skipIf(!url)('H4 approved dispute action execution', () => {
       paypalStatus: 'UNDER_REVIEW',
     });
     expect(pack?.paypal_response).not.toHaveProperty('links');
+    const ledger = await database.db
+      .select()
+      .from(ledger_entries)
+      .where(eq(ledger_entries.order_id, f.order.id));
+    expect(ledger.map((entry) => entry.type)).toContain('evidence_submitted');
   });
 
   it('rebuilds without a vendor POST when the fresh dispute stage is stale', async () => {
@@ -159,7 +191,7 @@ describe.skipIf(!url)('H4 approved dispute action execution', () => {
       .where(eq(evidence_packs.id, f.pack.id));
     expect(pack?.status).toBe('submitted');
     expect(pack?.paypal_response).toMatchObject({
-      operation: 'dispute_action',
+      operation: 'provide_evidence',
       outcome: 'outcome_unknown',
     });
   });
@@ -183,7 +215,7 @@ describe.skipIf(!url)('H4 approved dispute action execution', () => {
       .where(eq(evidence_packs.id, f.pack.id));
     expect(pack?.status).toBe('failed');
     expect(pack?.paypal_response).toMatchObject({
-      operation: 'dispute_action',
+      operation: 'provide_evidence',
       outcome: 'failed',
       upstreamStatus: 422,
       debugId: 'debug-synthetic',
@@ -191,5 +223,90 @@ describe.skipIf(!url)('H4 approved dispute action execution', () => {
       issues: ['BAD_INPUT'],
     });
     expect(f.publish).toHaveBeenCalledWith('evidence.rebuild', { disputeId: f.disputeId });
+  });
+
+  it('lets only the owning merchant queue the exact approved evidence pack', async () => {
+    const f = await fixture();
+    const tool = createProvideDisputeEvidenceTool({
+      database: database.db,
+      jobs: { publish: f.publish } as Pick<Jobs, 'publish'>,
+    });
+    const result = await tool(f.merchantId, {
+      dispute_id: f.disputeId,
+      evidences: f.pack.evidences,
+      files: f.pack.files,
+    });
+    expect(result).toEqual({
+      status: 'queued',
+      dispute_id: f.disputeId,
+      pack_id: f.pack.id,
+    });
+    await expect(
+      tool(f.merchantId, {
+        dispute_id: f.disputeId,
+        evidences: f.pack.evidences,
+        files: [{ ...(f.pack.files as Array<Record<string, unknown>>)[0], sha256: '0'.repeat(64) }],
+      }),
+    ).rejects.toMatchObject({ code: 'APPROVED_EVIDENCE_PACK_REQUIRED' });
+    await expect(
+      tool(randomUUID(), {
+        dispute_id: f.disputeId,
+        evidences: f.pack.evidences,
+        files: f.pack.files,
+      }),
+    ).rejects.toMatchObject({ code: 'DISPUTE_NOT_FOUND' });
+  });
+
+  it('executes an approved offer and claim with the frozen operation-specific parameters', async () => {
+    const offer = await fixture();
+    await database.db
+      .update(evidence_packs)
+      .set({
+        recommendation: 'make_offer',
+        action_params: {
+          note: 'Synthetic approved offer',
+          offerType: 'REFUND',
+          offerAmount: { currency_code: 'USD', value: '12.00' },
+        },
+      })
+      .where(eq(evidence_packs.id, offer.pack.id));
+    offer.detail.allowed_response_options = { make_offer: { offer_types: ['REFUND'] } };
+    await offer.handler({ packId: offer.pack.id });
+    expect(offer.makeOffer).toHaveBeenCalledWith(
+      offer.disputeId,
+      {
+        note: 'Synthetic approved offer',
+        offerType: 'REFUND',
+        offerAmount: { currency_code: 'USD', value: '12.00' },
+        invoiceId: undefined,
+      },
+      { requestId: `fairfold-evidence-${offer.pack.id}` },
+    );
+
+    const claim = await fixture();
+    await database.db
+      .update(evidence_packs)
+      .set({
+        recommendation: 'accept_claim',
+        action_params: {
+          note: 'Synthetic approved claim',
+          acceptClaimType: 'PARTIAL_REFUND',
+          refundAmount: { currency_code: 'USD', value: '10.00' },
+        },
+      })
+      .where(eq(evidence_packs.id, claim.pack.id));
+    claim.detail.allowed_response_options = {
+      accept_claim: { accept_claim_types: ['PARTIAL_REFUND'] },
+    };
+    await claim.handler({ packId: claim.pack.id });
+    expect(claim.acceptClaim).toHaveBeenCalledWith(
+      claim.disputeId,
+      {
+        note: 'Synthetic approved claim',
+        acceptClaimType: 'PARTIAL_REFUND',
+        refundAmount: { currency_code: 'USD', value: '10.00' },
+      },
+      { requestId: `fairfold-evidence-${claim.pack.id}` },
+    );
   });
 });

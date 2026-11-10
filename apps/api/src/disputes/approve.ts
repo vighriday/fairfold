@@ -69,6 +69,11 @@ function object(value: unknown): Record<string, unknown> {
     : {};
 }
 
+function actionParamsNote(current: Record<string, unknown>, override: ApprovalEdits): boolean {
+  const note = override.note ?? current.note;
+  return typeof note === 'string' && note.trim().length > 0 && [...note].length <= 2000;
+}
+
 export function createDisputeApproval(options: {
   database: Pick<ReturnType<typeof createDatabase>, 'pool'>;
   jobs: Pick<Jobs, 'publish'>;
@@ -138,6 +143,8 @@ export function createDisputeApproval(options: {
               ? current.refundAmount
               : undefined);
         if (recommendation === 'make_offer') {
+          if (!actionParamsNote(current, override))
+            throw new AppError('INVALID_DISPUTE_APPROVAL', 'Action note is required', 400);
           if (!offerType || !offerTypes.has(offerType))
             throw new AppError('INVALID_DISPUTE_APPROVAL', 'Offer type is required', 400);
           if (offerType === 'REFUND_WITH_RETURN')
@@ -147,6 +154,8 @@ export function createDisputeApproval(options: {
               409,
             );
         }
+        if (recommendation === 'accept_claim' && !actionParamsNote(current, override))
+          throw new AppError('INVALID_DISPUTE_APPROVAL', 'Action note is required', 400);
         if (
           recommendation === 'accept_claim' &&
           acceptClaimType &&
@@ -170,6 +179,7 @@ export function createDisputeApproval(options: {
               400,
             );
         }
+
         const now = new Date(clock.now());
         if (!Number.isFinite(now.getTime())) throw new Error('Invalid approval clock');
         const actionParams = {

@@ -68,6 +68,11 @@ describe.skipIf(!integrationUrl)('H2 HTTP contracts with real database/client/qu
         reads: createOrderReads({ database: database.db, computeBuyerSignal }),
         disputeReads: createDisputeReads(database.db),
         disputeApproval: createDisputeApproval({ database, jobs, clock: checkoutClock }),
+        demoAdjudicate: async (_auth, disputeId, outcome) => ({
+          disputeId,
+          outcome,
+          status: 'SYNTHETIC',
+        }),
       }),
     });
     apps.push(app);
@@ -113,6 +118,24 @@ describe.skipIf(!integrationUrl)('H2 HTTP contracts with real database/client/qu
       database: 'ready',
       phase: 'H2',
       intelligence: 'stub',
+    });
+    expect(spec.paths['/api/dev/disputes/{id}/adjudicate'].post.security).toEqual([
+      { bearerAuth: [] },
+    ]);
+  });
+  it('keeps demo adjudication merchant-authenticated and explicitly simulated', async () => {
+    const f = await fixture();
+    const response = await f.app.inject({
+      method: 'POST',
+      url: '/api/dev/disputes/PP-D-SYNTHETIC/adjudicate',
+      headers: await f.headers('merchant'),
+      payload: { outcome: 'BUYER_FAVOR' },
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      disputeId: 'PP-D-SYNTHETIC',
+      outcome: 'BUYER_FAVOR',
+      status: 'SYNTHETIC',
     });
   });
   it('serves public client-ID configuration and creates/captures from the unchanged bodies without bearer auth', async () => {
