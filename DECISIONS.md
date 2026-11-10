@@ -213,3 +213,9 @@ Status: **DEFERRED BY USER; NOT RUN**. The user confirmed accounts do not curren
 - `limit` is 1–100 (`IntelListQuerySchema` in `@fairfold/contracts/intel`). Section 11 sets no maximum; one is needed because endpoints 6 and 42 are unauthenticated. Hriday's order lists accept up to 2³¹−1; aligning the two is a review item.
 - `searchCatalog(input)` (section 15, the MCP tool) returns the first page of 50 as before.
 - Contract change: additive (`IntelListQuerySchema`; query parameters section 11 already promised).
+
+### I-D24 — Cluster centroid is the exact normalised mean of its members — 2026-11-10
+- Section 9 stage 3: "recompute the centroid as the normalised mean". The previous update `normalise(centroid × memberCount + v)` treated the stored unit centroid as the members' sum; the sum's length is smaller than the member count unless all members coincide, so the existing members were over-weighted and the centroid drifted from the mean.
+- `assignClusters` now keeps each cluster's sum of member unit vectors and sets the centroid to that sum normalised. An existing cluster's sum is rebuilt from its members among the complaints the scan loads (all of the merchant's read complaints), so the result is exact regardless of how the centroid was stored; only a cluster with none of its members passed falls back to its stored centroid weighted by its stored count. Members embedded by a different model (another vector length) are left out of the mean.
+- Effect on published numbers: the clustering precision in README.md and docs/ai-tools.md (1.00 over 45 pairs at threshold 0.85, 2026-11-10) was measured with the old update. Re-run `pnpm --filter @fairfold/intelligence eval` before quoting it again; not re-run here because it spends the free-tier model quota.
+- Contract change: none.

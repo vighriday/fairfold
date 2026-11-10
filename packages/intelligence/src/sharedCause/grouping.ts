@@ -46,6 +46,15 @@ const isTransit = (category: string) => TRANSIT_CATEGORIES.has(category);
 const bucketOf = (c: { productId: string | null; category: string }) =>
   isTransit(c.category) ? `transit|${c.category}` : `${c.productId}|${c.category}`;
 
+const add = (sum: number[], v: number[]) => sum.map((x, i) => x + (v[i] ?? 0));
+
+/**
+ * Places every unassigned complaint (section 9 stage 3). Each cluster keeps the sum of its members' unit vectors and
+ * its centroid is that sum normalised — "the normalised mean". An existing cluster's sum is rebuilt from its members
+ * among `complaints`, so the centroid is exact however it was stored; only a cluster none of whose members is passed
+ * falls back to its stored centroid, weighted by its stored member count. Members whose embedding has another length
+ * (a different embedding model) are left out of the mean.
+ */
 export function assignClusters(
   complaints: GroupingComplaint[],
   existing: ClusterState[],
@@ -53,7 +62,20 @@ export function assignClusters(
   now: Date,
   newId: () => string,
 ): { assignments: Map<string, string>; clusters: ClusterState[] } {
-  const clusters = existing.map((c) => ({ ...c, centroid: [...c.centroid] }));
+  const members = new Map<string, { sum: number[]; count: number }>();
+  for (const c of complaints) {
+    if (!c.clusterId || !c.embedding) continue;
+    const v = normalise(c.embedding);
+    const m = members.get(c.clusterId);
+    if (!m) members.set(c.clusterId, { sum: v, count: 1 });
+    else if (m.sum.length === v.length)
+      members.set(c.clusterId, { sum: add(m.sum, v), count: m.count + 1 });
+  }
+  const clusters = existing.map((c) => {
+    const m = members.get(c.id);
+    const sum = m ? m.sum : c.centroid.map((x) => x * Math.max(1, c.memberCount));
+    return { ...c, centroid: normalise(sum), memberCount: m ? m.count : c.memberCount, sum };
+  });
   const assignments = new Map<string, string>();
   const since = now.getTime() - GROUPING_WINDOW_DAYS * 86_400_000;
 
@@ -71,7 +93,7 @@ export function assignClusters(
   for (const c of pending) {
     const vector = normalise(c.embedding!);
     const bucket = bucketOf(c);
-    let best: ClusterState | null = null;
+    let best: (typeof clusters)[number] | null = null;
     let bestScore = -Infinity;
     for (const cluster of clusters) {
       if (bucketOf(cluster) !== bucket) continue;
@@ -82,7 +104,8 @@ export function assignClusters(
       }
     }
     if (best) {
-      best.centroid = normalise(best.centroid.map((x, i) => x * best!.memberCount + vector[i]!));
+      best.sum = add(best.sum, vector);
+      best.centroid = normalise(best.sum);
       best.memberCount += 1;
     } else {
       best = {
@@ -91,12 +114,13 @@ export function assignClusters(
         category: c.category,
         centroid: vector,
         memberCount: 1,
+        sum: [...vector],
       };
       clusters.push(best);
     }
     assignments.set(c.id, best.id);
   }
-  return { assignments, clusters };
+  return { assignments, clusters: clusters.map(({ sum: _sum, ...cluster }) => cluster) };
 }
 
 /** Clusters with at least three distinct orders move on to localisation. */

@@ -221,6 +221,59 @@ describe('grouping', () => {
     expect(out.clusters.find((c) => c.id === 'cl-1')!.memberCount).toBe(2);
   });
 
+  it('the centroid is the normalised mean of its members (section 9 stage 3)', () => {
+    n = 0;
+    const members = [vec(1, 0), vec(0.8, 0.6), vec(0.6, 0.8)];
+    const out = assignClusters(
+      members.map((embedding, i) =>
+        complaint({
+          id: `m${i}`,
+          embedding,
+          createdAt: new Date(Date.UTC(2026, 10, 1 + i)),
+        }),
+      ),
+      [],
+      0.6,
+      now,
+      newId,
+    );
+    expect(new Set(out.assignments.values())).toEqual(new Set(['cl-1']));
+    const sum = [1 + 0.8 + 0.6, 0 + 0.6 + 0.8];
+    const length = Math.hypot(...sum);
+    const centroid = out.clusters[0]!.centroid;
+    expect(centroid[0]).toBeCloseTo(sum[0]! / length, 6);
+    expect(centroid[1]).toBeCloseTo(sum[1]! / length, 6);
+  });
+
+  it('an existing cluster’s centroid is rebuilt from its members before new ones join', () => {
+    n = 0;
+    const stale = {
+      id: 'kept',
+      productId: 'P',
+      category: 'product_defect' as const,
+      centroid: vec(1, 0), // as stored by an earlier scan, not the mean of the members below
+      memberCount: 2,
+    };
+    const out = assignClusters(
+      [
+        complaint({ id: 'a', clusterId: 'kept', embedding: vec(1, 0) }),
+        complaint({ id: 'b', clusterId: 'kept', embedding: vec(0.6, 0.8) }),
+        complaint({ id: 'c', embedding: vec(0.8, 0.6) }),
+      ],
+      [stale],
+      0.6,
+      now,
+      newId,
+    );
+    expect(out.assignments.get('c')).toBe('kept');
+    const kept = out.clusters.find((c) => c.id === 'kept')!;
+    const sum = [1 + 0.6 + 0.8, 0 + 0.8 + 0.6];
+    const length = Math.hypot(...sum);
+    expect(kept.memberCount).toBe(3);
+    expect(kept.centroid[0]).toBeCloseTo(sum[0]! / length, 6);
+    expect(kept.centroid[1]).toBeCloseTo(sum[1]! / length, 6);
+  });
+
   it('cluster ids stable across re-runs: assigned complaints never move', () => {
     n = 0;
     const existing = [
@@ -234,7 +287,7 @@ describe('grouping', () => {
     ];
     const out = assignClusters(
       [
-        complaint({ id: 'old', clusterId: 'kept', embedding: vec(0, 1, 0) }),
+        complaint({ id: 'old', clusterId: 'kept', embedding: vec(1, 0, 0) }),
         complaint({ id: 'new', embedding: vec(0.99, 0.05, 0) }),
       ],
       existing,
