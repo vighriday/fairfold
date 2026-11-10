@@ -135,3 +135,9 @@ Status: **DEFERRED BY USER; NOT RUN**. The user confirmed accounts do not curren
 - A superseded hypothesis is history: endpoint 22 leaves it out and endpoint 23 answers 409 `HYPOTHESIS_SUPERSEDED` (its status is not in `HypothesisDetail`'s enum).
 - Trend `rate` is complaints per order-day of exposure, exactly as stage 4 counts them; weeks are ISO weeks of delivery (of shipping for transit categories), keyed by their Monday.
 - Contract change: none.
+
+### I-D12 — Shared Cause and report-problem routes — 2026-11-10
+- Endpoint 22 takes the merchant from the token. A1 calls it with `?merchantId=`; the parameter is accepted and must equal the token's merchant (403 otherwise).
+- Endpoint 32 accepts files in `photos` or `photos[]` (at most 4, else 400 `TOO_MANY_PHOTOS`) and a required `text`; only the buyer's own paid order (captured or later) can be reported. Photos go through `blobs.put`, so its JPEG/PNG and size checks apply. No ledger entry is written for a report (section 8 names none).
+- Clustering precision on `complaints.json` (task I6 gate) needs the real model's extractions and is measured in I7's eval run; it is NOT RUN as of this entry because no provider key is configured locally.
+- Contract change: none.

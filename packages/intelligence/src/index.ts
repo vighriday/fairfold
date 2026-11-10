@@ -27,6 +27,7 @@ export {
 } from './storeReport/index.js';
 export { searchCatalog, searchCatalogWith } from './catalog.js';
 export { upsertComplaint } from './complaints/create.js';
+export { reportProblem } from './complaints/report.js';
 export { buildEvidencePack, buildEvidencePackWith } from './dispute/build.js';
 export type { EvidencePackResult } from './dispute/build.js';
 export { decide } from './dispute/decide.js';
