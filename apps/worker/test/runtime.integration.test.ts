@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createDatabase, merchants, paypal_events, migrateDatabase } from '@fairfold/db';
 import { fixedClock } from '@fairfold/contracts';
+import { getIntelRuntime } from '@fairfold/intelligence';
 import { testDatabaseUrl } from '../../../packages/db/test/environment.js';
 import { createWorkerRuntime, readWorkerConfig } from '../src/runtime.js';
 
@@ -81,6 +82,20 @@ describe.skipIf(!url)('H3 normal worker lifecycle with actual pg-boss', () => {
       await closed;
     }
     await expect(worker.start()).rejects.toMatchObject({ code: 'WORKER_CLOSED' });
+  });
+  it("binds the intelligence handlers to the worker's own database and queue", async () => {
+    const { worker } = runtime();
+    try {
+      await worker.start();
+      // A job the intelligence runtime publishes lands in this worker's queue schema, not in a second queue.
+      const merchantId = randomUUID();
+      const jobId = await getIntelRuntime().jobs.publish('sharedcause.scan', { merchantId });
+      expect(await worker.jobs.boss.getJobById('sharedcause.scan', jobId as string)).toMatchObject({
+        data: { merchantId },
+      });
+    } finally {
+      await worker.close();
+    }
   });
   it('handles closing during startup without leaking a queue or refresh timer', async () => {
     const { worker } = runtime(),
