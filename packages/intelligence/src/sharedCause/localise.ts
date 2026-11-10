@@ -36,6 +36,10 @@ export const PRODUCT_DIMENSIONS: Dimension[] = [
   'ship_week',
 ];
 export const TRANSIT_DIMENSIONS: Dimension[] = ['carrier', 'ship_to_country', 'ship_week'];
+const ALL_DIMENSIONS: Dimension[] = [
+  ...PRODUCT_DIMENSIONS,
+  ...TRANSIT_DIMENSIONS.filter((d) => !PRODUCT_DIMENSIONS.includes(d)),
+];
 
 /** ISO 8601 week, e.g. 2026-W43. */
 export function isoWeek(d: Date): string {
@@ -178,21 +182,20 @@ export function localise(
 
   const inPrimary = population.filter((o) => valueOf(o, primary!.dimension) === primary!.value);
   const restPrimary = population.filter((o) => valueOf(o, primary!.dimension) !== primary!.value);
-  const spread = dimensions
-    .filter((d) => d !== primary!.dimension)
-    .map((dimension) => {
-      const counts = new Map<string, number>();
-      for (const o of inPrimary) {
-        const v = valueOf(o, dimension);
-        if (v !== null) counts.set(v, (counts.get(v) ?? 0) + 1);
-      }
-      const total = [...counts.values()].reduce((s, n) => s + n, 0);
-      return {
-        dimension,
-        distinctValues: counts.size,
-        topShare: total ? round(Math.max(...counts.values()) / total, 3) : 0,
-      };
-    });
+  // Spread covers every dimension, not just the tested set: section 9's B17 example reports "4 different couriers".
+  const spread = ALL_DIMENSIONS.filter((d) => d !== primary!.dimension).map((dimension) => {
+    const counts = new Map<string, number>();
+    for (const o of inPrimary) {
+      const v = valueOf(o, dimension);
+      if (v !== null) counts.set(v, (counts.get(v) ?? 0) + 1);
+    }
+    const total = [...counts.values()].reduce((s, n) => s + n, 0);
+    return {
+      dimension,
+      distinctValues: counts.size,
+      topShare: total ? round(Math.max(...counts.values()) / total, 3) : 0,
+    };
+  });
   const dominant = (list: PopulationOrder[]) => {
     const counts = new Map<string, number>();
     for (const o of list)

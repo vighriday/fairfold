@@ -73,6 +73,8 @@ export function headline(
   return `${prefix} shared ${kind} issue: ${DIMENSION_LABEL[dimension]} ${value}`;
 }
 
+const listOf = (xs: string[]) =>
+  xs.length <= 1 ? (xs[0] ?? '') : `${xs.slice(0, -1).join(', ')} and ${xs.at(-1)}`;
 const sig = (x: number) => (x < 0.000001 ? '< 0.000001' : String(Number(x.toPrecision(2))));
 const ratio = (x: number) => (x >= 10 ? String(Math.round(x)) : String(Math.round(x * 10) / 10));
 
@@ -93,9 +95,7 @@ export function explanation(category: string, label: string, stats: HypothesisSt
     .filter((s) => s.distinctValues > 1)
     .map((s) => `${s.distinctValues} ${DIMENSION_PLURAL[s.dimension]}`);
   if (spread.length)
-    sentences.push(
-      `The complaining value spans ${spread.join(' and ')}, so those do not explain it.`,
-    );
+    sentences.push(`The complaining value spans ${listOf(spread)}, so those do not explain it.`);
   if (stats.confounders.coincidesWithListingChange)
     sentences.push('It coincides with a listing change, which may also explain it.');
   return sentences.join(' ');

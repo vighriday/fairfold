@@ -75,11 +75,16 @@ describe('localise', () => {
     expect(p.wilson95Rest[1]).toBeCloseTo(0.028, 3);
     expect(out!.strength).toBe('strong');
     expect(out!.stats.horizonDays).toBe(14);
-    expect(out!.stats.confounders.spread.map((s) => s.dimension).sort()).toEqual([
+    const spread = out!.stats.confounders.spread;
+    expect(spread.map((s) => s.dimension).sort()).toEqual([
+      'carrier',
       'listing_version',
       'packer',
+      'ship_to_country',
       'ship_week',
     ]);
+    // section 9: the confounders show how many couriers the complaining batch went through
+    expect(spread.find((s) => s.dimension === 'carrier')!.distinctValues).toBeGreaterThan(1);
     expect(out!.stats.confounders.medianDaysSinceDelivery.value).toBeGreaterThan(14);
   });
 
