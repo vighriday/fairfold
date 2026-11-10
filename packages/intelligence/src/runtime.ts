@@ -1,12 +1,13 @@
 // The platform pieces every intelligence service uses: Hriday's database, job queue and clock, plus
-// optional model overrides. The worker and the API import ready-made handlers and routes, so the
-// default runtime is built lazily from the environment on first use (after dotenv has loaded).
+// optional model overrides. The API and the worker bind their own database and job queue at startup
+// (bindIntelRuntime), so the ready-made handlers and routes use them; only a process that binds nothing
+// (a script or an eval) builds a runtime from the environment, lazily on first use.
 import { sql } from 'drizzle-orm';
 import { fromDrizzle } from 'pg-boss';
 import type { EmbeddingModel, LanguageModel } from '@fairfold/ai';
 import { systemClock, type Clock, type JobName, type JobPayload } from '@fairfold/contracts';
 import { createDatabase, type Database } from '@fairfold/db';
-import { createJobs, type Jobs } from '@fairfold/jobs';
+import { createJobs, type PublishOptions as HostPublishOptions } from '@fairfold/jobs';
 import type { DatabaseExecutor } from '@fairfold/ledger';
 
 export type Env = Record<string, string | undefined>;
@@ -25,6 +26,16 @@ export interface Publisher {
   publishDebounced(name: 'sharedcause.scan', key: string, seconds: number): Promise<unknown>;
 }
 
+/** What intelligence needs from the host's job queue; the queue createJobs (@fairfold/jobs) returns provides it. */
+export interface HostJobs {
+  publish<N extends JobName>(
+    name: N,
+    payload: JobPayload<N>,
+    options?: HostPublishOptions,
+  ): Promise<unknown>;
+  publishDebounced(name: 'sharedcause.scan', key: string, seconds: number): Promise<unknown>;
+}
+
 /** pg-boss's drizzle adapter takes drizzle's `sql` tag; its declared parameter type is looser than drizzle's. */
 const drizzleSql = sql as unknown as Parameters<typeof fromDrizzle>[1];
 
@@ -32,7 +43,7 @@ const drizzleSql = sql as unknown as Parameters<typeof fromDrizzle>[1];
  * The intelligence Publisher over a job queue built by createJobs (@fairfold/jobs). A `tx` is handed to pg-boss
  * through its drizzle adapter, so the job row is written in the caller's transaction.
  */
-export function jobsPublisher(jobs: Pick<Jobs, 'publish' | 'publishDebounced'>): Publisher {
+export function jobsPublisher(jobs: HostJobs): Publisher {
   return {
     publish: (name, payload, options) =>
       jobs.publish(name, payload, options?.tx ? { db: fromDrizzle(options.tx, drizzleSql) } : {}),
@@ -68,6 +79,27 @@ export function createIntelRuntime(parts: {
   };
 }
 
+/**
+ * Binds the process runtime to the host's own database and job queue: the API and the worker call this once at
+ * startup with the database they created and their createJobs queue, so the intelligence services, routes and job
+ * handlers open no pool or queue of their own. Returns the bound runtime.
+ */
+export function bindIntelRuntime(parts: {
+  db: Database;
+  jobs: HostJobs;
+  clock?: Clock;
+  env?: Env;
+}): IntelRuntime {
+  const runtime = createIntelRuntime({
+    db: parts.db,
+    jobs: jobsPublisher(parts.jobs),
+    clock: parts.clock,
+    env: parts.env,
+  });
+  setIntelRuntime(runtime);
+  return runtime;
+}
+
 /** A publisher that starts pg-boss on the first publish, so importing intelligence never opens a queue. */
 export function lazyPublisher(connectionString: string): Publisher {
   let started: Promise<ReturnType<typeof createJobs>> | null = null;
@@ -96,6 +128,7 @@ export function setIntelRuntime(runtime: IntelRuntime | null): void {
   active = runtime;
 }
 
+/** The bound runtime; a process that bound none (a script or an eval) gets one built from DATABASE_URL. */
 export function getIntelRuntime(): IntelRuntime {
   if (active) return active;
   const url = process.env.DATABASE_URL;

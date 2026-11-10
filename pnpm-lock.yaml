@@ -211,6 +211,9 @@ importers:
       '@fairfold/intelligence':
         specifier: workspace:*
         version: link:../../packages/intelligence
+      '@fairfold/jobs':
+        specifier: workspace:*
+        version: link:../../packages/jobs
       '@fastify/cors':
         specifier: 11.4.1
         version: 11.4.1

@@ -1,7 +1,9 @@
 import { config as loadEnv } from 'dotenv';
 import { fileURLToPath } from 'node:url';
 import pino from 'pino';
+import { createDatabase } from '@fairfold/db';
 import { createJobs } from '@fairfold/jobs';
+import { bindIntelRuntime } from '@fairfold/intelligence';
 import { handlers } from '@fairfold/intelligence/handlers';
 
 loadEnv({ path: fileURLToPath(new URL('../../../.env', import.meta.url)), quiet: true });
@@ -12,9 +14,12 @@ if (
 )
   throw new Error('Only PayPal sandbox is permitted');
 const log = pino({ redact: ['token', 'secret', 'password'] });
+const database = createDatabase(process.env.DATABASE_URL);
 const jobs = createJobs(process.env.DATABASE_URL, {
   onError: (error) => log.error({ code: error.name }, 'Queue error'),
 });
+// The intelligence handlers use this worker's database and queue instead of opening their own.
+bindIntelRuntime({ db: database.db, jobs });
 await jobs.start();
 await jobs.register(handlers);
 log.info(
@@ -25,7 +30,11 @@ let stopping = false;
 async function shutdown() {
   if (!stopping) {
     stopping = true;
-    await jobs.stop();
+    try {
+      await jobs.stop();
+    } finally {
+      await database.close();
+    }
   }
 }
 process.once('SIGINT', () => {
