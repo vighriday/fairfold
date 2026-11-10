@@ -81,8 +81,14 @@ export function normaliseSize(s: string | null): string | null {
 /**
  * Recomputes every item's `matches` from normalised colour, size and quantity, ignoring the model's own flag.
  * Unreadable fields go into couldNotVerify as `<field>:<orderItemId>`; order items the model omitted become `item:<id>`.
+ *
+ * Buyer photos (step `buyer_photo`) answer a different question: do they show the item that was ordered? Only a
+ * visible contradiction counts — another colour, or a readable size label that differs. A buyer is not expected to
+ * photograph the size label or every unit, so an unreadable label and the unit count are not compared, and an
+ * ordered item that is not visible at all cannot be verified.
  */
 export function applyItemMatching(input: AttestInput, raw: AttestationResult): AttestationResult {
+  const buyerPhoto = input.step === 'buyer_photo';
   const couldNotVerify = [...raw.couldNotVerify];
   const note = (entry: string) => {
     if (!couldNotVerify.includes(entry)) couldNotVerify.push(entry);
@@ -101,34 +107,47 @@ export function applyItemMatching(input: AttestInput, raw: AttestationResult): A
       };
     }
     const { seen } = seenItem;
+    if (buyerPhoto && seen.quantity === 0) {
+      note(`item:${expected.orderItemId}`);
+      return { ...seenItem, matches: false };
+    }
     const colourOk =
       expected.colour === null || normaliseColour(seen.colour) === normaliseColour(expected.colour);
     let sizeOk = true;
     if (expected.size !== null && seen.quantity > 0) {
       const seenSize = normaliseSize(seen.sizeLabel);
-      if (seenSize === null) {
+      if (seenSize !== null) sizeOk = seenSize === normaliseSize(expected.size);
+      else if (!buyerPhoto) {
         note(`sizeLabel:${expected.orderItemId}`);
         sizeOk = false;
-      } else {
-        sizeOk = seenSize === normaliseSize(expected.size);
       }
     }
-    const quantityOk = seen.quantity === expected.quantity;
+    const quantityOk = buyerPhoto || seen.quantity === expected.quantity;
     return { ...seenItem, matches: colourOk && sizeOk && quantityOk };
   });
 
   return { ...raw, items, couldNotVerify };
 }
 
-/** Status per section 10. A definite contradiction or a functional/safety defect outranks an unreadable field. */
-export function deriveStatus(r: AttestationResult): AttestationStatus {
-  const seriousDefect = r.defects.some(
-    (d) => d.severity === 'functional' || d.severity === 'safety',
-  );
+/**
+ * Status per section 10. A definite contradiction or a functional/safety defect outranks an unreadable field.
+ * For buyer photos a visible defect is what the buyer is reporting, so it is not a mismatch, and only fields about
+ * the ordered items (or the model failing to report them) leave the check unverified.
+ */
+export function deriveStatus(
+  r: AttestationResult,
+  step: AttestInput['step'] = 'pack',
+): AttestationStatus {
+  const buyerPhoto = step === 'buyer_photo';
+  const seriousDefect =
+    !buyerPhoto && r.defects.some((d) => d.severity === 'functional' || d.severity === 'safety');
   const unreadableFor = (id: string) => r.couldNotVerify.some((c) => c.endsWith(`:${id}`));
   const definiteMismatch = r.items.some((i) => !i.matches && !unreadableFor(i.orderItemId));
   if (seriousDefect || definiteMismatch) return 'mismatch';
-  if (r.couldNotVerify.length > 0 || r.items.some((i) => i.confidence < MIN_ITEM_CONFIDENCE))
+  const unreadable = buyerPhoto
+    ? r.items.length === 0 || r.items.some((i) => unreadableFor(i.orderItemId))
+    : r.couldNotVerify.length > 0;
+  if (unreadable || r.items.some((i) => i.confidence < MIN_ITEM_CONFIDENCE))
     return 'could_not_verify';
   return 'match';
 }

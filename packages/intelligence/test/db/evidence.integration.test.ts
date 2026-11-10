@@ -3,7 +3,9 @@ import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { attestations, inspection_rules, complaint_clusters, hypotheses } from '@fairfold/db';
 import { createBlobStore, createLedger } from '@fairfold/ledger';
+import { upsertComplaint } from '../../src/complaints/create.js';
 import { createHandlers } from '../../src/handlers.js';
+import { readComplaint } from '../../src/sharedCause/scan.js';
 import { mockModel } from '../helpers/mockModel.js';
 import {
   dbUrl,
@@ -98,6 +100,72 @@ describe.skipIf(!dbUrl)('evidence agent against Postgres', () => {
       attestationId: rows[0]!.id,
       status: 'match',
     });
+  });
+
+  it("a buyer's report photos are described as a buyer_photo attestation when the complaint is read, once", async () => {
+    const { merchant, order, item, runtime, shas } = await packedOrder();
+    const extraction = {
+      category: 'product_defect',
+      component: 'left sleeve seam',
+      failureMode: 'stitching came apart',
+      locationOnItem: 'left sleeve',
+      severity: 'functional',
+      summary: 'The left sleeve seam came apart.',
+      language: 'en',
+    };
+    const described = {
+      items: [
+        {
+          orderItemId: item.id,
+          seen: { itemType: 'hoodie', colour: 'navy', sizeLabel: null, quantity: 1 },
+          matches: true,
+          confidence: 0.88,
+          notes: '',
+        },
+      ],
+      batchLabelText: null,
+      shippingLabel: { visible: false, trackingNumberText: null },
+      defects: [
+        { component: 'left sleeve seam', description: 'seam open', severity: 'functional' },
+      ],
+      inspection: null,
+      couldNotVerify: ['shipping label'],
+      confidence: 0.85,
+    };
+    const first = mockModel([extraction, described]);
+    runtime.models.vision = first.model;
+    const { id } = await upsertComplaint(runtime, {
+      merchantId: merchant.id,
+      orderId: order.id,
+      buyerId: null,
+      source: 'buyer_report',
+      sourceRef: 'report-1',
+      text: 'The left sleeve seam came apart after one wear.',
+      imageShas: shas,
+    });
+
+    await readComplaint(runtime, id);
+    const again = mockModel([extraction]);
+    runtime.models.vision = again.model;
+    await readComplaint(runtime, id); // a redelivered complaint.created job
+
+    const rows = await database.db
+      .select()
+      .from(attestations)
+      .where(eq(attestations.order_id, order.id));
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      step: 'buyer_photo',
+      status: 'match',
+      hypothesis_id: null,
+      batch_code: null,
+      model: 'mock-vision',
+      photo_shas: shas,
+      photo_labels: ['buyer_photo', 'buyer_photo'],
+    });
+    expect(first.calls).toHaveLength(2);
+    expect(again.calls).toHaveLength(1);
+    expect((await createLedger(database.db).verify(order.id)).entries).toEqual([]);
   });
 
   it('an active inspection rule on the batch reaches the prompt with its cluster label', async () => {

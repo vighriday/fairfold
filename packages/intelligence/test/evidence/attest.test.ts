@@ -203,4 +203,20 @@ describe('attestPackingPhotos', () => {
     await attestPackingPhotos({ ...input, step: 'buyer_photo' }, { loadPhoto, model });
     expect(promptOf(calls[0]!).system).toMatch(/buyer/i);
   });
+
+  it('buyer photos showing the reported defect on the ordered item are a match', async () => {
+    const seam = {
+      ...good,
+      defects: [
+        { component: 'left sleeve seam', description: 'seam open', severity: 'functional' },
+      ],
+    };
+    const { model } = mockModel([seam]);
+    const a = await attestPackingPhotos(
+      { ...input, step: 'buyer_photo', batchCodes: {}, expectedTrackingNumber: null },
+      { loadPhoto, model },
+    );
+    expect(a.status).toBe('match');
+    expect(a.defects).toHaveLength(1);
+  });
 });

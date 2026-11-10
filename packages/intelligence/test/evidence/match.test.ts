@@ -202,3 +202,70 @@ describe('status rules (section 10)', () => {
     ).toBe('match');
   });
 });
+
+describe('buyer photos (step buyer_photo): do they show the item that was ordered?', () => {
+  const buyer: AttestInput = {
+    ...input,
+    step: 'buyer_photo',
+    batchCodes: {},
+    expectedTrackingNumber: null,
+  };
+  const buyerStatus = (r: AttestationResult) =>
+    deriveStatus(applyItemMatching(buyer, r), 'buyer_photo');
+  const tear = {
+    defects: [
+      { component: 'left sleeve seam', description: 'seam open', severity: 'functional' as const },
+    ],
+  };
+
+  it('a defect the buyer photographed is the complaint, not a mismatch', () => {
+    expect(buyerStatus(raw(tear))).toBe('match');
+  });
+
+  it('a different colour means the photos may show a different item', () => {
+    expect(
+      buyerStatus(
+        raw(tear, { seen: { itemType: 'hoodie', colour: 'red', sizeLabel: null, quantity: 1 } }),
+      ),
+    ).toBe('mismatch');
+  });
+
+  it('a size label the buyer did not photograph is not required', () => {
+    expect(
+      buyerStatus(
+        raw({}, { seen: { itemType: 'hoodie', colour: 'navy', sizeLabel: null, quantity: 1 } }),
+      ),
+    ).toBe('match');
+  });
+
+  it('a readable size label that differs is a mismatch', () => {
+    expect(
+      buyerStatus(
+        raw({}, { seen: { itemType: 'hoodie', colour: 'navy', sizeLabel: 'XL', quantity: 1 } }),
+      ),
+    ).toBe('mismatch');
+  });
+
+  it('how many units the buyer photographed is not compared with the order', () => {
+    const two: AttestInput = { ...buyer, items: [{ ...buyer.items[0]!, quantity: 2 }] };
+    expect(deriveStatus(applyItemMatching(two, raw()), 'buyer_photo')).toBe('match');
+  });
+
+  it('an ordered item not visible in the buyer photos cannot be verified', () => {
+    expect(
+      buyerStatus(
+        raw({}, { seen: { itemType: 'none', colour: '', sizeLabel: null, quantity: 0 } }),
+      ),
+    ).toBe('could_not_verify');
+  });
+
+  it('labels a buyer photo is not expected to show do not block a verdict', () => {
+    expect(buyerStatus(raw({ couldNotVerify: ['batch label', 'shipping label'] }))).toBe('match');
+  });
+
+  it('the model failing still means could_not_verify', () => {
+    expect(buyerStatus(raw({ items: [], couldNotVerify: ['model_unavailable'] }))).toBe(
+      'could_not_verify',
+    );
+  });
+});

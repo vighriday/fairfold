@@ -24,6 +24,7 @@ import {
 } from '@fairfold/db';
 import { createBlobStore, type DatabaseExecutor } from '@fairfold/ledger';
 import { raiseAlertOnce } from '../alerts.js';
+import { attestBuyerPhotos } from '../evidence/buyerPhotos.js';
 import type { IntelRuntime } from '../runtime.js';
 import { draftBuyerMessages } from './actions.js';
 import { affectedOrders } from './affected.js';
@@ -81,11 +82,11 @@ export async function readComplaint(
   if (!c) throw new AppError('COMPLAINT_NOT_FOUND', 'Complaint not found', 404);
 
   const blobs = createBlobStore(rt.db, rt.clock);
-  const photos: Array<{ mime: string; bytes: Uint8Array }> = [];
+  const photos: Array<{ sha256: string; mime: string; bytes: Uint8Array }> = [];
   for (const sha256 of c.image_shas.slice(0, MAX_COMPLAINT_PHOTOS)) {
     try {
       const blob = await blobs.get(sha256);
-      if (blob.bytes) photos.push({ mime: blob.mime, bytes: new Uint8Array(blob.bytes) });
+      if (blob.bytes) photos.push({ sha256, mime: blob.mime, bytes: new Uint8Array(blob.bytes) });
     } catch {
       // purged by retention or missing: the text is still read
     }
@@ -136,6 +137,13 @@ export async function readComplaint(
       });
     }
   });
+  // Task I2: the buyer's photos are also described against the order (step buyer_photo).
+  if (c.order_id && photos.length)
+    await attestBuyerPhotos(
+      rt,
+      c.order_id,
+      photos.map((p) => p.sha256),
+    );
   await rt.jobs.publishDebounced('sharedcause.scan', c.merchant_id, SCAN_DEBOUNCE_SECONDS);
   return extraction;
 }

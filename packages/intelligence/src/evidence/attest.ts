@@ -73,5 +73,5 @@ export async function attestPackingPhotos(
   }
 
   const checked = applyItemMatching(input, raw);
-  return { ...checked, status: deriveStatus(checked), model: out.model };
+  return { ...checked, status: deriveStatus(checked, input.step), model: out.model };
 }
