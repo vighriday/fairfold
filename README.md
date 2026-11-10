@@ -1,51 +1,103 @@
 # Fairfold
 
-Fairfold is a neutral AI witness for both sides of a PayPal payment. Packing evidence supports the merchant, a cited Store Report informs the buyer, and Shared Cause Detection links complaints to possible problems before more orders ship. PayPal holds the payment and decides disputes.
+Fairfold is a neutral witness for both sides of a PayPal payment. It records proof when the merchant packs an order, turns that proof into trust the buyer can see before paying, and links complaints to a shared cause, such as one faulty production batch, before more orders ship. PayPal still holds the money and decides every dispute. Every action that touches a buyer or PayPal needs the merchant's approval first.
 
-Hriday and Ishaan are preparing this project for the PayPal AI Hackathon. The documented audience is Indian apparel exporters selling to overseas PayPal buyers.
+Built by Hriday and Ishaan for the PayPal AI Hackathon. The target user is an Indian apparel exporter selling to overseas buyers through PayPal.
 
-**Current state, 9 November 2026:** the H1 backend foundation runs locally. It includes the PostgreSQL 16 schema, shared contracts, role authentication, OpenAPI, pg-boss jobs, evidence storage and a transactional hash-chain ledger. PayPal checkout, model calls and the product frontend belong to subsequent tasks. Work is on `Hriday`; the existing idea and architecture remain the governing specification.
+> **Status (10 November 2026): work in progress.** This `ishaan` branch has the backend foundation and the complete intelligence layer, tested locally against PostgreSQL. PayPal checkout, dispute filing, the Pack Station flow, the MCP server and the frontend are still being built on the `Hriday` branch, so the end-to-end demo does not run yet. All PayPal activity is sandbox-only.
 
-The user authorized proceeding around the absent sandbox accounts. The real dispute spike is deferred, and PayPal-dependent checks remain not run. H1's first Render deployment is still pending.
+## What it does
 
-## Run the local foundation
+| Moment                    | What Fairfold shows or does                                                                                                                                                  |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Before the buyer pays     | A **Store Report** beside the PayPal button: verifiable facts, the store's fulfilment record and reviews from verified payments, each claim linked to its source.            |
+| Before the merchant ships | A **Buyer Signal**: green, yellow, red, or grey for any new buyer, with reasons and a recommended action (never "cancel"). Buyers can see and contest their own band.        |
+| At the packing table      | An AI reads the packing photos (item, size label, batch tag, tracking label); code decides whether they match the PayPal order. Evidence is sealed in a hash-chained ledger. |
+| When complaints pile up   | **Shared Cause Detection** groups similar complaints and tests which batch, courier, packer or ship week they have in common, then proposes holds, inspections and messages. |
+| When a dispute opens      | The **Dispute Agent** builds the evidence pack the dispute reason needs, or recommends inspecting first, or a fair offer, when the merchant's own batch is at fault.         |
+| For AI shopping agents    | The same Store Report as an MCP tool, so an agent checks a store before paying.                                                                                              |
 
-Prerequisites: Node.js 22.16 or newer, the pinned pnpm 12.4.2, and PostgreSQL 16. Docker Compose supplies PostgreSQL when Docker is available.
+**Code decides, the model describes.** Every band, match, recommendation and statistic is computed by tested TypeScript. The model only reads photos and complaints, groups review themes, and drafts text, through one gateway with structured output, a timeout, and a fixed fallback. Text from buyers and reviewers is passed as quoted untrusted data with no tools. See [AI tools and how we used them](docs/ai-tools.md).
+
+## Repository layout
+
+```text
+apps/
+  api/            Fastify API with OpenAPI at /docs; routes/intel/ holds the intelligence endpoints
+  worker/         pg-boss worker running the job handlers
+packages/
+  contracts/      shared types, zod schemas and job names
+  db/             Drizzle schema and SQL migration (PostgreSQL 16)
+  ledger/         hash-chained ledger and content-addressed evidence storage
+  jobs/           pg-boss wrapper
+  ai/             the only code that talks to a model provider
+  intelligence/   Evidence Agent, Buyer Signal, Store Report, Dispute Agent, Shared Cause Detection, evals
+scripts/          setup, migrations and test launchers
+```
+
+## Run it locally
+
+Prerequisites: Node.js 22.16 or newer, pnpm 12.4.2 (pinned in `package.json`), and Docker for PostgreSQL 16.
 
 ```sh
 pnpm install --frozen-lockfile
-pnpm setup:local
-docker compose up -d
+pnpm setup:local        # creates an ignored .env with fresh local keys; never overwrites an existing one
+docker compose up -d    # PostgreSQL 16 on localhost:5432
 pnpm db:migrate
-pnpm dev
+pnpm dev                # API on http://localhost:3000 (Swagger UI at /docs) and the worker
 ```
 
-`setup:local` creates an ignored `.env` with fresh encryption/signing keys and leaves PayPal/model credentials blank. It never overwrites an existing `.env`. The default API serves [health](http://localhost:3000/healthz) and [Swagger UI](http://localhost:3000/docs/). The worker starts with an explicitly empty intelligence handler map until Ishaan's implementation arrives.
+### AI configuration (free)
 
-For this workspace's validated native PostgreSQL setup, `.env` uses port 55432 and the API uses port 3110. The running API documentation is [http://localhost:3110/docs/](http://localhost:3110/docs/). See [H1 setup and handoff](docs/hriday/h1-foundation.md) for exact commands and limitations.
-
-## Verify
+Fairfold runs on Google Gemini's free tier; no billing is needed. Create a key at [Google AI Studio](https://aistudio.google.com), then set these in `.env`:
 
 ```sh
-pnpm test
-pnpm test:db
-pnpm typecheck
-pnpm lint
-pnpm format:check
-pnpm test:sandbox
+AI_PROVIDER=google
+GOOGLE_GENERATIVE_AI_API_KEY=your-key
+AI_MODEL_VISION=gemini-3.5-flash
+AI_MODEL_TEXT=gemini-3.5-flash-lite
+AI_EMBEDDING_PROVIDER=google
+AI_MODEL_EMBEDDING=gemini-embedding-2
+CLUSTER_SIMILARITY=0.85
 ```
 
-Offline tests do not contact external services. Database integration checks require an isolated loopback PostgreSQL 16 database named `fairfold_*test` in `TEST_DATABASE_URL`; they are skipped by the default offline run and explicitly executed by `test:db`. Sandbox checks report SKIPPED when credentials are absent. `test:e2e` reports not implemented until the later application tasks are delivered.
+Without a key, every AI step uses its fixed fallback and the rest of the app still works. xAI, OpenAI and Anthropic are supported by changing `AI_PROVIDER` and the model ids. The free tier allows about 20 requests per model per day; set `AI_CACHE_DIR` to cache model answers by input hash.
 
-The Render blueprint defines the chosen API, worker and PostgreSQL 16 services. It has not been deployed or purchased. Read the [deployment preparation](docs/hriday/h1-foundation.md) before creating services.
+## Tests and evaluation
 
-Start with the [Hriday work guide](docs/hriday/README.md). It links the sequential build plan, verified PayPal research, sandbox dispute runbook, responsibilities, acceptance tests, and submission preparation.
+```sh
+pnpm test              # offline unit and API tests; no network
+pnpm test:db           # adds PostgreSQL integration tests (needs TEST_DATABASE_URL, an isolated *test database)
+pnpm typecheck
+pnpm lint
+pnpm --filter @fairfold/intelligence eval                 # prints the evaluation table
+pnpm --filter @fairfold/intelligence cost <eval log>      # call-log summary: calls, failures, tokens
+```
 
-- [Current status and next action](docs/hriday/status.md)
-- [Architecture decisions and open questions](DECISIONS.md)
+Tests never call a real model; the database test launcher strips model settings before it runs.
+
+Evaluation results measured on 10 November 2026 (details and method in [docs/ai-tools.md](docs/ai-tools.md)):
+
+| Set                                         | Target                 | Result                                                           |
+| ------------------------------------------- | ---------------------- | ---------------------------------------------------------------- |
+| 24 complaint texts, 3 true clusters + noise | Precision ≥ 0.85       | 1.00 over 45 grouped pairs (Gemini embeddings)                   |
+| 8 scripted disputes                         | 8 of 8                 | 8 of 8                                                           |
+| 30 synthetic buyer profiles                 | 30 of 30               | 30 of 30                                                         |
+| Batch B17 scenario (unit fixture)           | B17, strong            | B17, strong: rate ratio 30, p 0.000129, q 0.00154                |
+| Same volume, no defect                      | No hypothesis          | No hypothesis                                                    |
+| 20 packing-photo sets                       | ≥ 18 of 20; ≥ 16 of 20 | Not measured yet (free-tier quota; current photos are synthetic) |
+
+## Data and labels
+
+All stores, buyers and orders in the tests and seed are fictional and synthetic. Seeded PayPal identifiers start with `SEED-`. Cross-merchant buyer data appears only as a clearly labelled simulation of a tier only PayPal could run. No buyer email or street address is ever sent to a model.
+
+## More
+
+- [AI tools and how we used them](docs/ai-tools.md)
+- [Decisions and contract questions](DECISIONS.md)
 - [Change history](CHANGELOG.md)
-- [Contributor instructions](AGENTS.md)
+- [Platform build guide (Hriday)](docs/hriday/README.md)
 
-The internal source documents remain local and are excluded from Git. This README describes the working H1 foundation; the full application setup, seed, sandbox demonstration and measured AI results are completed in H8 after their acceptance gates pass.
+## Licence
 
-Licensed under the [MIT License](LICENSE).
+[MIT](LICENSE) © 2026 Hriday and Ishaan.
