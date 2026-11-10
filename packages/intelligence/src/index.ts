@@ -31,6 +31,8 @@ export { buildEvidencePack, buildEvidencePackWith } from './dispute/build.js';
 export type { EvidencePackResult } from './dispute/build.js';
 export { decide } from './dispute/decide.js';
 export type { Decision, DisputeFacts } from './dispute/decide.js';
+export { readComplaint, runSharedCauseScan, sweepSharedCauses } from './sharedCause/scan.js';
+export { draftBuyerMessages } from './sharedCause/actions.js';
 export {
   packPdfForMerchant,
   rebuildPackForMerchant,
