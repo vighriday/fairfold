@@ -17,6 +17,7 @@ All authored work in this checkout is on `Hriday`. Entries distinguish documenta
 - Added authenticated `/mcp` JSON-RPC tool surface for catalog search, cached store reports, ownership-checked order proof and merchant-only dispute-evidence lookup. Agent access cannot read private order proof, and no PayPal action is performed by these read tools.
 - Added a deterministic shopper policy loop with sandbox-only context propagation, caution-store skipping, non-verified-store confirmation pause, PayPal approval pause and capture-after-approval enforcement. The loop is provider-injected and does not fabricate AI, approval or sandbox outcomes.
 - Added the deterministic `pnpm seed` command for fictional catalogue merchants/products. It is explicitly PayPal-free and reports the missing B17/Ishaan fixture and real sandbox-ID gates instead of fabricating them.
+- Added authenticated MCP HTTP contract coverage and explicit `MCP_METHOD_NOT_FOUND`/`MCP_TOOL_NOT_FOUND` responses instead of generic server errors for unsupported requests.
 - Added PostgreSQL coverage for photo persistence, inspection queue publication and concurrent sealing. **192 database tests passed**; typecheck, targeted lint and formatting passed. I2 attestation/actions, real PayPal tracking and A6/A7/A11 remain **NOT RUN**.
 
 ## 2026-11-10 — H4 approved action execution
