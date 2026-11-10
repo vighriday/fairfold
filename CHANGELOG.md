@@ -5,6 +5,7 @@ All authored work in this checkout is on `Hriday`. Entries distinguish documenta
 ## 2026-11-10 — Ishaan: intelligence Phase 2 robustness for the free model tier (`ishaan` branch)
 
 - I6: buyer messages are drafted template-first. The Message Drafter now makes at most one model call per hypothesis and level, writing a template with `{order}` and `{product}` placeholders that code fills with each buyer's own order; before, it made one call per buyer (38 for the seeded B17 hypothesis, about two days of Gemini's free text quota). The template is stored in the `send_buyer_messages` payload, so a re-scan that adds buyers costs no call; an unusable draft (no `{order}`, another placeholder, too long, or a buyer's name) falls back to the fixed template. Six new unit tests and one PostgreSQL test; DECISIONS.md I-D10 (amended).
+- I4: review themes are reused while the store's reviews are unchanged. A Store Report refresh compares the hash of exactly what the Review Themer would read (ids, ratings and texts of the counted reviews) with the hash stored beside the last report, and reuses its themes without a model call when they match; a new review, a changed rating or text, or a review weighted out asks again. A fallback is never reused. The hash is kept inside `store_reports.report` and stripped by `StoreReportSchema`, so no response changes. Three new unit tests and one PostgreSQL test; DECISIONS.md I-D25.
 
 ## 2026-11-10 — Ishaan: intelligence Phase 1 fixes (`ishaan` branch)
 

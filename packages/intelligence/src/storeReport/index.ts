@@ -25,9 +25,29 @@ import { storeBand } from './bands.js';
 import { computeFulfilment, WINDOW_DAYS, type FulfilmentInput } from './metrics.js';
 import { isRealDomain, rdapRegisteredAt, rdapUrl } from './rdap.js';
 import { reviewAverage, weightReviews } from './reviews.js';
-import { themeReviews } from './themer.js';
+import { themesReusing, type ThemesResult } from './themer.js';
 
 const DAY_MS = 24 * 3600_000;
+
+/**
+ * The stored report also carries `themesInputHash`, the hash of the reviews its themes were made from. It is not
+ * part of StoreReport: StoreReportSchema strips it, so endpoint 5 and the MCP tool never return it.
+ */
+const StoredThemesSchema = z.object({
+  themesInputHash: z.string(),
+  reviews: StoreReportSchema.shape.reviews.pick({ themes: true }),
+});
+
+async function storedThemes(rt: IntelRuntime, merchantId: string): Promise<ThemesResult | null> {
+  const [row] = await rt.db
+    .select({ report: store_reports.report })
+    .from(store_reports)
+    .where(eq(store_reports.merchant_id, merchantId));
+  const parsed = StoredThemesSchema.safeParse(row?.report);
+  return parsed.success
+    ? { themes: parsed.data.reviews.themes, inputHash: parsed.data.themesInputHash }
+    : null;
+}
 const PolicySchema = z.object({ kind: z.enum(['returns', 'shipping', 'contact']), url: z.url() });
 const POLICY_LABEL = {
   returns: 'Returns policy',
@@ -193,7 +213,11 @@ export async function buildStoreReportWith(
   const fulfilment = computeFulfilment(await fulfilmentInput(rt, merchantId, since), now);
   const allReviews = await listReviews(rt, merchantId);
   const counted = allReviews.filter((r) => r.weight > 0);
-  const themes = await themeReviews(counted, rt.models.text);
+  const { themes, inputHash } = await themesReusing(
+    counted,
+    await storedThemes(rt, merchantId),
+    rt.models.text,
+  );
 
   const policies = z
     .array(z.unknown())
@@ -225,10 +249,14 @@ export async function buildStoreReportWith(
     sources,
     computedAt: now.toISOString(),
   });
+  const stored = inputHash ? { ...report, themesInputHash: inputHash } : report;
   await rt.db
     .insert(store_reports)
-    .values({ merchant_id: merchantId, report, computed_at: now })
-    .onConflictDoUpdate({ target: store_reports.merchant_id, set: { report, computed_at: now } });
+    .values({ merchant_id: merchantId, report: stored, computed_at: now })
+    .onConflictDoUpdate({
+      target: store_reports.merchant_id,
+      set: { report: stored, computed_at: now },
+    });
   return report;
 }
 

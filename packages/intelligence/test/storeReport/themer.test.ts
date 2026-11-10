@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanThemes, themeReviews } from '../../src/storeReport/themer.js';
+import { cleanThemes, themeReviews, themesReusing } from '../../src/storeReport/themer.js';
 import { isRealDomain, rdapRegisteredAt } from '../../src/storeReport/rdap.js';
 import { uid } from '../helpers/ids.js';
 import { mockModel, promptOf } from '../helpers/mockModel.js';
@@ -34,6 +34,39 @@ describe('cleanThemes', () => {
     expect(
       cleanThemes([{ label: 'Seams', tone: 'negative', reviewIds: [C] }], new Set([A, B, C])),
     ).toEqual([]);
+  });
+});
+
+describe('themesReusing', () => {
+  const answer = { themes: [{ label: 'Print quality', tone: 'positive', reviewIds: [A, B] }] };
+  it('reuses the previous themes when the reviews sent to the themer are the same', async () => {
+    const { model, calls } = mockModel([answer]);
+    const first = await themesReusing(reviews, null, model);
+    expect(first.inputHash).toMatch(/^[0-9a-f]{64}$/);
+    expect(calls).toHaveLength(1);
+    const again = await themesReusing([...reviews], first, model);
+    expect(again).toEqual(first);
+    expect(calls).toHaveLength(1);
+  });
+  it('asks again when a review is added or its text or rating differs', async () => {
+    const { model, calls } = mockModel([answer]);
+    const first = await themesReusing(reviews.slice(0, 3), null, model);
+    await themesReusing(reviews, first, model);
+    await themesReusing(
+      reviews.slice(0, 3).map((r) => (r.id === C ? { ...r, rating: 3 } : r)),
+      first,
+      model,
+    );
+    await themesReusing(
+      reviews.slice(0, 3).map((r) => (r.id === C ? { ...r, text: 'Seam fine' } : r)),
+      first,
+      model,
+    );
+    expect(calls).toHaveLength(4);
+  });
+  it('a fallback has no input hash, so it is never reused', async () => {
+    const { model } = mockModel(['not json']);
+    expect(await themesReusing(reviews, null, model)).toEqual({ themes: [], inputHash: null });
   });
 });
 

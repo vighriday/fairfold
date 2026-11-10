@@ -208,6 +208,63 @@ describe.skipIf(!dbUrl)('store report against Postgres', () => {
     expect(stored).toHaveLength(2);
   });
 
+  it('the Review Themer runs again only when the set of reviews changed', async () => {
+    const n = await neel();
+    const addReview = async (orderId: string, text: string) => {
+      const [r] = await database.db
+        .insert(reviews)
+        .values({
+          merchant_id: n.merchant.id,
+          order_id: orderId,
+          buyer_id: n.buyer.id,
+          rating: 5,
+          text,
+          created_at: daysAgo(1),
+        })
+        .returning();
+      return r!.id;
+    };
+    const first = await addReview(n.ids[0]!, 'Beautiful print');
+    const second = await addReview(n.ids[1]!, 'Lovely print');
+    const { model, calls } = mockModel([
+      'not json',
+      'not json',
+      { themes: [{ label: 'Print quality', tone: 'positive', reviewIds: [first, second] }] },
+    ]);
+    const { runtime } = testRuntime(database.db, {
+      clock: fixedClock(NOW),
+      models: { text: model },
+    });
+
+    // a fallback (no themes) is never reused: the next refresh asks again
+    expect((await buildStoreReportWith(runtime, n.merchant.id)).reviews.themes).toEqual([]);
+    expect(calls).toHaveLength(2);
+    const themed = await buildStoreReportWith(runtime, n.merchant.id);
+    expect(themed.reviews.themes).toEqual([
+      { label: 'Print quality', tone: 'positive', count: 2, reviewIds: [first, second] },
+    ]);
+    expect(calls).toHaveLength(3);
+
+    // same reviews: the stored themes are reused without a model call; a reply changes nothing
+    await database.db
+      .update(reviews)
+      .set({ merchant_reply: 'Thank you!' })
+      .where(eq(reviews.id, first));
+    const again = await buildStoreReportWith(runtime, n.merchant.id);
+    expect(again.reviews.themes).toEqual(themed.reviews.themes);
+    expect(calls).toHaveLength(3);
+    const [row] = await database.db
+      .select({ report: store_reports.report })
+      .from(store_reports)
+      .where(eq(store_reports.merchant_id, n.merchant.id));
+    expect((row!.report as { reviews: unknown }).reviews).toEqual(again.reviews);
+
+    // a new review changes the set: the themer runs again
+    await addReview(n.ids[2]!, 'Print faded after a wash');
+    await buildStoreReportWith(runtime, n.merchant.id);
+    expect(calls).toHaveLength(4);
+  });
+
   it('rdap failure keeps the stored registration date of a real domain', async () => {
     const merchant = await insertMerchant(database.db, {
       domain: 'neelprints.in',

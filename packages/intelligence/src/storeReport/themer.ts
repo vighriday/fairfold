@@ -1,7 +1,9 @@
 // Review Themer (section 10): the model names themes and cites review ids; code keeps only real ids,
 // drops themes with fewer than 2 reviews and counts them. Review text is untrusted third-party data.
+// Themes are reused while the reviews the themer would read are unchanged, so a report refresh triggered by an
+// order or a dispute spends no model call.
 import { z } from 'zod';
-import { generateStructured, type LanguageModel } from '@fairfold/ai';
+import { generateStructured, hashInput, type LanguageModel } from '@fairfold/ai';
 import type { StoreReport } from '@fairfold/contracts';
 
 export type Theme = StoreReport['reviews']['themes'][number];
@@ -39,12 +41,26 @@ export function cleanThemes(
     .filter((t) => t.count >= MIN_THEME_REVIEWS);
 }
 
-export async function themeReviews(
-  reviews: Array<{ id: string; rating: number; text: string }>,
+type ThemedReview = { id: string; rating: number; text: string };
+
+/** Themes and the hash of the reviews they were made from; `inputHash` is null when the model fell back. */
+export interface ThemesResult {
+  themes: Theme[];
+  inputHash: string | null;
+}
+
+/** Identifies exactly what the themer reads: the first MAX_THEMED_REVIEWS reviews' ids, ratings and texts. */
+export function themerInputHash(reviews: ThemedReview[]): string {
+  return hashInput([
+    JSON.stringify(reviews.slice(0, MAX_THEMED_REVIEWS).map((r) => [r.id, r.rating, r.text])),
+  ]);
+}
+
+async function runThemer(
+  sample: ThemedReview[],
   model?: LanguageModel,
-): Promise<Theme[]> {
-  const sample = reviews.slice(0, MAX_THEMED_REVIEWS);
-  if (sample.length === 0) return [];
+): Promise<{ themes: Theme[]; usedFallback: boolean }> {
+  if (sample.length === 0) return { themes: [], usedFallback: false };
   const out = await generateStructured({
     schema: ThemesSchema,
     system: SYSTEM,
@@ -55,5 +71,30 @@ export async function themeReviews(
     fallback: () => ({ themes: [] }),
     model,
   });
-  return cleanThemes(out.value.themes, new Set(sample.map((r) => r.id)));
+  return {
+    themes: cleanThemes(out.value.themes, new Set(sample.map((r) => r.id))),
+    usedFallback: out.usedFallback,
+  };
+}
+
+export async function themeReviews(
+  reviews: ThemedReview[],
+  model?: LanguageModel,
+): Promise<Theme[]> {
+  return (await runThemer(reviews.slice(0, MAX_THEMED_REVIEWS), model)).themes;
+}
+
+/**
+ * The previous themes when they were made from the same reviews (same ids, ratings and texts); otherwise one
+ * themer call. A fallback is returned without a hash, so the next refresh asks the model again.
+ */
+export async function themesReusing(
+  reviews: ThemedReview[],
+  previous: ThemesResult | null,
+  model?: LanguageModel,
+): Promise<ThemesResult> {
+  const inputHash = themerInputHash(reviews);
+  if (previous?.inputHash === inputHash) return { themes: previous.themes, inputHash };
+  const out = await runThemer(reviews.slice(0, MAX_THEMED_REVIEWS), model);
+  return { themes: out.themes, inputHash: out.usedFallback ? null : inputHash };
 }
