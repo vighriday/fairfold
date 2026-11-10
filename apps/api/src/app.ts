@@ -129,7 +129,7 @@ export async function createApi(options: {
       info: {
         title: 'Fairfold API',
         description:
-          'H1 foundation. PayPal checkout and intelligence endpoints are not implemented yet.',
+          'H1 foundation with the intelligence endpoints. PayPal checkout endpoints are not implemented yet.',
         version: '0.1.0',
       },
       components: {
@@ -179,7 +179,7 @@ export async function createApi(options: {
             status: z.literal('ok'),
             database: z.literal('ready'),
             phase: z.literal('H1'),
-            intelligence: z.literal('stub'),
+            intelligence: z.literal('ready'),
           }),
           503: ErrorEnvelopeSchema,
         },
@@ -201,7 +201,7 @@ export async function createApi(options: {
         status: 'ok' as const,
         database: 'ready' as const,
         phase: 'H1' as const,
-        intelligence: 'stub' as const,
+        intelligence: 'ready' as const,
       };
     },
   );

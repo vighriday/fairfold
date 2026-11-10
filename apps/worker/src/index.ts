@@ -18,7 +18,7 @@ const jobs = createJobs(process.env.DATABASE_URL, {
 await jobs.start();
 await jobs.register(handlers);
 log.info(
-  { phase: 'H1', handlerCount: Object.keys(handlers).length, intelligence: 'stub' },
+  { phase: 'H1', handlerCount: Object.keys(handlers).length, intelligence: 'ready' },
   'Worker ready',
 );
 let stopping = false;

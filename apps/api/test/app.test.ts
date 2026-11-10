@@ -36,7 +36,7 @@ describe('H1 API foundation', () => {
     expect((await app.inject('/healthz')).json()).toMatchObject({
       status: 'ok',
       database: 'ready',
-      intelligence: 'stub',
+      intelligence: 'ready',
     });
     expect((await app.inject('/docs/json')).json().paths).toHaveProperty('/api/auth/demo-login');
     expect((await app.inject('/docs/')).statusCode).toBe(200);
