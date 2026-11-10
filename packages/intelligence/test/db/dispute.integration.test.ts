@@ -478,6 +478,62 @@ describe.skipIf(!dbUrl)('dispute agent against Postgres', () => {
     );
   });
 
+  it("dispute.synced reads the buyer's words from the whole dispute and appends later ones once", async () => {
+    const { dispute } = await packedOrder();
+    const raw = {
+      create_time: '2026-11-10T08:00:00Z',
+      extensions: {
+        merchandize_dispute_properties: {
+          product_details: { description: 'The seam on the left sleeve is open.' },
+        },
+      },
+      supporting_info: [{ source: 'SUBMITTED_BY_BUYER', notes: 'Photo of the seam attached.' }],
+      messages: [
+        { posted_by: 'BUYER', content: 'The left sleeve seam opened after one wash.' },
+        { posted_by: 'SELLER', content: 'Could you send a photo?' },
+        { posted_by: 'BUYER', content: 'Done, see the attachment.' },
+      ],
+    };
+    await database.db.update(disputes).set({ raw }).where(eq(disputes.id, dispute.id));
+    const { runtime } = testRuntime(database.db, { clock: fixedClock(NOW) });
+    const synced = createHandlers(() => runtime)['dispute.synced']!;
+    const text = async () =>
+      (
+        await database.db
+          .select({ text: complaints.text })
+          .from(complaints)
+          .where(eq(complaints.source_ref, dispute.id))
+      )[0]!.text;
+
+    await synced({ disputeId: dispute.id, isNew: true, newBuyerMessages: [] });
+    expect(await text()).toBe(
+      [
+        'PayPal dispute reason: MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED.',
+        'The seam on the left sleeve is open.',
+        'Photo of the seam attached.',
+        'The left sleeve seam opened after one wash.',
+        'Done, see the attachment.',
+      ].join('\n\n'),
+    );
+
+    // a later update: a new buyer message in the payload, even when the job lists none
+    const later = {
+      ...raw,
+      messages: [...raw.messages, { posted_by: 'BUYER', content: 'Still waiting for a reply.' }],
+    };
+    await database.db.update(disputes).set({ raw: later }).where(eq(disputes.id, dispute.id));
+    await synced({ disputeId: dispute.id, isNew: false, newBuyerMessages: [] });
+    await synced({
+      disputeId: dispute.id,
+      isNew: false,
+      newBuyerMessages: ['Still waiting for a reply.'],
+    });
+    const after = await text();
+    expect(after.endsWith('Done, see the attachment.\n\nStill waiting for a reply.')).toBe(true);
+    expect(after.match(/Still waiting for a reply\./g)).toHaveLength(1);
+    expect(after).not.toContain('Could you send a photo?');
+  });
+
   it('routes 19 and 20: the owner rebuilds and downloads the PDF; another store cannot', async () => {
     const { merchant, dispute } = await packedOrder();
     const { runtime } = testRuntime(database.db, { clock: fixedClock(NOW) });

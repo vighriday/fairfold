@@ -296,3 +296,9 @@ Status: **DEFERRED BY USER; NOT RUN**. The user confirmed accounts do not curren
 - `approved` is included although the task names only "submitted": an approved pack is the one Hriday's `evidence.submit` is about to file, and a new draft beside it would have to be approved again.
 - The buyer's later messages still reach the dispute's complaint (Shared Cause Detection uses them); only the pack is frozen.
 - Contract change: two new 409 codes on endpoint 19 and `buildEvidencePack`.
+
+### I-D36 — A dispute complaint carries every place the buyer wrote, not just the first message — 2026-11-10
+- Section 9's table takes a dispute's text from "dispute reason, the buyer's notes in the dispute details, and the first buyer message"; the code took only the reason and the first buyer message, and a later sync added only the messages the job listed.
+- `buyerTexts(raw)` reads every field of PayPal's dispute object (customer-disputes v1 OpenAPI schema, checked 2026-11-10) that carries the buyer's words: the customer-provided issue details (`extensions.merchandize_dispute_properties` and `billing_dispute_properties.credit_not_processed`: product and service `description`, service `note`), item-level `notes` and details in `disputed_transactions[].items[]`, `supporting_info[]` and `evidences[]` notes with `source: SUBMITTED_BY_BUYER`, every `messages[]` entry `posted_by: BUYER` (an entry without `posted_by` counts as the buyer's, as before), and `offer.history[]` notes with `actor: BUYER`. Seller and arbiter text is left out; an unexpected shape is skipped, never thrown on.
+- The first sync stores the reason followed by all of it; every later sync appends whatever buyer text from the stored payload or the job's `newBuyerMessages` is not yet in the complaint, so a message is added once even if the job did not list it.
+- Contract change: none.
