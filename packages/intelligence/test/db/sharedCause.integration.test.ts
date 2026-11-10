@@ -73,6 +73,7 @@ describe.skipIf(!dbUrl)('shared cause scan against Postgres', () => {
 
     const [row] = await database.db.select().from(hypotheses).where(eq(hypotheses.id, h.id));
     expect(row!.safety_flag).toBe(false);
+    expect(row!.explanation).toContain('4 carriers'); // section 9: courier spread is shown
     expect(row!.explanation).toMatch(
       /^5 of 39 orders with batch B17 had a "sleeve seam: stitching came apart" complaint/,
     );
