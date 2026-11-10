@@ -130,4 +130,23 @@ describe.skipIf(!databaseUrl)('authenticated MCP HTTP contract', () => {
     expect(response.json().error.code).toBe('FORBIDDEN');
     expect(merchantToken).toContain('.');
   });
+
+  it('rejects unsupported MCP methods and tools explicitly', async () => {
+    const method = await call('prompts/get', agentToken);
+    expect(method.statusCode).toBe(400);
+    expect(method.json().error).toMatchObject({
+      code: 'MCP_METHOD_NOT_FOUND',
+      message: 'Unsupported MCP method',
+    });
+
+    const tool = await call('tools/call', agentToken, {
+      name: 'delete_everything',
+      arguments: {},
+    });
+    expect(tool.statusCode).toBe(400);
+    expect(tool.json().error).toMatchObject({
+      code: 'MCP_TOOL_NOT_FOUND',
+      message: 'Unsupported MCP tool',
+    });
+  });
 });

@@ -93,7 +93,7 @@ export function createMcpRoutes(service: ReturnType<typeof createMcpService>): F
           value = await service.getOrderProof(request.auth, z.string().parse(args.orderId));
         else if (name === 'provide_dispute_evidence')
           value = await service.provideDisputeEvidence(request.auth, z.string().parse(args.packId));
-        else throw new Error('Unsupported MCP tool');
+        else throw new AppError('MCP_TOOL_NOT_FOUND', 'Unsupported MCP tool', 400);
         return {
           jsonrpc: '2.0',
           id: body.id,
