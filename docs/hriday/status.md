@@ -16,7 +16,7 @@ The user has explicitly chosen connecting Render and completing H1's first deplo
 | Runtime inventory         | Node 22.16.0, pnpm 12.4.2; isolated PostgreSQL 16.15 under ignored `.work/`; Docker absent                           |
 | Sandbox app/buyer access  | User confirmed accounts do not exist; real spike deferred by user                                                    |
 | Render/frontend access    | Render skills loaded; sign-in reported; account tools absent in this chat; no services purchased or Figma UI created |
-| Application               | Local H1 API/worker, 25-table schema, contracts, jobs, ledger/blob storage and demo auth; intelligence stubs only    |
+| Application               | Local H1 API/worker, 25-table schema, contracts, jobs, ledger/blob storage and demo auth; real intelligence handlers and endpoints merged on `ishaan` (I1–I6)    |
 | Local API                 | http://localhost:3110/docs/ and /healthz verified over HTTP against real PostgreSQL 16                               |
 | Git publication           | Incremental history published to `origin/Hriday` on 9 November; no main merge or submission performed                |
 

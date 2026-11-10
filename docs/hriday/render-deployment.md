@@ -37,9 +37,9 @@ Apply the reviewed Blueprint in the Render Dashboard. The Render deployment skil
 After applying, retain the actual service URLs, resource/deploy IDs and deployed Git commit. Check:
 
 1. API build, `pnpm db:migrate` pre-deploy and start all succeed. The service reaches `live`.
-2. Actual API URL plus `/healthz` returns database `ready`, phase `H1` and intelligence `stub`.
+2. Actual API URL plus `/healthz` returns database `ready`, phase `H1` and intelligence `ready`.
 3. `/docs/` loads Swagger; `/docs/json` contains the implemented demo-login endpoint. The Figma frontend and checkout routes are not implemented in H1.
-4. Worker deploy succeeds and runtime logs say `Worker ready`, `handlerCount: 0`, intelligence `stub`. No real intelligence job result is claimed.
+4. Worker deploy succeeds and runtime logs say `Worker ready`, `handlerCount: 9` (the intelligence job handlers), intelligence `ready`. No intelligence job result is claimed until a job actually runs.
 5. Record the deployed commit and actual observations in a new dated evidence record, then update H1's status. A queued deploy or green API alone does not prove the worker is ready.
 
 The public API URL can be supplied back in chat for HTTP verification; no credentials or secret values are needed. Full sandbox checks remain deferred until the accounts exist.

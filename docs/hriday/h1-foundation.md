@@ -77,7 +77,7 @@ The API rejects a live PAYPAL_API_BASE before boot. The current foundation perfo
 
 ## Handoff to Ishaan
 
-- Import shared types/schemas from `@fairfold/contracts`, named job contracts from its jobs export, and the fixed stubs from `@fairfold/contracts/stubs`.
+- Import shared types/schemas from `@fairfold/contracts`, named job contracts from its jobs export, and the real intelligence services from `@fairfold/intelligence` (the H1 stubs were retired once I1–I6 landed).
 - Import `createDatabase`/typed SQL-named tables from `@fairfold/db`; use `createLedger(db, clock)` and `createBlobStore(db, clock)` for evidence. To join a caller's transaction, construct these helpers with that transaction.
 - Register jobs through `createJobs`. The wrapper validates at publish and worker entry. `publishDebounced('sharedcause.scan', merchantId, 60)` maintains a single delayed pending scan for that merchant, without editing an active scan.
 - `publish` accepts an optional existing pg-boss-compatible transaction adapter. Its rollback behavior is tested; H3 still needs to implement and prove the full verified-event/store/enqueue recovery flow.

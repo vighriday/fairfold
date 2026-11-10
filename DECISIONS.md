@@ -101,7 +101,7 @@ Status: **DEFERRED BY USER; NOT RUN**. The user confirmed accounts do not curren
 - H1 landed on `Hriday`; it is merged into `ishaan` locally. The temporary shim is deleted and every intelligence import uses `@fairfold/contracts`.
 - Ishaan's route schemas live in `packages/contracts/src/intel.ts`, imported as `@fairfold/contracts/intel` (the existing `./*` export), so `contracts/src/index.ts` is unchanged. This file reaches Hriday by pull request as section 14 asks.
 - The worker imports a ready `handlers` map and the API registers the intel plugin without options, so `packages/intelligence/src/runtime.ts` builds the database and a lazily-started pg-boss publisher from `DATABASE_URL` on first use. Tests inject their own runtime.
-- For Hriday: `/healthz` still reports `intelligence: 'stub'` and the worker logs `intelligence: 'stub'`; both are Hriday's files.
+- For Hriday: `/healthz` and the worker log reported `intelligence: 'stub'` until I-D13 retired the stubs.
 - Contract change: adds `intel.ts` only.
 
 ### I-D6 — Buyer Signal sentence is stored inside `buyer_signals.features` — 2026-11-09
@@ -141,3 +141,8 @@ Status: **DEFERRED BY USER; NOT RUN**. The user confirmed accounts do not curren
 - Endpoint 32 accepts files in `photos` or `photos[]` (at most 4, else 400 `TOO_MANY_PHOTOS`) and a required `text`; only the buyer's own paid order (captured or later) can be reported. Photos go through `blobs.put`, so its JPEG/PNG and size checks apply. No ledger entry is written for a report (section 8 names none).
 - Clustering precision on `complaints.json` (task I6 gate) needs the real model's extractions and is measured in I7's eval run; it is NOT RUN as of this entry because no provider key is configured locally.
 - Contract change: none.
+
+### I-D13 — H1 intelligence stubs retired — 2026-11-10
+- The worker registers the real intelligence handler map (9 handlers) and the API registers all 18 intelligence endpoints, so the H1 stand-ins were false. At Ishaan's instruction ("no scaffolding throughout the project") they are removed: `packages/contracts/src/stubs.ts` and its test are deleted (nothing else imported them), `/healthz` returns `intelligence: 'ready'`, the worker logs `intelligence: 'ready'`, and the OpenAPI description no longer says the intelligence endpoints are missing. Hriday's H1 deployment checklist, status and handoff lines that expected the stubs are corrected to match.
+- Not changed: Hriday's unbuilt H2–H8 work (checkout, PayPal actions, seed, `test:e2e`) keeps its accurate NOT RUN / not-implemented labels; building it is outside I1–I7.
+- Contract change: **yes** — `/healthz`'s `intelligence` literal changes from `stub` to `ready`, and `@fairfold/contracts/stubs` no longer exists. Needs Hriday's review.
