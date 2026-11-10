@@ -277,6 +277,35 @@ describe.skipIf(!dbUrl)('dispute agent against Postgres', () => {
     });
   });
 
+  it('evidence-integrity flags (section 12) reach the merchant: a reused photo and an EXIF time gap', async () => {
+    const { merchant, product, dispute, shas } = await packedOrder();
+    const { order: other } = await insertOrder(database.db, {
+      merchantId: merchant.id,
+      product,
+      status: 'delivered',
+    });
+    await createLedger(database.db, at('2026-10-20T10:00:00Z')).append(other.id, {
+      type: 'photo',
+      payload: { label: 'item' },
+      blob_sha256: shas[0],
+    });
+    const { runtime } = testRuntime(database.db, { clock: fixedClock(NOW) });
+    const pack = await buildEvidencePackWith(runtime, dispute.id);
+    const flagged = pack.rationale.filter((r) => r.startsWith('Packing photo'));
+    expect(flagged).toEqual([
+      'Packing photo "item": photo EXIF time is more than 15 minutes from the upload time; ' +
+        'the same photo is recorded for 1 other order of this store.',
+    ]);
+    expect(pack.recommendation).toBe('provide_evidence');
+  });
+
+  it('a photo used only for this order carries no reuse flag', async () => {
+    const { dispute } = await packedOrder();
+    const { runtime } = testRuntime(database.db, { clock: fixedClock(NOW) });
+    const pack = await buildEvidencePackWith(runtime, dispute.id);
+    expect(pack.rationale.join(' ')).not.toMatch(/same photo/);
+  });
+
   describe("the buyer's own photos (I5: shown beside the packing photos for the merchant)", () => {
     /** The buyer reported the problem with one photo, which the Evidence Agent described with `status`. */
     async function buyerReported(status: 'match' | 'mismatch') {

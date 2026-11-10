@@ -93,6 +93,59 @@ function exifFlag(payload: unknown): string | null {
   return null;
 }
 
+interface PackingPhoto {
+  sha256: string;
+  label: string;
+  serverTime: Date | null;
+  /** Section 12 evidence-integrity flags, in plain words; empty when the photo raises none. */
+  flags: string[];
+}
+
+/**
+ * The attested packing photos with their section 12 integrity flags: an EXIF capture time outside the upload window
+ * (recorded on the photo's ledger entry when it was stored) and the same photo — by SHA-256 — recorded for another
+ * order of this store (H1's merchant-local reuse lookup). Flags inform the merchant and PayPal's reviewer; they never
+ * change the recommendation.
+ */
+async function packingPhotos(
+  blobs: ReturnType<typeof createBlobStore>,
+  order: typeof orders.$inferSelect,
+  attestation: typeof attestations.$inferSelect | undefined,
+  entries: Ledger['entries'],
+): Promise<PackingPhoto[]> {
+  if (!attestation) return [];
+  const photoEntries = new Map(
+    entries.filter((e) => e.type === 'photo' && e.blob_sha256).map((e) => [e.blob_sha256!, e]),
+  );
+  const photos: PackingPhoto[] = [];
+  for (const [i, sha256] of attestation.photo_shas.entries()) {
+    const entry = photoEntries.get(sha256);
+    const flags: string[] = [];
+    const exif = exifFlag(entry?.payload);
+    if (exif) flags.push(exif);
+    const others = (await blobs.photoUsedByMerchant(sha256, order.merchant_id)).filter(
+      (id) => id !== order.id,
+    ).length;
+    if (others)
+      flags.push(
+        `the same photo is recorded for ${others} other order${others === 1 ? '' : 's'} of this store`,
+      );
+    photos.push({
+      sha256,
+      label: attestation.photo_labels[i] ?? 'photo',
+      serverTime: entry?.server_time ?? null,
+      flags,
+    });
+  }
+  return photos;
+}
+
+/** One rationale line per flagged packing photo, e.g. `Packing photo "item": …; ….` */
+const integrityRationale = (photos: PackingPhoto[]) =>
+  photos
+    .filter((p) => p.flags.length)
+    .map((p) => `Packing photo "${p.label}": ${p.flags.join('; ')}.`);
+
 function confidenceOf(d: Decision, attestationConfidence: number | null): number {
   if (d.weakCaseWarning) return 0.4;
   if (d.recommendation === 'provide_evidence')
@@ -127,6 +180,7 @@ export async function buildEvidencePackWith(
   const result = attestation?.result as AttestationResult | undefined;
   const { hypothesis } = await linkedHypothesis(rt, disputeId);
   const buyerPhotos = order ? await buyerPhotoEvidence(rt, order.id) : { shas: [], check: null };
+  const photos = order ? await packingPhotos(blobs, order, attestation, entries) : [];
 
   const amount = {
     currency_code: dispute.currency ?? order?.currency ?? 'USD',
@@ -199,6 +253,7 @@ export async function buildEvidencePackWith(
         ledger: ledger!,
         attestation,
         result,
+        photos,
         buyerPhotos,
         amount,
       }),
@@ -213,7 +268,11 @@ export async function buildEvidencePackWith(
 
   const draft = EvidencePackDraftSchema.parse({
     recommendation: decision.recommendation,
-    rationale: buyerPhotos.check ? [...decision.rationale, buyerPhotos.check] : decision.rationale,
+    rationale: [
+      ...decision.rationale,
+      ...integrityRationale(photos),
+      ...(buyerPhotos.check ? [buyerPhotos.check] : []),
+    ],
     evidences,
     files,
     actionParams: decision.actionParams,
@@ -259,6 +318,7 @@ async function pdfData(
     ledger: Ledger;
     attestation: typeof attestations.$inferSelect | undefined;
     result: AttestationResult | undefined;
+    photos: PackingPhoto[];
     buyerPhotos: { shas: string[]; check: string | null };
     amount: { currency_code: string; value: string };
   },
@@ -270,23 +330,10 @@ async function pdfData(
       return null; // purged or missing bytes: the photo is listed in the ledger but cannot be shown
     }
   };
-  const photoEntries = new Map(
-    s.ledger.entries
-      .filter((e) => e.type === 'photo' && e.blob_sha256)
-      .map((e) => [e.blob_sha256!, e]),
-  );
-  const packingPhotos: EvidencePdfData['packingPhotos'] = [];
-  for (const [i, sha256] of (s.attestation?.photo_shas ?? []).entries()) {
-    const bytes = await bytesOf(sha256);
-    if (!bytes) continue;
-    const entry = photoEntries.get(sha256);
-    packingPhotos.push({
-      sha256,
-      label: s.attestation!.photo_labels[i] ?? 'photo',
-      serverTime: entry?.server_time ?? null,
-      bytes,
-      exifFlag: exifFlag(entry?.payload),
-    });
+  const packing: EvidencePdfData['packingPhotos'] = [];
+  for (const photo of s.photos) {
+    const bytes = await bytesOf(photo.sha256);
+    if (bytes) packing.push({ ...photo, bytes });
   }
   const buyerPhotos: EvidencePdfData['buyerPhotos'] = [];
   for (const sha256 of s.buyerPhotos.shas) {
@@ -330,7 +377,7 @@ async function pdfData(
       serverTime: e.server_time,
       actor: e.actor,
     })),
-    packingPhotos,
+    packingPhotos: packing,
     buyerPhotos,
     buyerPhotoCheck: s.buyerPhotos.check,
     attestation:

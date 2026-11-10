@@ -25,7 +25,8 @@ export interface EvidencePdfData {
     label: string;
     serverTime: Date | null;
     bytes: Uint8Array;
-    exifFlag: string | null;
+    /** Evidence-integrity flags (EXIF time gap, the same photo on another order), shown in the caption. */
+    flags: string[];
   }>;
   buyerPhotos: Array<{ sha256: string; bytes: Uint8Array }>;
   /** The Evidence Agent's check of the buyer's photos against the order (step buyer_photo), in words. */
@@ -224,7 +225,7 @@ async function render(data: EvidencePdfData, photoSide: number | null): Promise<
     for (const p of data.packingPhotos)
       await drawPhoto(w, await photo(p.bytes), [
         `${p.label} - SHA-256 ${p.sha256}`,
-        `Server time ${iso(p.serverTime)}${p.exifFlag ? ` - FLAG: ${p.exifFlag}` : ''}`,
+        `Server time ${iso(p.serverTime)}${p.flags.length ? ` - FLAG: ${p.flags.join('; ')}` : ''}`,
       ]);
   }
   if (data.buyerPhotos.length) {

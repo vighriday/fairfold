@@ -163,7 +163,7 @@ describe('evidence PDF', () => {
           label: 'item',
           serverTime: new Date('2026-11-02T09:00:00Z'),
           bytes,
-          exifFlag: i === 0 ? 'EXIF time is more than 15 minutes from upload time' : null,
+          flags: i === 0 ? ['photo EXIF time is more than 15 minutes from the upload time'] : [],
         })),
         buyerPhotos: [],
         buyerPhotoCheck: null,

@@ -185,3 +185,10 @@ Status: **DEFERRED BY USER; NOT RUN**. The user confirmed accounts do not curren
 - The status answers "do these photos show the item that was ordered?" (idea doc section 8: the agent "compares the buyer's photos with the packing photos and flags differences — it does not decide"). A visible defect is what the buyer is reporting, so it is not a mismatch; an unreadable size label, the number of units photographed and fields a buyer photo is not expected to show (batch tag, shipping label) are not compared. A different colour, or a readable size label that differs, is `mismatch`; an ordered item that is not visible is `could_not_verify`.
 - One attestation per set of photos: a redelivered `complaint.created` job does not call the model again. Photos whose bytes were purged by retention are skipped.
 - Contract change: none (`attestations.step` already allows `buyer_photo`).
+
+### I-D20 — Evidence-integrity flags shown in the pack — 2026-11-10
+- Section 12, "Evidence integrity": the duplicate-photo check and the EXIF 15-minute rule are Hriday's (ledger, blobs); showing the flag in the pack is Ishaan's. The pack now flags each attested packing photo that (a) is recorded — by SHA-256 — for another order of the same store, using H1's `blobs.photoUsedByMerchant(hash, merchantId)` over ledger `photo` and `inspection` entries, or (b) carries `exifOutsideWindow` / `exifUnreadable` on its ledger `photo` entry.
+- Each flagged photo adds one code-written line to `EvidencePackDraft.rationale` (e.g. `Packing photo "item": the same photo is recorded for 1 other order of this store.`) and a FLAG note to its PDF caption. The count of other orders is shown, never their ids.
+- Flags inform the merchant and PayPal's reviewer; they do not change the recommendation, because section 10's decision table has no integrity row.
+- For Hriday (H5): the ledger `photo` entry payload is expected to carry `label` and, when the EXIF check fires, `exifOutsideWindow: true` or `exifUnreadable: true` (the fields `inspectImage` already computes).
+- Contract change: none.
