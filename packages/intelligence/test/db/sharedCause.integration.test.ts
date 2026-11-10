@@ -103,6 +103,7 @@ describe.skipIf(!dbUrl)('shared cause scan against Postgres', () => {
       instruction:
         'Photograph a close-up of the sleeve seam on each unit of batch B17 and check for: stitching came apart.',
       requiredPhotoLabel: 'seam_closeup',
+      productId: w.hoodie.id, // Hriday's executor stores it in inspection_rules.product_id
     });
     const send = byType.send_buyer_messages!.payload as { messageIds: string[]; level: string };
     expect(send.level).toBe('suspected');
