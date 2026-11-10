@@ -1,8 +1,9 @@
 // Buyer Signal service (task I3): compute and store per order, the buyer's own view, and contests.
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import { AppError, type BuyerSignal, type SignalContest } from '@fairfold/contracts';
 import type { BuyerSignalView } from '@fairfold/contracts/intel';
 import { alerts, buyer_signals, signal_contests } from '@fairfold/db';
+import type { DatabaseExecutor } from '@fairfold/ledger';
 import { getIntelRuntime, type IntelRuntime } from '../runtime.js';
 import { buyerFeatures, loadOrder } from './features.js';
 import { scoreBuyer, type BuyerFeatures } from './points.js';
@@ -27,20 +28,49 @@ function toSignal(row: SignalRow): BuyerSignal {
   };
 }
 
+/** The order's latest stored signal, if one exists. */
+async function storedSignal(db: DatabaseExecutor, orderId: string): Promise<SignalRow | undefined> {
+  const [row] = await db
+    .select()
+    .from(buyer_signals)
+    .where(eq(buyer_signals.order_id, orderId))
+    .orderBy(desc(buyer_signals.computed_at), desc(buyer_signals.id))
+    .limit(1);
+  return row;
+}
+
+/**
+ * The order's Buyer Signal, computed once per order at capture (section 10). The first call scores the order and
+ * stores the signal; every later call — a redelivered order.captured job, the merchant's order page — returns that
+ * stored signal, so the band cannot drift after capture and the model writes the sentence once. Concurrent first
+ * calls are serialised per order by a transaction-scoped advisory lock, so exactly one row is written.
+ * An order without a buyer has nothing to store (buyer_signals.buyer_id is required) and is scored on each call.
+ */
 export async function computeBuyerSignalWith(
   rt: IntelRuntime,
   orderId: string,
 ): Promise<BuyerSignal> {
+  const existing = await storedSignal(rt.db, orderId);
+  if (existing) return toSignal(existing);
+
   const order = await loadOrder(rt, orderId);
   const features = await buyerFeatures(rt, order);
   const scored = scoreBuyer(features);
   const sentence = await explainSignal(scored, rt.models.text);
   const signal: BuyerSignal = { ...scored, sentence };
-  if (order.buyer_id) {
+  const buyerId = order.buyer_id;
+  if (!buyerId) return signal;
+
+  return rt.db.transaction(async (tx) => {
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`fairfold:buyer_signal:${orderId}`}, 0))`,
+    );
+    const raced = await storedSignal(tx, orderId);
+    if (raced) return toSignal(raced);
     const stored: StoredFeatures = { ...features, sentence };
-    await rt.db.insert(buyer_signals).values({
+    await tx.insert(buyer_signals).values({
       merchant_id: order.merchant_id,
-      buyer_id: order.buyer_id,
+      buyer_id: buyerId,
       order_id: order.id,
       band: signal.band,
       points: signal.points,
@@ -49,16 +79,16 @@ export async function computeBuyerSignalWith(
       recommendation: signal.recommendation,
       computed_at: rt.clock.now(),
     });
-  }
-  return signal;
+    return signal;
+  });
 }
 
-/** Section 15: computeBuyerSignal(orderId). */
+/** Section 15: computeBuyerSignal(orderId) — the order's stored signal, computed on first use. */
 export function computeBuyerSignal(orderId: string): Promise<BuyerSignal> {
   return computeBuyerSignalWith(getIntelRuntime(), orderId);
 }
 
-/** Endpoint 9: the latest signal for the merchant's own order, computed now if none is stored. */
+/** Endpoint 9: the signal for the merchant's own order. */
 export async function orderSignalForMerchant(
   rt: IntelRuntime,
   merchantId: string,
@@ -67,13 +97,7 @@ export async function orderSignalForMerchant(
   const order = await loadOrder(rt, orderId);
   if (order.merchant_id !== merchantId)
     throw new AppError('FORBIDDEN', 'This order belongs to another store', 403);
-  const [row] = await rt.db
-    .select()
-    .from(buyer_signals)
-    .where(eq(buyer_signals.order_id, orderId))
-    .orderBy(desc(buyer_signals.computed_at))
-    .limit(1);
-  return row ? toSignal(row) : computeBuyerSignalWith(rt, orderId);
+  return computeBuyerSignalWith(rt, orderId);
 }
 
 /** Endpoint 34: a buyer sees their own latest band and reasons with one store, never the points total. */

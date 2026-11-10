@@ -2,6 +2,10 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-10 — Ishaan: intelligence Phase 1 fixes (`ishaan` branch)
+
+- I3: one Buyer Signal per order, computed at capture (section 10). `computeBuyerSignal(orderId)` now returns the stored signal when one exists, so Hriday's order-detail read no longer writes a row and spends a model call on every page view, and a redelivered `order.captured` job stores nothing new. Concurrent first calls are serialised per order with a transaction-scoped advisory lock (no schema change). Three new PostgreSQL tests; 233 intelligence tests, 238 offline tests, typecheck and lint pass. DECISIONS.md I-D17.
+
 ## 2026-11-09 — H1 initial hosted URL bootstrap
 
 - Added Render-only URL defaults from its assigned public URL, preserving explicit APP_BASE_URL/FRONTEND_ORIGIN overrides and strict local configuration. The API, worker, Postgres and CORS architecture are unchanged.

@@ -167,3 +167,9 @@ Status: **DEFERRED BY USER; NOT RUN**. The user confirmed accounts do not curren
 - Models (all free tier, probed 2026-11-10): `gemini-3.5-flash` for vision; `gemini-3.5-flash-lite` for text, which has its own daily quota; `gemini-embedding-2`. `gemini-3.8-flash` and `gemini-3.7-flash` gave no valid answer within the 30-second limit, and `gemini-2.5-flash` was refused.
 - For Hriday (Render): set `AI_PROVIDER=google`, the three model ids, `AI_EMBEDDING_PROVIDER=google`, `GOOGLE_GENERATIVE_AI_API_KEY` and `CLUSTER_SIMILARITY=0.85` on both the API and the worker.
 - Contract change: none (environment only).
+
+### I-D17 — One Buyer Signal per order, returned from storage after capture — 2026-11-10
+- Section 10 says the signal is "computed per order at capture". `computeBuyerSignal(orderId)` (section 15) now returns the order's stored signal when one exists and computes and stores it only on first use. Hriday's merchant order detail calls this function on every read (his DECISIONS.md: "Ishaan … can supply its caching through that seam"); before this change each read inserted a new `buyer_signals` row, spent one model call and could show a band that drifted from the capture-time value.
+- The `order.captured` handler and endpoint 9 use the same path, so a redelivered job stores nothing new. Concurrent first calls take a transaction-scoped advisory lock on the order (`pg_advisory_xact_lock`) and re-check before inserting, so exactly one row is written without a schema change.
+- An order with no buyer cannot be stored (`buyer_signals.buyer_id` is required) and is scored on each call.
+- Contract change: none (the function keeps its section 15 signature; behaviour now matches section 10).

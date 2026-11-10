@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { alerts, buyer_network_simulated, buyer_signals } from '@fairfold/db';
-import { computeBuyerSignalWith } from '../../src/buyerSignal/index.js';
+import { computeBuyerSignal, computeBuyerSignalWith } from '../../src/buyerSignal/index.js';
 import { createHandlers } from '../../src/handlers.js';
 import { setIntelRuntime } from '../../src/runtime.js';
 import { mockModel } from '../helpers/mockModel.js';
@@ -192,6 +192,50 @@ describe.skipIf(!dbUrl)('buyer signal against Postgres', () => {
       .from(buyer_signals)
       .where(eq(buyer_signals.order_id, order.id));
     expect(rows.map((r) => r.band)).toEqual(['yellow']);
+  });
+
+  describe('one signal per order, computed at capture (section 10)', () => {
+    const signalRows = (orderId: string) =>
+      database.db.select().from(buyer_signals).where(eq(buyer_signals.order_id, orderId));
+
+    it('computeBuyerSignal returns the stored signal without a second row or model call', async () => {
+      const { merchant, product } = await store();
+      const { order } = await alexOrder(merchant.id, product);
+      const { model, calls } = mockModel([
+        { sentence: 'Written at capture.' },
+        { sentence: 'Written again on a later read.' },
+      ]);
+      const { runtime } = testRuntime(database.db, { models: { text: model } });
+      setIntelRuntime(runtime);
+      await createHandlers(() => runtime)['order.captured']!({ orderId: order.id });
+
+      const read = await computeBuyerSignal(order.id);
+
+      expect(read).toMatchObject({ band: 'yellow', points: 25, sentence: 'Written at capture.' });
+      expect(calls).toHaveLength(1);
+      expect(await signalRows(order.id)).toHaveLength(1);
+    });
+
+    it('a redelivered order.captured job stores no second signal', async () => {
+      const { merchant, product } = await store();
+      const { order } = await alexOrder(merchant.id, product);
+      const { runtime } = testRuntime(database.db);
+      const captured = createHandlers(() => runtime)['order.captured']!;
+      await captured({ orderId: order.id });
+      await captured({ orderId: order.id });
+      expect(await signalRows(order.id)).toHaveLength(1);
+    });
+
+    it('concurrent first reads store exactly one signal', async () => {
+      const { merchant, product } = await store();
+      const { order } = await alexOrder(merchant.id, product);
+      const { runtime } = testRuntime(database.db);
+      const results = await Promise.all(
+        [1, 2, 3, 4].map(() => computeBuyerSignalWith(runtime, order.id)),
+      );
+      expect(new Set(results.map((r) => r.band))).toEqual(new Set(['yellow']));
+      expect(await signalRows(order.id)).toHaveLength(1);
+    });
   });
 
   describe('routes 9, 34, 35, 40, 41', () => {
