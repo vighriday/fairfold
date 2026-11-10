@@ -4,6 +4,8 @@ import { type ZodTypeProvider } from 'fastify-type-provider-zod';
 import {
   AppError,
   CoreRequests,
+  DisputeDetailSchema,
+  DisputeRowSchema,
   ErrorEnvelopeSchema,
   ListQuerySchema,
   OrderDetailSchema,
@@ -33,11 +35,43 @@ const bearer = [{ bearerAuth: [] }];
 export function createCoreRoutes(options: {
   checkout: ReturnType<typeof createCheckoutService>;
   reads: ReturnType<typeof createOrderReads>;
+  disputeReads?: ReturnType<typeof import('../../disputes/read.js').createDisputeReads>;
   demoMode: boolean;
 }): FastifyPluginAsync {
   return async (server) => {
     const app = server.withTypeProvider<ZodTypeProvider>();
     await app.register(createDevRoutes(options.demoMode));
+    if (options.disputeReads) {
+      const disputeReads = options.disputeReads;
+      app.get(
+        '/api/merchant/disputes',
+        {
+          preHandler: requireAuth('merchant'),
+          schema: {
+            tags: ['Disputes'],
+            security: bearer,
+            summary: 'List this merchant’s disputes',
+            querystring: ListQuerySchema,
+            response: { 200: z.array(DisputeRowSchema), ...errors },
+          },
+        },
+        async (request) => disputeReads.list(request.auth, request.query),
+      );
+      app.get(
+        '/api/merchant/disputes/:id',
+        {
+          preHandler: requireAuth('merchant'),
+          schema: {
+            tags: ['Disputes'],
+            security: bearer,
+            summary: 'Read one merchant-owned dispute',
+            params: z.object({ id: z.string().min(1).max(255) }),
+            response: { 200: DisputeDetailSchema, ...errors },
+          },
+        },
+        async (request) => disputeReads.detail(request.auth, request.params.id),
+      );
+    }
     app.get(
       '/api/checkout/config',
       {

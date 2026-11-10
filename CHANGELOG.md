@@ -16,6 +16,12 @@ All authored work in this checkout is on `Hriday`. Entries distinguish documenta
 - Added five PostgreSQL synchronizer cases for capture/invoice mapping, message dedupe, resolution timestamps/ledger effects, queue rollback and detail-ID isolation. All five passed with the pure H4 suite, typecheck and targeted lint.
 - Real PayPal dispute delivery/action evidence remains NOT RUN; no vendor mutation or real fixture was created.
 
+## 2026-11-10 — H4 merchant dispute read surface
+
+- Added merchant-scoped dispute list/detail projections for endpoints 17/18 with bounded cursor pagination, latest evidence-pack summaries and explicit allowlisted messages, evidence and response options.
+- Wired both routes into the normal API/OpenAPI composition while retaining ownership and role guards; stored vendor fields are never returned.
+- The PostgreSQL API contract suite passed all 9 cases, including projection, hidden-field and wrong-role checks. Approval and PayPal execution remain separate H4 units.
+
 ## 2026-11-10 — H3 worker runtime and acceptance closeout
 
 - Wired both H3 handlers into the normal worker while preserving intelligence ownership, adding safe minimal configuration, schedule refresh and guarded startup/shutdown. The Blueprint worker references the API's existing encryption key; plans/resources are unchanged.

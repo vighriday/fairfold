@@ -12,6 +12,7 @@ import { createApi } from './app.js';
 import { type Config } from './config.js';
 import { createCheckoutService } from './checkout/service.js';
 import { createOrderReads } from './orders/read.js';
+import { createDisputeReads } from './disputes/read.js';
 import { createCoreRoutes } from './routes/core/index.js';
 import { createWebhookRoutes } from './routes/core/webhooks.js';
 
@@ -29,11 +30,14 @@ export async function createRuntime(config: Config, options: { recording?: Order
     });
     const checkout = createCheckoutService({ database, jobs, forMerchant });
     const reads = createOrderReads({ database: database.db, computeBuyerSignal });
+    const disputeReads = createDisputeReads(database.db);
     const app = await createApi({
       config,
       phase: 'H3',
       routes: async (routes) => {
-        await routes.register(createCoreRoutes({ checkout, reads, demoMode: config.demoMode }));
+        await routes.register(
+          createCoreRoutes({ checkout, reads, disputeReads, demoMode: config.demoMode }),
+        );
         await routes.register(
           createWebhookRoutes(createEventIngress({ database, jobs, forMerchant })),
         );

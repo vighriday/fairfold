@@ -2,13 +2,21 @@ import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { computeBuyerSignal } from '@fairfold/contracts/stubs';
-import { buyers, createDatabase, merchants, migrateDatabase } from '@fairfold/db';
+import {
+  buyers,
+  createDatabase,
+  disputes,
+  evidence_packs,
+  merchants,
+  migrateDatabase,
+} from '@fairfold/db';
 import { createJobs, type Jobs } from '@fairfold/jobs';
 import { testDatabaseUrl } from '../../../packages/db/test/environment.js';
 import { createApi } from '../src/app.js';
 import { createAuth } from '../src/auth.js';
 import { readConfig } from '../src/config.js';
 import { createOrderReads } from '../src/orders/read.js';
+import { createDisputeReads } from '../src/disputes/read.js';
 import { createCoreRoutes } from '../src/routes/core/index.js';
 import { checkoutFixture, checkoutClock } from './checkout-fixture.js';
 
@@ -57,6 +65,7 @@ describe.skipIf(!integrationUrl)('H2 HTTP contracts with real database/client/qu
         demoMode: config.demoMode,
         checkout: f.service,
         reads: createOrderReads({ database: database.db, computeBuyerSignal }),
+        disputeReads: createDisputeReads(database.db),
       }),
     });
     apps.push(app);
@@ -78,7 +87,7 @@ describe.skipIf(!integrationUrl)('H2 HTTP contracts with real database/client/qu
     }
     return { ...f, app, buyerId, headers, create };
   }
-  it('documents all seven source routes with role security and the H2/stub readiness state', async () => {
+  it('documents source routes with role security and the H2/stub readiness state', async () => {
     const f = await fixture();
     const spec = (await f.app.inject('/docs/json')).json();
     for (const path of [
@@ -89,6 +98,8 @@ describe.skipIf(!integrationUrl)('H2 HTTP contracts with real database/client/qu
       '/api/orders/{id}',
       '/api/buyer/orders',
       '/api/buyer/orders/{id}',
+      '/api/merchant/disputes',
+      '/api/merchant/disputes/{id}',
     ])
       expect(spec.paths).toHaveProperty(path);
     expect(spec.paths['/api/merchant/orders'].get.security).toEqual([{ bearerAuth: [] }]);
@@ -353,5 +364,84 @@ describe.skipIf(!integrationUrl)('H2 HTTP contracts with real database/client/qu
     expect(invalid.json().error.code).toBe('INVALID_CURSOR');
     expect(invalid.body).not.toContain(hidden.orderId);
     expect(new Set([page.json()[0].id, next.json()[0].id])).toContain(first.orderId);
+  });
+  it('projects only merchant-owned dispute detail and the latest evidence pack', async () => {
+    const f = await fixture();
+    const disputeId = 'PP-D-ROUTE-' + randomUUID().replaceAll('-', '').toUpperCase();
+    await database.db.insert(disputes).values({
+      id: disputeId,
+      merchant_id: f.merchant.id,
+      order_id: null,
+      reason: 'MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED',
+      status: 'WAITING_FOR_SELLER_RESPONSE',
+      life_cycle_stage: 'INQUIRY',
+      amount_value: '38.00',
+      currency: 'USD',
+      raw: {
+        messages: [
+          {
+            posted_by: 'BUYER',
+            time_posted: '2026-11-10T01:00:00.000Z',
+            content: 'Synthetic complaint',
+          },
+        ],
+        evidences: [
+          {
+            evidence_type: 'PROOF_OF_FULFILLMENT',
+            source: 'FAIRFOLD',
+            date: '2026-11-10T01:00:00.000Z',
+            item_id: 'item-1',
+          },
+        ],
+        allowed_response_options: {
+          make_offer: { offer_types: ['REFUND'] },
+          accept_claim: { accept_claim_types: ['REFUND'] },
+        },
+        _fairfold: { message_fingerprints: ['a'.repeat(64)] },
+        secret: 'excluded',
+      },
+    });
+    const [pack] = await database.db
+      .insert(evidence_packs)
+      .values({
+        dispute_id: disputeId,
+        recommendation: 'provide_evidence',
+        evidences: [],
+        files: [],
+        narrative: 'Synthetic',
+        confidence: 0.9,
+      })
+      .returning();
+    const headers = await f.headers('merchant');
+    const list = await f.app.inject({ url: '/api/merchant/disputes', headers });
+    expect(list.statusCode).toBe(200);
+    expect(list.json()).toContainEqual(
+      expect.objectContaining({
+        id: disputeId,
+        latestPack: { id: pack!.id, status: 'draft', recommendation: 'provide_evidence' },
+      }),
+    );
+    const detail = await f.app.inject({
+      url: '/api/merchant/disputes/' + disputeId,
+      headers,
+    });
+    expect(detail.statusCode).toBe(200);
+    expect(detail.json()).toMatchObject({
+      id: disputeId,
+      amount: { currency_code: 'USD', value: '38.00' },
+      messages: [{ postedBy: 'BUYER', content: 'Synthetic complaint' }],
+      allowedResponseOptions: {
+        makeOffer: { offerTypes: ['REFUND'] },
+      },
+    });
+    expect(detail.body).not.toContain('excluded');
+    expect(
+      (
+        await f.app.inject({
+          url: '/api/merchant/disputes/' + disputeId,
+          headers: await f.headers('buyer'),
+        })
+      ).statusCode,
+    ).toBe(403);
   });
 });
