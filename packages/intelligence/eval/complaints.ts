@@ -75,6 +75,10 @@ export async function runComplaintEval(
   );
   const truth = new Map(items.map((c) => [c.id, c.expectedCluster]));
   const { precision, pairs } = pairwisePrecision(assignments, truth);
-  const summary = `${precision.toFixed(2)} over ${pairs} grouped pairs (${useProvider ? 'provider' : 'local'} embeddings)`;
-  return { precision, pairs, summary };
+  const fellBack = extracted.filter((x) => x.model === 'fallback').length;
+  // A fallback reads as category "other" and never groups, so precision over the rest is not a measurement.
+  const summary = fellBack
+    ? `not measured: ${fellBack} of ${items.length} complaint reads fell back (quota or errors); re-run to fill them from the cache`
+    : `${precision.toFixed(2)} over ${pairs} grouped pairs (${useProvider ? 'provider' : 'local'} embeddings)`;
+  return { precision, pairs, fellBack, summary };
 }

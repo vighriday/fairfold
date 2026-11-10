@@ -175,4 +175,13 @@ describe('complaint clustering eval', () => {
     expect(calls).toHaveLength(24);
     expect(out.summary).toMatch(/^\d\.\d\d over \d+ grouped pairs \(local embeddings\)$/);
   });
+  it('reports not measured when any complaint read fell back, instead of a precision', async () => {
+    const { runComplaintEval } = await import('../../eval/complaints.js');
+    const { model } = mockModel(['not json']);
+    const out = await runComplaintEval({ model, env: {} });
+    expect(out.fellBack).toBe(24);
+    expect(out.summary).toBe(
+      'not measured: 24 of 24 complaint reads fell back (quota or errors); re-run to fill them from the cache',
+    );
+  });
 });
