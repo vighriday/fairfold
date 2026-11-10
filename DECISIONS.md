@@ -259,3 +259,9 @@ Status: **DEFERRED BY USER; NOT RUN**. The user confirmed accounts do not curren
 - `generateStructured` now passes every untrusted text through `removeContactDetails` (packages/ai) before it is wrapped, hashed and sent: email addresses become `[email removed]` and phone numbers (7–15 digits, optionally with `+` or `00`, spaces, dots, dashes or brackets, not inside a longer word) become `[phone removed]`. Dates, prices, quantities, SKUs, ids such as `FF-<uuid>` and carrier tracking numbers that run into letters are kept. A bare 7–15 digit number is removed even when it is not a phone number; for the Complaint Reader and the Review Themer that loses nothing they need.
 - A street address typed into free text is not detected; README.md and docs/ai-tools.md now say so instead of claiming no street address is ever sent.
 - Contract change: none.
+
+### I-D31 — Catalogue search matches every word against name, SKU, colour and description — 2026-11-10
+- `searchCatalog` (endpoint 6, MCP `search_catalog`) matched the whole query as one substring of the name or the SKU. A13's shopping agent asks for "navy hoodie": the seeded hoodie is named "Block-print cotton hoodie", so the phrase never matched and the agent found nothing.
+- The query is now split on whitespace and every word must appear (case-insensitive substring, `%` and `_` escaped) in the product's name, SKU, colour or listing description; `maxPrice` and paging are unchanged. "navy hoodie" finds a hoodie whose colour is navy; "navy" alone finds every navy product.
+- For H8: A13 relies on the seeded HD-IND-01 having `colour = 'navy'` (or "navy" in its description); section 19 does not state the hoodie's colour.
+- Contract change: none.

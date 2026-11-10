@@ -106,6 +106,7 @@ describe.skipIf(!dbUrl)('store report against Postgres', () => {
     const product = await insertProduct(database.db, merchant.id, {
       sku: 'QT-01',
       name: 'Plain navy tee',
+      description: 'Plain cotton tee',
       unit_value: '12.00',
     });
     const { ids } = await sealedOrders(merchant.id, product, 12, {
@@ -312,21 +313,37 @@ describe.skipIf(!dbUrl)('store report against Postgres', () => {
     expect(m!.domain_registered_at).toEqual(new Date('2015-05-05T00:00:00Z'));
   });
 
-  it('searchCatalog matches name or sku, filters by price and carries each store band', async () => {
+  it('searchCatalog matches every word against name, SKU, colour or description, filters by price and carries each store band', async () => {
     const n = await neel();
     const q = await quickTees();
     const { runtime } = testRuntime(database.db, { clock: fixedClock(NOW) });
     await buildStoreReportWith(runtime, n.merchant.id);
-    const navy = await searchCatalogWith(runtime, { query: 'NAVY' });
-    expect(navy).toEqual([
+    const tee = {
+      merchantId: q.merchant.id,
+      sku: 'QT-01',
+      name: 'Plain navy tee',
+      price: { currency_code: 'USD', value: '12.00' },
+      storeBand: 'caution',
+    };
+    // A13: "navy hoodie" — navy is the hoodie's colour, not part of its name
+    expect(await searchCatalogWith(runtime, { query: 'navy hoodie', maxPrice: 45 })).toEqual([
       {
-        merchantId: q.merchant.id,
-        sku: 'QT-01',
-        name: 'Plain navy tee',
-        price: { currency_code: 'USD', value: '12.00' },
-        storeBand: 'caution',
+        merchantId: n.merchant.id,
+        sku: 'HD-IND-01',
+        name: 'Block-print cotton hoodie',
+        price: { currency_code: 'USD', value: '38.00' },
+        storeBand: 'verified',
       },
     ]);
+    expect((await searchCatalogWith(runtime, { query: 'NAVY' })).map((c) => c.sku)).toEqual([
+      'HD-IND-01',
+      'QT-01',
+    ]);
+    expect(await searchCatalogWith(runtime, { query: '  navy   tee ' })).toEqual([tee]);
+    expect(
+      (await searchCatalogWith(runtime, { query: 'indigo' })).map((c) => c.sku), // description
+    ).toEqual(['HD-IND-01']);
+    expect(await searchCatalogWith(runtime, { query: 'red hoodie' })).toEqual([]);
     const cheap = await searchCatalogWith(runtime, { query: '', maxPrice: 20 });
     expect(cheap.map((c) => c.sku)).toEqual(['QT-01']);
     const hoodie = await searchCatalogWith(runtime, { query: 'hd-ind' });

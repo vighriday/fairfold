@@ -30,17 +30,29 @@ async function afterCursor(rt: IntelRuntime, cursor: string): Promise<SQL> {
   )!;
 }
 
+/**
+ * Every word of the query must appear (case-insensitive substring) in the product's name, SKU, colour or listing
+ * description, so "navy hoodie" finds a hoodie whose colour is navy (A13). Words are split on whitespace.
+ */
+function queryFilters(query: string | undefined): SQL[] {
+  const words = query?.trim().split(/\s+/).filter(Boolean) ?? [];
+  return words.map((word) => {
+    const pattern = `%${escapeLike(word)}%`;
+    return or(
+      ilike(products.name, pattern),
+      ilike(products.sku, pattern),
+      ilike(products.colour, pattern),
+      ilike(products.description, pattern),
+    )!;
+  });
+}
+
 export async function searchCatalogWith(
   rt: IntelRuntime,
   input: { query?: string; maxPrice?: number },
   page: Page = DEFAULT_PAGE,
 ): Promise<CatalogItem[]> {
-  const filters: SQL[] = [];
-  const q = input.query?.trim();
-  if (q) {
-    const pattern = `%${escapeLike(q)}%`;
-    filters.push(or(ilike(products.name, pattern), ilike(products.sku, pattern))!);
-  }
+  const filters = queryFilters(input.query);
   if (input.maxPrice !== undefined)
     filters.push(lte(products.unit_value, input.maxPrice.toFixed(2)));
   if (page.cursor !== undefined) filters.push(await afterCursor(rt, page.cursor));
