@@ -19,6 +19,7 @@ import { type createCheckoutService } from '../../checkout/service.js';
 import { OrderListQuerySchema, type createOrderReads } from '../../orders/read.js';
 import { type createPackingService } from '../../packing/service.js';
 import { type createInspectionService } from '../../packing/inspection.js';
+import { type createSharedCauseActionApproval } from '../../shared-causes/approve-action.js';
 
 const PayPalOrderIdSchema = z.string().regex(/^[A-Z0-9]{1,36}$/);
 const errors = {
@@ -44,6 +45,7 @@ export function createCoreRoutes(options: {
   >;
   packing?: ReturnType<typeof createPackingService>;
   inspection?: ReturnType<typeof createInspectionService>;
+  actionApproval?: ReturnType<typeof createSharedCauseActionApproval>;
   demoMode: boolean;
 }): FastifyPluginAsync {
   return async (server) => {
@@ -232,6 +234,39 @@ export function createCoreRoutes(options: {
                       if (part.type === 'file')
                         files.push({ bytes: await part.toBuffer(), mime: part.mimetype });
                       else if (part.fieldname === 'labels') labels.push(String(part.value));
+                    }
+                    if (options.actionApproval) {
+                      const actionApproval = options.actionApproval;
+                      app.post(
+                        '/api/shared-causes/:id/actions/:actionId/approve',
+                        {
+                          preHandler: requireAuth('merchant'),
+                          schema: {
+                            tags: ['Shared Causes'],
+                            security: bearer,
+                            summary: 'Approve a merchant-owned shared-cause action',
+                            params: z.object({ id: UuidSchema, actionId: UuidSchema }),
+                            body: z
+                              .object({ edits: z.record(z.string(), z.unknown()).optional() })
+                              .strict(),
+                            response: {
+                              200: z.object({
+                                status: z.literal('approved'),
+                                actionId: UuidSchema,
+                                approvedAt: z.iso.datetime(),
+                              }),
+                              ...errors,
+                            },
+                          },
+                        },
+                        async (request) =>
+                          actionApproval(
+                            request.auth!,
+                            request.params.id,
+                            request.params.actionId,
+                            request.body.edits,
+                          ),
+                      );
                     }
                     if (files.length !== labels.length)
                       throw new AppError(

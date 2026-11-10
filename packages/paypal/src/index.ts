@@ -28,6 +28,7 @@ export {
 export { createDisputeSynchronizer } from './dispute-sync.js';
 export { createEvidenceSubmitHandler } from './dispute-execution.js';
 export { createTrackingPushHandler } from './tracking-execution.js';
+export { createActionHandler } from './action-execution.js';
 export { createProvideDisputeEvidenceTool } from './dispute-tool.js';
 export { createWebhookOperations } from './webhooks.js';
 export { createCheckoutClientFactory, type CheckoutClient } from './checkout.js';

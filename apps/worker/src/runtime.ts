@@ -10,6 +10,7 @@ import {
   createDisputesPoller,
   createEvidenceSubmitHandler,
   createTrackingPushHandler,
+  createActionHandler,
   syncDisputePollSchedules,
   type DisputeSynchronizer,
 } from '@fairfold/paypal';
@@ -136,6 +137,12 @@ export function createWorkerRuntime(
               clock: options.clock,
             }),
             'tracking.push': createTrackingPushHandler({
+              database,
+              jobs,
+              forMerchant,
+              clock: options.clock,
+            }),
+            'action.approved': createActionHandler({
               database,
               jobs,
               forMerchant,

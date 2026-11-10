@@ -8,6 +8,7 @@ All authored work in this checkout is on `Hriday`. Entries distinguish documenta
 - Added blocker-aware pack projections and atomic sealing: order locking, batch ownership/stock checks, one-time inventory decrement, shipment creation, `sealed` ledger entry and post-commit `tracking.push` publication.
 - Added a tracking worker with deterministic request IDs, payer notification, bounded three-attempt handling, safe shipment/order projection, `tracking_pushed` ledger entry and failure alert.
 - Added endpoint 39 inspection-photo persistence with merchant-owned hypothesis/rule checks and `inspection.uploaded` publication for Ishaan's attestation handler.
+- Added merchant approval and worker execution for shared-cause actions: hold/release orders, inspection rules, buyer messages, offer evidence rebuilds and sandbox-bound refunds. Execution is ownership-checked, ledgered and idempotent for completed actions.
 - Added PostgreSQL coverage for photo persistence, inspection queue publication and concurrent sealing. **192 database tests passed**; typecheck, targeted lint and formatting passed. I2 attestation/actions, real PayPal tracking and A6/A7/A11 remain **NOT RUN**.
 
 ## 2026-11-10 — H4 approved action execution
