@@ -22,6 +22,7 @@
     "@fairfold/ledger": "workspace:*",
     "drizzle-orm": "0.45.4",
     "pdf-lib": "1.17.1",
+    "pg-boss": "12.38.1",
     "sharp": "0.35.5",
     "zod": "4.6.7"
   },

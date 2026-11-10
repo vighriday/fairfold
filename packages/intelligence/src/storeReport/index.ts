@@ -314,7 +314,8 @@ export async function createReview(
     .where(eq(reviews.order_id, orderId));
   if (existing) throw new AppError('REVIEW_EXISTS', 'This order already has a review', 409);
 
-  const complaintId = await rt.db.transaction(async (tx) => {
+  // The review, its complaint and their jobs commit together.
+  await rt.db.transaction(async (tx) => {
     const [review] = await tx
       .insert(reviews)
       .values({
@@ -326,22 +327,22 @@ export async function createReview(
         created_at: rt.clock.now(),
       })
       .returning({ id: reviews.id });
-    if (rating > 2) return null;
-    const complaint = await upsertComplaint(
-      rt,
-      {
-        merchantId: order.merchant_id,
-        orderId,
-        buyerId,
-        source: 'review',
-        sourceRef: review!.id,
-        text,
-      },
-      tx,
-    );
-    return complaint.id;
+    if (rating <= 2) {
+      const complaint = await upsertComplaint(
+        rt,
+        {
+          merchantId: order.merchant_id,
+          orderId,
+          buyerId,
+          source: 'review',
+          sourceRef: review!.id,
+          text,
+        },
+        tx,
+      );
+      await rt.jobs.publish('complaint.created', { complaintId: complaint.id }, { tx });
+    }
+    await rt.jobs.publish('storereport.refresh', { merchantId: order.merchant_id }, { tx });
   });
-  if (complaintId) await rt.jobs.publish('complaint.created', { complaintId });
-  await rt.jobs.publish('storereport.refresh', { merchantId: order.merchant_id });
   return (await listReviews(rt, order.merchant_id)).find((r) => r.orderId === orderId)!;
 }

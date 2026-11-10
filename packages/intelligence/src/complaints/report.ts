@@ -33,15 +33,23 @@ export async function reportProblem(
   const imageShas: string[] = [];
   for (const photo of photos) imageShas.push(await blobs.put(photo.bytes, photo.mime));
 
-  const { id } = await upsertComplaint(rt, {
-    merchantId: order.merchant_id,
-    orderId,
-    buyerId,
-    source: 'buyer_report',
-    sourceRef: randomUUID(),
-    text,
-    imageShas: [...new Set(imageShas)],
+  // The complaint and its complaint.created job commit together, so a stored complaint is always read.
+  const complaintId = await rt.db.transaction(async (tx) => {
+    const { id } = await upsertComplaint(
+      rt,
+      {
+        merchantId: order.merchant_id,
+        orderId,
+        buyerId,
+        source: 'buyer_report',
+        sourceRef: randomUUID(),
+        text,
+        imageShas: [...new Set(imageShas)],
+      },
+      tx,
+    );
+    await rt.jobs.publish('complaint.created', { complaintId: id }, { tx });
+    return id;
   });
-  await rt.jobs.publish('complaint.created', { complaintId: id });
-  return { complaintId: id };
+  return { complaintId };
 }

@@ -265,3 +265,11 @@ Status: **DEFERRED BY USER; NOT RUN**. The user confirmed accounts do not curren
 - The query is now split on whitespace and every word must appear (case-insensitive substring, `%` and `_` escaped) in the product's name, SKU, colour or listing description; `maxPrice` and paging are unchanged. "navy hoodie" finds a hoodie whose colour is navy; "navy" alone finds every navy product.
 - For H8: A13 relies on the seeded HD-IND-01 having `colour = 'navy'` (or "navy" in its description); section 19 does not state the hoodie's colour.
 - Contract change: none.
+
+### I-D32 — Jobs are sent in the transaction that writes their rows; the sweep re-reads unread complaints — 2026-11-10
+- Every intelligence job was published after its rows committed. A crash, a deploy or a queue error between the commit and the publish left a stored complaint that was never read (it never reaches Shared Cause Detection), or a hypothesis change whose packs were never rebuilt.
+- The intelligence `Publisher.publish(name, payload, { tx })` now sends the job inside the caller's drizzle transaction: `jobsPublisher(jobs)` adapts Hriday's `createJobs` queue and hands the transaction to pg-boss through pg-boss's own drizzle adapter (`fromDrizzle`, pg-boss 12.38.1, the version `@fairfold/jobs` pins; added as a direct dependency of `@fairfold/intelligence`), the same mechanism as Hriday's `{ db }` publish option. A test against PostgreSQL shows a job sent in a rolled-back transaction does not exist.
+- In the transaction now: `complaint.created` with the complaint (report-problem, low review, new dispute), `storereport.refresh` with the review, `evidence.rebuild` with the Confirm and with each scanned hypothesis (one job per hypothesis instead of one per scan).
+- Not in a transaction: the debounced `sharedcause.scan` after a complaint is read, because Hriday's `publishDebounced` has no transaction option. A lost one is covered by the nightly sweep's scan.
+- The nightly `sharedcause.sweep` first re-sends `complaint.created` for every complaint still unread more than an hour after it was stored (`UNREAD_GRACE_HOURS`), so a job that is merely still queued is not doubled.
+- Contract change: additive optional parameter on the intelligence-internal `Publisher`; new export `jobsPublisher`.

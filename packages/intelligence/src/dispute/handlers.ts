@@ -25,7 +25,7 @@ export function firstBuyerMessage(raw: unknown): string | null {
 
 /**
  * One complaint per dispute (source 'dispute', source_ref = dispute id). New buyer messages are appended to it
- * (DECISIONS.md I-D3). A new complaint is published for extraction; then the evidence pack is built.
+ * (DECISIONS.md I-D3). A new complaint and its complaint.created job commit together; then the pack is built.
  */
 export async function syncDispute(
   rt: IntelRuntime,
@@ -52,15 +52,21 @@ export async function syncDispute(
       `PayPal dispute reason: ${dispute.reason}.`,
       ...messages.filter((m): m is string => Boolean(m)),
     ].join('\n\n');
-    const created = await upsertComplaint(rt, {
-      merchantId: dispute.merchant_id,
-      orderId: dispute.order_id,
-      buyerId: order?.buyerId ?? null,
-      source: 'dispute',
-      sourceRef: dispute.id,
-      text,
+    await rt.db.transaction(async (tx) => {
+      const created = await upsertComplaint(
+        rt,
+        {
+          merchantId: dispute.merchant_id,
+          orderId: dispute.order_id,
+          buyerId: order?.buyerId ?? null,
+          source: 'dispute',
+          sourceRef: dispute.id,
+          text,
+        },
+        tx,
+      );
+      await rt.jobs.publish('complaint.created', { complaintId: created.id }, { tx });
     });
-    await rt.jobs.publish('complaint.created', { complaintId: created.id });
   } else if (p.newBuyerMessages.length) {
     await upsertComplaint(rt, {
       merchantId: dispute.merchant_id,

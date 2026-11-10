@@ -74,16 +74,17 @@ export async function confirmHypothesis(
       .update(hypotheses)
       .set({ status: 'confirmed', confirmed_at: now })
       .where(eq(hypotheses.id, h.id));
-    if (disputeIds.length)
+    if (disputeIds.length) {
       await tx.insert(actions).values({
         hypothesis_id: h.id,
         type: 'propose_offers',
         payload: { disputeIds },
         created_at: now,
       });
+      await rt.jobs.publish('evidence.rebuild', { disputeIds }, { tx });
+    }
   });
   await draftBuyerMessagesWith(rt, h.id, 'confirmed');
-  if (disputeIds.length) await rt.jobs.publish('evidence.rebuild', { disputeIds });
   return hypothesisDetail(rt, merchantId, h.id);
 }
 

@@ -2,7 +2,7 @@
 // code embeds, groups, tests, picks the affected orders and proposes actions. Nothing here executes an action:
 // every hold, rule and message is a proposal the merchant approves and Hriday's module carries out.
 import { randomUUID } from 'node:crypto';
-import { and, eq, gt, inArray, isNotNull, isNull, ne } from 'drizzle-orm';
+import { and, asc, eq, gt, inArray, isNotNull, isNull, lt, ne } from 'drizzle-orm';
 import { embed, getModel, hasModelConfig, logAi } from '@fairfold/ai';
 import {
   AffectedOrdersSchema,
@@ -379,7 +379,6 @@ export async function runSharedCauseScanWith(
 
   const allOrders = await loadScanOrders(rt, merchantId);
   const result: Hypothesis[] = [];
-  const rebuild = new Set<string>();
 
   for (const clusterId of eligible) {
     const cluster = clusterRows.find((c) => c.id === clusterId)!;
@@ -432,7 +431,7 @@ export async function runSharedCauseScanWith(
     const fault = extractions[0]!;
     const words = explanation(cluster.category, cluster.label, loc.stats);
 
-    const { row, isNew } = await rt.db.transaction(async (tx) => {
+    const row = await rt.db.transaction(async (tx) => {
       const [existing] = await tx
         .select()
         .from(hypotheses)
@@ -525,22 +524,33 @@ export async function runSharedCauseScanWith(
             now,
           });
       }
-      return { row: saved!, isNew: !existing || existing.status === 'superseded' };
+      // Open disputes that now sit under a live hypothesis — all of them for a new one, else those that just
+      // joined — get their packs rebuilt; the job commits with the hypothesis it reflects.
+      if (saved!.status === 'open' || saved!.status === 'confirmed') {
+        const isNew = !existing || existing.status === 'superseded';
+        const openIds = new Set(affected.openDisputes);
+        const rebuild = [
+          ...new Set(
+            inCluster
+              .filter(
+                (m) =>
+                  m.source === 'dispute' &&
+                  openIds.has(m.source_ref) &&
+                  (isNew || assignments.has(m.id)),
+              )
+              .map((m) => m.source_ref),
+          ),
+        ].sort();
+        if (rebuild.length)
+          await rt.jobs.publish('evidence.rebuild', { disputeIds: rebuild }, { tx });
+      }
+      return saved!;
     });
 
-    // Drafts are written outside the transaction (one model call each); a safety flag means no drafts.
+    // The draft template is written outside the transaction (one model call); a safety flag means no drafts.
     if (row.status === 'open' && !safety) await draftBuyerMessagesWith(rt, row.id, 'suspected');
-
-    if (row.status === 'open' || row.status === 'confirmed') {
-      const openIds = new Set(affected.openDisputes);
-      for (const m of inCluster)
-        if (m.source === 'dispute' && openIds.has(m.source_ref) && (isNew || assignments.has(m.id)))
-          rebuild.add(m.source_ref);
-    }
     result.push(toHypothesis(row));
   }
-
-  if (rebuild.size) await rt.jobs.publish('evidence.rebuild', { disputeIds: [...rebuild].sort() });
   return result;
 }
 
@@ -549,8 +559,23 @@ export function runSharedCauseScan(merchantId: string): Promise<Hypothesis[]> {
   return runSharedCauseScanWith(getIntelRuntime(), merchantId);
 }
 
-/** sharedcause.sweep (02:00 IST): the scan for every merchant with complaints. */
+/** A complaint still unread this long after it was stored lost its complaint.created job; the sweep re-sends it. */
+export const UNREAD_GRACE_HOURS = 1;
+
+/**
+ * sharedcause.sweep (02:00 IST): re-sends complaint.created for every complaint that was never read (stored more
+ * than UNREAD_GRACE_HOURS ago, so a job still in the queue is not doubled), then the scan for every merchant with
+ * read complaints.
+ */
 export async function sweepSharedCauses(rt: IntelRuntime): Promise<void> {
+  const cutoff = new Date(rt.clock.now().getTime() - UNREAD_GRACE_HOURS * 3_600_000);
+  const unread = await rt.db
+    .select({ id: complaints.id })
+    .from(complaints)
+    .where(and(isNull(complaints.extracted), lt(complaints.created_at, cutoff)))
+    .orderBy(asc(complaints.created_at), asc(complaints.id));
+  for (const { id } of unread) await rt.jobs.publish('complaint.created', { complaintId: id });
+
   const rows = await rt.db
     .selectDistinct({ merchantId: complaints.merchant_id })
     .from(complaints)

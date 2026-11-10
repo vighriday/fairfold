@@ -16,7 +16,12 @@ import {
   shipments,
 } from '@fairfold/db';
 import { testDatabaseUrl } from '../../../db/test/environment.js';
-import { createIntelRuntime, type IntelRuntime, type Publisher } from '../../src/runtime.js';
+import {
+  createIntelRuntime,
+  type IntelRuntime,
+  type PublishOptions,
+  type Publisher,
+} from '../../src/runtime.js';
 
 export const dbUrl = testDatabaseUrl();
 
@@ -50,17 +55,22 @@ const TABLES = [
 
 export interface RecordingPublisher extends Publisher {
   published: Array<{ name: JobName; payload: unknown }>;
+  /** The publishes sent inside a database transaction (`options.tx`), in order. */
+  inTransaction: Array<{ name: JobName; payload: unknown }>;
   debounced: Array<{ name: string; key: string; seconds: number }>;
 }
 
 export function recordingPublisher(): RecordingPublisher {
   const published: RecordingPublisher['published'] = [];
+  const inTransaction: RecordingPublisher['inTransaction'] = [];
   const debounced: RecordingPublisher['debounced'] = [];
   return {
     published,
+    inTransaction,
     debounced,
-    async publish<N extends JobName>(name: N, payload: JobPayload<N>) {
+    async publish<N extends JobName>(name: N, payload: JobPayload<N>, options?: PublishOptions) {
       published.push({ name, payload });
+      if (options?.tx) inTransaction.push({ name, payload });
       return null;
     },
     async publishDebounced(name, key, seconds) {
