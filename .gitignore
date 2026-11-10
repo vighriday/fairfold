@@ -12,3 +12,11 @@ node_modules/
 dist/
 coverage/
 *.log
+
+# Private, internal documents and working notes: never commit.
+# The hackathon submission and architecture documents (.docx) are internal-only.
+*.docx
+~$*
+/docs/superpowers/
+/docs/submission/
+/.superpowers/
