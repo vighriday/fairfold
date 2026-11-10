@@ -47,7 +47,7 @@ export async function createApi(options: {
   clock?: Clock;
   logger?: FastifyServerOptions['logger'];
   routes?: FastifyPluginAsync;
-  phase?: 'H1' | 'H2' | 'H3' | 'H5';
+  phase?: 'H1' | 'H2' | 'H3' | 'H5' | 'H7';
 }) {
   const { config } = options;
   const app = Fastify({
@@ -185,7 +185,7 @@ export async function createApi(options: {
           200: z.object({
             status: z.literal('ok'),
             database: z.literal('ready'),
-            phase: z.enum(['H1', 'H2', 'H3', 'H5']),
+            phase: z.enum(['H1', 'H2', 'H3', 'H5', 'H7']),
             intelligence: z.literal('stub'),
           }),
           503: ErrorEnvelopeSchema,

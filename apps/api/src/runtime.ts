@@ -21,6 +21,8 @@ import { createSharedCauseActionApproval } from './shared-causes/approve-action.
 import { createAlertReads } from './alerts/read.js';
 import { createCoreRoutes } from './routes/core/index.js';
 import { createWebhookRoutes } from './routes/core/webhooks.js';
+import { createMcpService } from './mcp/service.js';
+import { createMcpRoutes } from './mcp/routes.js';
 
 /** The normal server and local recorded rehearsal use the same application composition. */
 export async function createRuntime(config: Config, options: { recording?: OrderRecording } = {}) {
@@ -43,6 +45,7 @@ export async function createRuntime(config: Config, options: { recording?: Order
     const inspection = createInspectionService({ database, jobs });
     const actionApproval = createSharedCauseActionApproval({ database, jobs });
     const alertReads = createAlertReads(database.db);
+    const mcpService = createMcpService(database);
     const app = await createApi({
       config,
       phase: 'H5',
@@ -65,6 +68,7 @@ export async function createRuntime(config: Config, options: { recording?: Order
         await routes.register(
           createWebhookRoutes(createEventIngress({ database, jobs, forMerchant })),
         );
+        await routes.register(createMcpRoutes(mcpService));
       },
       checkDatabase: async () => {
         await database.pool.query('select 1');

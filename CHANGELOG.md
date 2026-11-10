@@ -14,6 +14,7 @@ All authored work in this checkout is on `Hriday`. Entries distinguish documenta
 - Added the H6 watchdog sweep on the documented 15-minute schedule. It raises deduplicated tracking-gap, seal-overdue and dispute-due alerts at the fixed 72-hour/48-hour thresholds, appends only the tracking `gap_alert` ledger entry, and never sends buyer messages.
 - Added PostgreSQL coverage for repeated-sweep deduplication and all three alert classes. **329 offline and 196 PostgreSQL tests passed**; typecheck, lint and formatting passed.
 - Added merchant alert listing/acknowledgement endpoints and DEMO_MODE-gated synthetic shipment scan/delivery routes. Synthetic courier updates are labelled, merchant-owned, ledgered and unavailable when demo mode is disabled.
+- Added authenticated `/mcp` JSON-RPC tool surface for catalog search, cached store reports, ownership-checked order proof and merchant-only dispute-evidence lookup. Agent access cannot read private order proof, and no PayPal action is performed by these read tools.
 - Added PostgreSQL coverage for photo persistence, inspection queue publication and concurrent sealing. **192 database tests passed**; typecheck, targeted lint and formatting passed. I2 attestation/actions, real PayPal tracking and A6/A7/A11 remain **NOT RUN**.
 
 ## 2026-11-10 — H4 approved action execution
