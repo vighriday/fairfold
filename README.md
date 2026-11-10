@@ -40,9 +40,10 @@ pnpm typecheck
 pnpm lint
 pnpm format:check
 pnpm test:sandbox
+pnpm test:e2e
 ```
 
-Offline tests do not contact external services. Database integration checks require an isolated loopback PostgreSQL 16 database named `fairfold_*test` in `TEST_DATABASE_URL`; they are skipped by the default offline run and explicitly executed by `test:db`. Sandbox checks report SKIPPED when credentials are absent. `test:e2e` reports not implemented until the later application tasks are delivered.
+Offline tests do not contact external services. Database integration checks require an isolated loopback PostgreSQL 16 database named `fairfold_*test` in `TEST_DATABASE_URL`; they are skipped by the default offline run and explicitly executed by `test:db`. Sandbox checks report SKIPPED when credentials are absent. With `TEST_DATABASE_URL` set, `test:e2e` starts the assembled local runtime and performs a credential-free smoke check; without it, the command reports SKIPPED. Neither local smoke nor database tests satisfy A1–A14.
 
 The Render blueprint defines the chosen API, worker and PostgreSQL 16 services. It has not been deployed or purchased. Read the [deployment preparation](docs/hriday/h1-foundation.md) before creating services.
 
