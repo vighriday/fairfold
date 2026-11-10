@@ -168,6 +168,54 @@ describe.skipIf(!dbUrl)('evidence agent against Postgres', () => {
     expect((await createLedger(database.db).verify(order.id)).entries).toEqual([]);
   });
 
+  it('photos uploaded one at a time are attested together, and both attestations are chained', async () => {
+    const { order, item, runtime, shas } = await packedOrder();
+    const { model, calls } = mockModel([
+      {
+        items: [
+          {
+            orderItemId: item.id,
+            seen: { itemType: 'hoodie', colour: 'navy', sizeLabel: 'M', quantity: 1 },
+            matches: true,
+            confidence: 0.93,
+            notes: '',
+          },
+        ],
+        batchLabelText: 'B17',
+        shippingLabel: { visible: true, trackingNumberText: 'FF100000001' },
+        defects: [],
+        inspection: null,
+        couldNotVerify: [],
+        confidence: 0.9,
+      },
+    ]);
+    runtime.models.vision = model;
+    const pack = createHandlers(() => runtime)['pack.photos_uploaded']!;
+    await pack({
+      orderId: order.id,
+      photoShas: [shas[0]!],
+      labels: ['item'],
+      batchCodes: { [item.id]: 'B17' },
+    });
+    await pack({
+      orderId: order.id,
+      photoShas: [shas[1]!],
+      labels: ['sealed_parcel'],
+      batchCodes: { [item.id]: 'B17' },
+    });
+    const rows = await database.db
+      .select()
+      .from(attestations)
+      .where(eq(attestations.order_id, order.id))
+      .orderBy(attestations.created_at);
+    expect(rows.map((r) => r.photo_shas)).toEqual([[shas[0]], [shas[0], shas[1]]]);
+    expect(rows[1]!.photo_labels).toEqual(['item', 'sealed_parcel']);
+    expect(calls).toHaveLength(2);
+    const chain = await createLedger(database.db).verify(order.id);
+    expect(chain.verified).toBe(true);
+    expect(chain.entries.map((e) => e.type)).toEqual(['attestation', 'attestation']);
+  });
+
   it('an active inspection rule on the batch reaches the prompt with its cluster label', async () => {
     const { merchant, order, item, runtime, shas } = await packedOrder();
     const [cluster] = await database.db

@@ -88,6 +88,16 @@ function memoryStore(): EvidenceStore & {
       mime: 'image/jpeg',
       bytes: new TextEncoder().encode(sha),
     })),
+    loadLatestPackAttestation: vi.fn(async (orderId: string) => {
+      const latest = rows.filter((r) => r.orderId === orderId && r.step === 'pack').at(-1);
+      return latest
+        ? {
+            photoShas: latest.photoShas,
+            photoLabels: latest.photoLabels,
+            batchCode: latest.batchCode,
+          }
+        : null;
+    }),
     insertAttestation: vi.fn(async (row: AttestationRow, ledgerEntry?: (id: string) => unknown) => {
       rows.push(row);
       const id = `att-${rows.length}`;
@@ -147,10 +157,72 @@ describe('pack.photos_uploaded handler', () => {
     const store = memoryStore();
     const { model, calls } = mockModel([answer]);
     await createEvidenceHandlers({ store, model })['pack.photos_uploaded'](packPayload);
-    expect(store.loadOrderForAttestation).toHaveBeenCalledWith(O1, { [I1]: 'B17', [I2]: 'B17' });
+    expect(store.loadOrderForAttestation).toHaveBeenCalledWith(O1, ['B17']);
     const p = promptOf(calls[0]!);
     expect(p.userText).toContain(I2);
     expect(p.system).toContain('sleeve seam opening');
+  });
+
+  describe('photos uploaded in several steps (one photo at a time from a phone)', () => {
+    const [S4, S5, S6, S7] = [sha('s4'), sha('s5'), sha('s6'), sha('s7')];
+    const upload = (
+      photoShas: string[],
+      labels: string[],
+      batchCodes = packPayload.batchCodes,
+    ) => ({
+      orderId: O1,
+      photoShas,
+      labels,
+      batchCodes,
+    });
+
+    it('a later upload is attested together with the photos already taken', async () => {
+      const store = memoryStore();
+      const { model, calls } = mockModel([answer]);
+      const pack = createEvidenceHandlers({ store, model })['pack.photos_uploaded'];
+      await pack(upload([S1, S2], ['item', 'size_label']));
+      await pack(upload([S3], ['sealed_parcel']));
+      expect(store.rows[1]).toMatchObject({
+        photoShas: [S1, S2, S3],
+        photoLabels: ['item', 'size_label', 'sealed_parcel'],
+      });
+      expect(promptOf(calls[1]!).fileCount).toBe(3);
+    });
+
+    it('a retake replaces the earlier photo with the same label', async () => {
+      const store = memoryStore();
+      const { model } = mockModel([answer]);
+      const pack = createEvidenceHandlers({ store, model })['pack.photos_uploaded'];
+      await pack(upload([S1, S2], ['item', 'size_label']));
+      await pack(upload([S3], ['item']));
+      expect(store.rows[1]).toMatchObject({
+        photoShas: [S2, S3],
+        photoLabels: ['size_label', 'item'],
+      });
+    });
+
+    it('keeps at most 6 photos, dropping the oldest carried-over photos first', async () => {
+      const store = memoryStore();
+      const { model } = mockModel([answer]);
+      const pack = createEvidenceHandlers({ store, model })['pack.photos_uploaded'];
+      await pack(upload([S1, S2, S3], ['a', 'b', 'c']));
+      await pack(upload([S4, S5, S6], ['d', 'e', 'f']));
+      await pack(upload([S7], ['g']));
+      expect(store.rows[2]).toMatchObject({
+        photoShas: [S2, S3, S4, S5, S6, S7],
+        photoLabels: ['b', 'c', 'd', 'e', 'f', 'g'],
+      });
+    });
+
+    it('an upload without batch codes keeps the batch entered earlier, so its inspection rule still applies', async () => {
+      const store = memoryStore();
+      const { model } = mockModel([answer]);
+      const pack = createEvidenceHandlers({ store, model })['pack.photos_uploaded'];
+      await pack(upload([S1], ['item']));
+      await pack(upload([S2], ['seam_closeup'], {}));
+      expect(store.loadOrderForAttestation).toHaveBeenLastCalledWith(O1, ['B17']);
+      expect(store.rows[1]?.batchCode).toBe('B17');
+    });
   });
 
   it('an active inspection rule with no inspection read blocks match', async () => {

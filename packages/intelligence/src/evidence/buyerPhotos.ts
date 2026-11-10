@@ -31,7 +31,7 @@ export async function attestBuyerPhotos(
   if (described.some((a) => sameSet(a.shas, shas))) return;
 
   const store = dbEvidenceStore(rt);
-  const { items } = await store.loadOrderForAttestation(orderId, {});
+  const { items } = await store.loadOrderForAttestation(orderId, []);
   const labels = shas.map(() => BUYER_PHOTO_LABEL);
   const a = await attestPackingPhotos(
     {

@@ -1,5 +1,5 @@
 // EvidenceStore backed by Hriday's packages: drizzle tables, blobs.get and ledger.append (section 7).
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 import { AppError, type AttestInput } from '@fairfold/contracts';
 import {
   attestations,
@@ -60,7 +60,7 @@ export function dbEvidenceStore(rt: IntelRuntime): EvidenceStore {
         .from(order_items)
         .innerJoin(products, eq(products.id, order_items.product_id))
         .where(eq(order_items.order_id, orderId));
-      const codes = [...new Set(Object.values(batchCodes))];
+      const codes = [...new Set(batchCodes)];
       const inspectionRule = codes.length
         ? await ruleWithLabel(
             rt,
@@ -72,6 +72,20 @@ export function dbEvidenceStore(rt: IntelRuntime): EvidenceStore {
           )
         : null;
       return { items, inspectionRule };
+    },
+
+    async loadLatestPackAttestation(orderId) {
+      const [latest] = await rt.db
+        .select({
+          photoShas: attestations.photo_shas,
+          photoLabels: attestations.photo_labels,
+          batchCode: attestations.batch_code,
+        })
+        .from(attestations)
+        .where(and(eq(attestations.order_id, orderId), eq(attestations.step, 'pack')))
+        .orderBy(desc(attestations.created_at), desc(attestations.id))
+        .limit(1);
+      return latest ?? null;
     },
 
     async loadInspectionRule(hypothesisId, batchCode) {

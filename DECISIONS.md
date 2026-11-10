@@ -192,3 +192,10 @@ Status: **DEFERRED BY USER; NOT RUN**. The user confirmed accounts do not curren
 - Flags inform the merchant and PayPal's reviewer; they do not change the recommendation, because section 10's decision table has no integrity row.
 - For Hriday (H5): the ledger `photo` entry payload is expected to carry `label` and, when the EXIF check fires, `exifOutsideWindow: true` or `exifUnreadable: true` (the fields `inspectImage` already computes).
 - Contract change: none.
+
+### I-D21 — A pack attestation covers all of the order's packing photos so far — 2026-11-10
+- F2 publishes `pack.photos_uploaded` per upload, and the seal checks the latest pack attestation. Attesting each upload alone failed whenever photos were taken one at a time: an upload holding only the sealed parcel reads the item as missing (quantity 0), so the latest attestation is `mismatch` and the seal is refused.
+- Each pack attestation now covers this upload plus the photos of the order's latest pack attestation (which already holds every earlier photo). An earlier photo whose label this upload shoots again is a retake and is replaced, so a corrected photo can clear an earlier mismatch. At most 6 photos (the Evidence Agent's limit) are kept, dropping the oldest carried-over photos first. The ledger `attestation` entry lists the photos actually attested.
+- An upload whose `batchCodes` is empty keeps the batch code recorded on the latest pack attestation, so the batch's active inspection rule (and its required photo) still reaches the agent.
+- One model call per upload, as before; each upload still writes one attestation and one ledger entry.
+- Contract change: none (job payload unchanged).
