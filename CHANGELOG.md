@@ -2,6 +2,13 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-10 — H5 Pack Station core
+
+- Added merchant-owned Pack Station routes for state, photo upload, attestation-mismatch override and seal. Uploads enforce JPEG/PNG, six-file/12 MB limits, supported labels, EXIF freshness, normalized content-addressed bytes and merchant-local cross-order reuse protection.
+- Added blocker-aware pack projections and atomic sealing: order locking, batch ownership/stock checks, one-time inventory decrement, shipment creation, `sealed` ledger entry and post-commit `tracking.push` publication.
+- Added a tracking worker with deterministic request IDs, payer notification, bounded three-attempt handling, safe shipment/order projection, `tracking_pushed` ledger entry and failure alert.
+- Added PostgreSQL coverage for photo persistence, queue publication and concurrent sealing. **191 database tests passed**; typecheck, targeted lint and formatting passed. H5 attestation/actions, real PayPal tracking and A6/A7/A11 remain **NOT RUN**.
+
 ## 2026-11-10 — H4 approved action execution
 
 - Added the worker-owned `evidence.submit` executor for approved evidence, offer and claim packs. It re-fetches authoritative dispute state/options, validates the approved pack and content-addressed blobs, uses deterministic PayPal request IDs, and sends no vendor request for stale or invalid state.

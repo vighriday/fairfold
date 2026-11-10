@@ -17,6 +17,7 @@ import { requireAuth } from '../../auth.js';
 import { createDevRoutes } from '../../dev/routes.js';
 import { type createCheckoutService } from '../../checkout/service.js';
 import { OrderListQuerySchema, type createOrderReads } from '../../orders/read.js';
+import { type createPackingService } from '../../packing/service.js';
 
 const PayPalOrderIdSchema = z.string().regex(/^[A-Z0-9]{1,36}$/);
 const errors = {
@@ -40,6 +41,7 @@ export function createCoreRoutes(options: {
   demoAdjudicate?: ReturnType<
     typeof import('../../disputes/demo-adjudicate.js').createDemoDisputeAdjudication
   >;
+  packing?: ReturnType<typeof createPackingService>;
   demoMode: boolean;
 }): FastifyPluginAsync {
   return async (server) => {
@@ -106,6 +108,156 @@ export function createCoreRoutes(options: {
             request.params.packId,
             request.body,
           ),
+      );
+    }
+    if (options.packing) {
+      const packing = options.packing;
+      app.get(
+        '/api/orders/:id/pack',
+        {
+          preHandler: requireAuth('merchant'),
+          schema: {
+            tags: ['Pack Station'],
+            security: bearer,
+            summary: 'Read merchant-owned packing state and blockers',
+            params: z.object({ id: UuidSchema }),
+            response: {
+              200: z.object({
+                photos: z.array(
+                  z.object({
+                    sha256: z.string().regex(/^[a-f0-9]{64}$/),
+                    label: z.string(),
+                    createdAt: z.iso.datetime(),
+                  }),
+                ),
+                attestation: z
+                  .object({
+                    id: UuidSchema,
+                    status: z.enum(['match', 'mismatch', 'could_not_verify']),
+                    confidence: z.number(),
+                    result: z.unknown(),
+                    createdAt: z.iso.datetime(),
+                  })
+                  .nullable(),
+                inspectionRule: z
+                  .object({
+                    id: UuidSchema,
+                    batchCode: z.string(),
+                    instruction: z.string(),
+                    requiredPhotoLabel: z.string(),
+                  })
+                  .nullable(),
+                batches: z.array(
+                  z.object({
+                    id: UuidSchema,
+                    batchCode: z.string(),
+                    qtyRemaining: z.number().int(),
+                    status: z.string(),
+                  }),
+                ),
+                canSeal: z.boolean(),
+                blockers: z.array(z.string()),
+              }),
+              ...errors,
+            },
+          },
+        },
+        async (request) => packing.get(request.auth!, request.params.id),
+      );
+      app.post(
+        '/api/orders/:id/pack/photos',
+        {
+          preHandler: requireAuth('merchant'),
+          schema: {
+            tags: ['Pack Station'],
+            security: bearer,
+            summary: 'Upload merchant-owned packing photos',
+            params: z.object({ id: UuidSchema }),
+            response: {
+              202: z.object({ photoShas: z.array(z.string().regex(/^[a-f0-9]{64}$/)) }),
+              ...errors,
+            },
+          },
+        },
+        async (request, reply) => {
+          const files: Array<{ bytes: Buffer; mime: string }> = [];
+          const labels: string[] = [];
+          let batchCodes: Record<string, string> = {};
+          for await (const part of request.parts()) {
+            if (part.type === 'file') {
+              files.push({ bytes: await part.toBuffer(), mime: part.mimetype });
+            } else if (part.fieldname === 'labels') {
+              labels.push(String(part.value));
+            } else if (part.fieldname === 'batchCodes') {
+              try {
+                const parsed: unknown = JSON.parse(String(part.value));
+                if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))
+                  throw new Error();
+                batchCodes = Object.fromEntries(
+                  Object.entries(parsed).map(([key, value]) => {
+                    if (typeof value !== 'string' || !value.trim()) throw new Error();
+                    return [key, value.trim()];
+                  }),
+                );
+              } catch {
+                throw new AppError('BATCH_CODES_INVALID', 'batchCodes must be a JSON object', 400);
+              }
+            }
+          }
+          if (files.length !== labels.length)
+            throw new AppError('PHOTO_LABEL_COUNT_MISMATCH', 'Each photo requires one label', 400);
+          const photos = files.map((file, index) => ({ ...file, label: labels[index]! }));
+          return reply
+            .status(202)
+            .send(
+              await packing.uploadPhotos(request.auth!, request.params.id, { photos, batchCodes }),
+            );
+        },
+      );
+      app.post(
+        '/api/orders/:id/pack/override',
+        {
+          preHandler: requireAuth('merchant'),
+          schema: {
+            tags: ['Pack Station'],
+            security: bearer,
+            summary: 'Override only an attestation mismatch',
+            params: z.object({ id: UuidSchema }),
+            body: z.object({ reason: z.string().trim().min(1).max(2000) }).strict(),
+            response: { 200: z.object({ status: z.literal('overridden') }), ...errors },
+          },
+        },
+        async (request) => packing.override(request.auth!, request.params.id, request.body.reason),
+      );
+      app.post(
+        '/api/orders/:id/pack/seal',
+        {
+          preHandler: requireAuth('merchant'),
+          schema: {
+            tags: ['Pack Station'],
+            security: bearer,
+            summary: 'Seal an order after all packing blockers pass',
+            params: z.object({ id: UuidSchema }),
+            body: z
+              .object({
+                batchCodes: z.record(z.string(), z.string().trim().min(1)),
+                carrier: z.string().regex(/^[A-Z0-9_]{1,64}$/),
+                carrierNameOther: z.string().trim().min(1).max(64).optional(),
+                trackingNumber: z.string().trim().min(1).max(64),
+                packer: z.string().trim().min(1).max(255),
+              })
+              .strict(),
+            response: {
+              200: z.object({
+                orderId: UuidSchema,
+                shipmentId: UuidSchema,
+                status: z.literal('sealed'),
+              }),
+              ...errors,
+            },
+          },
+        },
+        async (request) => packing.seal(request.auth!, request.params.id, request.body),
       );
     }
     app.get(

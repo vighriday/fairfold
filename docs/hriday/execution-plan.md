@@ -69,12 +69,12 @@ Source estimate: 5 hours. Sources: architecture 3–4, 8 F4, 10–11, 16 H4. Sta
 
 ## H5 Pack Station and approved shared-cause actions
 
-Source estimate: 5 hours. Sources: architecture 7–9, 11–12, 16 H5. Status: NOT STARTED. Depends on H4; consumes Ishaan's I2/I6 interfaces or explicit stubs.
+Source estimate: 5 hours. Sources: architecture 7–9, 11–12, 16 H5. Status: IN PROGRESS; local Pack Station core implemented. Depends on H4; consumes Ishaan's I2/I6 interfaces or explicit stubs.
 
-1. Implement upload/pack/override/seal/ledger endpoints 10–14. Validate JPEG/PNG, maximum 12 MB each and six pack files, label/batch associations, EXIF freshness and cross-order reuse checks. Store normalized bytes and append photo entries; publish `pack.photos_uploaded`, return 202, and wait for the attestation job.
+1. **Implemented and database-verified locally:** upload/pack/override/seal core endpoints. JPEG/PNG, maximum 12 MB each and six pack files, label/batch associations, EXIF freshness and cross-order reuse checks are enforced. Normalized bytes are content-addressed, photo entries are appended, `pack.photos_uploaded` is published, and upload returns 202.
 2. Return active stocked batches, photos, latest attestation, inspection rule, `canSeal` and exact blockers. Preserve all five blocker codes. An override with a reason clears only ATTESTATION_MISMATCH, never a hold, required inspection, batch mismatch or tracking-label mismatch.
-3. Seal transaction locks the order, sets batch/packer/packed time, decrements inventory once, creates shipment, timestamps status and appends `sealed`. Commit before queueing tracking. Prevent repeat seals from double-decrementing stock; test concurrent attempts and no-stock cases.
-4. `tracking.push` sends flat tracking data with payer notification, stores tracker ID and shipment status, appends `tracking_pushed`, refreshes report; after three failed attempts raises `tracking_push_failed`. Keep local seal success distinct from PayPal tracking success.
+3. **Implemented and database-verified locally:** seal transaction locks the order, sets batch/packer/packed time, decrements inventory once, creates shipment, timestamps status and appends `sealed`. It commits before queueing tracking and rejects repeat/concurrent seals.
+4. **Implemented locally:** `tracking.push` sends flat tracking data with payer notification, stores tracker ID and shipment status, appends `tracking_pushed`, refreshes the report and raises a `tracking_push_failed` alert after three local attempts. Keep local seal success distinct from PayPal tracking success.
 5. Implement endpoint 39: store batch inspection photos, publish `inspection.uploaded`, let Ishaan attest. A passing required inspection requires the correct photo label and `inspection.defectVisible = false` under the fixed rule.
 6. Execute only approved action rows: hold orders/batch, add inspection rule, send messages, rebuild offer packs, proactive refund, release orders/batch. Ishaan proposes and confirms; Hriday executes and writes status/result. Check merchant ownership and parent hypothesis/action association.
 7. For approved messages, mark in-app delivery and use dispute send-message only for eligible INQUIRY cases. Never expose another buyer. No email provider is added; `email_outbox` is a documented channel, not permission to send real email.

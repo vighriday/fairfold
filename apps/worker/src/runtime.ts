@@ -9,6 +9,7 @@ import {
   createPayPalEventHandler,
   createDisputesPoller,
   createEvidenceSubmitHandler,
+  createTrackingPushHandler,
   syncDisputePollSchedules,
   type DisputeSynchronizer,
 } from '@fairfold/paypal';
@@ -129,6 +130,12 @@ export function createWorkerRuntime(
             'paypal.event': event,
             'disputes.poll': poll,
             'evidence.submit': createEvidenceSubmitHandler({
+              database,
+              jobs,
+              forMerchant,
+              clock: options.clock,
+            }),
+            'tracking.push': createTrackingPushHandler({
               database,
               jobs,
               forMerchant,

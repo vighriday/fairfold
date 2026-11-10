@@ -33,6 +33,7 @@ const result = spawnSync(
     'order-reads.integration.test.ts',
     'checkout-service.integration.test.ts',
     'core-routes.integration.test.ts',
+    'packing.integration.test.ts',
     'sandbox-setup.integration.test.ts',
     'sandbox-verify.integration.test.ts',
   ],
