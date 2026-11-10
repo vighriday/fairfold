@@ -1,6 +1,6 @@
 # H3 acceptance and human handoff
 
-Status: **REAL ACCEPTANCE NOT RUN**, 10 November 2026 IST. H3 and the event policy are approved. Registration, ingress and transactional event reconciliation are implemented; polling/runtime closeout is in progress. The real-run steps below remain unexecuted. Follow the [implementation plan](h3-webhooks.md) and [approved event policy](webhook-persistence-review.md).
+Status: **REAL ACCEPTANCE NOT RUN**, 10 November 2026 IST. H3 and the event policy are approved. Local registration, ingress, reconciliation, polling, runtime and read-only inspection are implemented; see the [closeout](h3-closeout.md). The real-run steps below remain unexecuted. Follow the [implementation plan](h3-webhooks.md) and [approved event policy](webhook-persistence-review.md).
 
 ## What Hriday needs to supply
 
@@ -20,7 +20,7 @@ Status: **REAL ACCEPTANCE NOT RUN**, 10 November 2026 IST. H3 and the event poli
 
 1. Complete H2's actual `/dev` purchase with Maya and record the real Fairfold order ID, PayPal order/capture IDs and actual UTC times privately. Verify the approved capture fields and ledger as in H2; retain no raw buyer contact/address values.
 2. Observe the actual `PAYMENT.CAPTURE.COMPLETED` delivery in the merchant app's webhook Dashboard. Confirm signature postback returned `SUCCESS` for the stored merchant webhook ID. A synthetic test returning `true`, a simulator delivery or a manually inserted database row does not meet this step.
-3. Read the matching `paypal_events` row's ID/type, merchant ID, `verified`, `received_at`, `processed_at` and fixed error only. Check `verified = true`, the correct merchant, successful processing and the expected order/capture link. Do not dump `payload`, headers or vendor bodies into terminal logs/evidence.
+3. Run `pnpm exec tsx scripts/verify-webhook.ts <merchantSlug> <observed-event-id>` for read-only local state inspection; it deliberately leaves real-delivery/redelivery proof to operator observation. Read the matching `paypal_events` row's ID/type, merchant ID, `verified`, `received_at`, `processed_at` and fixed error only. Check `verified = true`, the correct merchant, successful processing and the expected order/capture link. Do not dump `payload`, headers or vendor bodies into terminal logs/evidence.
 4. Redeliver that same actual event twice through PayPal. Record the observed delivery attempts/statuses/times. Check one verified row with that actual event ID, one logical capture effect, one captured ledger entry and no duplicated order/items. Queue delivery is at least once; repeat read-only GET calls after a crash do not establish duplicate payment effects.
 5. Compare order and ledger state before/after redelivery. A row count alone does not prove the handler completed once; a 200 duplicate alone does not prove its first transaction queued work. Keep the local atomic-enqueue/restart tests alongside this real evidence.
 6. Recheck the ledger hash chain and owner-scoped order response. Publish only a sanitized evidence summary and its commit/deployment revision. Actual transaction IDs can remain in ignored local evidence; public fixtures must pass their separate audit.

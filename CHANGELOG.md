@@ -2,6 +2,12 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-10 — H3 worker runtime and acceptance closeout
+
+- Wired both H3 handlers into the normal worker while preserving intelligence ownership, adding safe minimal configuration, schedule refresh and guarded startup/shutdown. The Blueprint worker references the API's existing encryption key; plans/resources are unchanged.
+- Added read-only verified-event/order/ledger inspection and completed the H3 handoff, recovery limits and current deployment instructions. Local H3 is ready; H4 sync and all real acceptance remain explicit dependencies.
+- All 302 offline and 180 PostgreSQL/HTTP cases passed, along with actual API/rehearsal/worker startup. Typecheck/lint/formatting and the 162-link publication audit passed; all 51 outgoing files passed exact local-secret and protected-path checks. Current Render schema passes; CLI validation lacks login. Automatic review blocked actual registration execution, so no vendor mutation ran.
+
 ## 2026-11-10 — H3 bounded polling and merchant schedules
 
 - Added complete-page dispute polling with ID-only H4 dispatch, per-merchant coalescing, unchanged page filters and bounded cursor/page checks. Watermarks advance only after success with overlap; a restart safely replays supported history.

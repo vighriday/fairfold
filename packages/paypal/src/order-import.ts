@@ -100,18 +100,16 @@ export async function importOrderSnapshot(
     });
   }
   if (total !== moneyMinor(capture.amount) || total <= 0n) return mismatch();
-  await tx
-    .insert(orders)
-    .values({
-      id: orderId,
-      merchant_id: merchantId,
-      paypal_order_id: capture.orderId,
-      invoice_id: invoice,
-      status: 'created',
-      amount_value: formatMoney(capture.amount.currency_code, total).value,
-      currency: capture.amount.currency_code,
-      created_at: clock.now(),
-    });
+  await tx.insert(orders).values({
+    id: orderId,
+    merchant_id: merchantId,
+    paypal_order_id: capture.orderId,
+    invoice_id: invoice,
+    status: 'created',
+    amount_value: formatMoney(capture.amount.currency_code, total).value,
+    currency: capture.amount.currency_code,
+    created_at: clock.now(),
+  });
   await tx.insert(order_items).values(snapshots);
   return orderId;
 }

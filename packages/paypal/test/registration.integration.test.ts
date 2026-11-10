@@ -22,18 +22,16 @@ describe.skipIf(!url)('H3 explicit merchant webhook registration (synthetic vend
     const id = randomUUID();
     ids.push(id);
     const slug = 'h3-registration-' + id;
-    await database.db
-      .insert(merchants)
-      .values({
-        id,
-        slug,
-        name: 'Synthetic registration',
-        domain: 'synthetic.invalid',
-        country: 'US',
-        paypal_client_id: 'synthetic-client',
-        paypal_client_secret_enc: 'synthetic-encrypted-value-never-decrypted',
-        ...extra,
-      });
+    await database.db.insert(merchants).values({
+      id,
+      slug,
+      name: 'Synthetic registration',
+      domain: 'synthetic.invalid',
+      country: 'US',
+      paypal_client_id: 'synthetic-client',
+      paypal_client_secret_enc: 'synthetic-encrypted-value-never-decrypted',
+      ...extra,
+    });
     const register = vi.fn(async () => ({ id: 'SYNTHETICWEBHOOK123' }));
     // Only the registration seam is exercised; no client HTTP is substituted silently.
     const forMerchant = vi.fn(async () => ({ webhooks: { register } })) as unknown as ForMerchant;

@@ -271,6 +271,9 @@ importers:
       '@fairfold/jobs':
         specifier: workspace:*
         version: link:../../packages/jobs
+      '@fairfold/paypal':
+        specifier: workspace:*
+        version: link:../../packages/paypal
       dotenv:
         specifier: 18.0.10
         version: 18.0.10

@@ -1,6 +1,6 @@
 # H3 — Verified webhooks and reconciliation
 
-Status: **IN PROGRESS; AUTHORIZED** on 10 November 2026 IST. Hriday approved “Proceed with H3 and approve the event policy,” superseding the prior phase gate. H2's ungated local code is ready; its real acceptance and H1 hosting remain pending. Registration and durable verified ingress are implemented: 148 PostgreSQL/HTTP checks and nine policy cases passed; see [ingress evidence](evidence/2026-11-10-h3-ingress.md). Reconciliation and polling follow below. H3 real acceptance remains pending.
+Status: **LOCAL IMPLEMENTATION READY; REAL ACCEPTANCE PENDING**, 10 November 2026 IST. Hriday approved H3 and the exact event policy. Registration, durable ingress, transactional reconciliation, polling, normal worker runtime and read-only inspection are implemented. Final checks: 302 offline and 180 PostgreSQL/HTTP passes. The [H3 closeout](h3-closeout.md) is the current handoff; H4 sync and actual A5/verified capture delivery remain pending.
 
 ## Source obligations and implementation sequence
 

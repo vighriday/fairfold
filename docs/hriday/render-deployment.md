@@ -30,7 +30,7 @@ For **APP_ENCRYPTION_KEY**, generate 32 random bytes as base64. On this Windows 
 node -e "process.stdout.write(require('node:crypto').randomBytes(32).toString('base64'))" | Set-Clipboard
 ```
 
-Paste into Render's APP_ENCRYPTION_KEY field. Keep it private and retain that value across redeployments: it encrypts merchant credentials when H2 is connected. Render generates DEMO_TOKEN_SECRET and supplies the internal DATABASE_URL from the Blueprint. Do not paste a local DATABASE_URL or any PayPal/model credentials for H1.
+Paste into Render's APP_ENCRYPTION_KEY field. Keep it private and retain that value across redeployments: it encrypts merchant credentials when H2 is connected. The worker references this same API key through fromService/envVarKey; do not supply a different key to it. Render generates DEMO_TOKEN_SECRET and supplies the internal DATABASE_URL from the Blueprint. Do not paste a local DATABASE_URL or any PayPal/model credentials for H1.
 
 The first hosted API URL is assigned by Render. With the URL variables omitted, the API now derives APP_BASE_URL from `RENDER_EXTERNAL_URL` and uses that same origin for FRONTEND_ORIGIN. Explicit values remain supported and take precedence. Once a separate Figma frontend exists, set FRONTEND_ORIGIN to its real URL. Local `.env` setup is unchanged. The source environment-variable names and CORS boundary are preserved.
 
@@ -41,9 +41,9 @@ Apply only the reviewed existing Blueprint when the account gate is resolved; se
 After applying, retain the actual service URLs, resource/deploy IDs and deployed Git commit. Check:
 
 1. API build, `pnpm db:migrate` pre-deploy and start all succeed. The service reaches `live`.
-2. Actual API URL plus `/healthz` returns database `ready`, phase `H2` and intelligence `stub` for the current branch. Earlier H1-only commits reported phase H1; do not deploy a stale commit just to match that historical label.
-3. `/docs/` loads Swagger; `/docs/json` contains demo login and the seven current H2 checkout/order endpoints. The Figma product frontend remains unimplemented; absent PayPal credentials do not authorize a dummy successful checkout.
-4. Worker deploy succeeds and runtime logs say `Worker ready`, `handlerCount: 0`, intelligence `stub`. No real intelligence job result is claimed.
+2. Actual API URL plus `/healthz` returns database `ready`, phase `H3` and intelligence `stub` for the current branch. Earlier H1-only commits reported phase H1; do not deploy a stale commit just to match that historical label.
+3. `/docs/` loads Swagger; `/docs/json` contains demo login and the seven checkout/order endpoints plus `/webhooks/paypal/{merchantSlug}`. The Figma product frontend remains unimplemented; absent PayPal credentials do not authorize a dummy successful checkout.
+4. Worker deploy succeeds and runtime logs say `Worker ready`, `handlerCount: 2`, intelligence `stub`. The H3 worker also reports disputeSync H4_PENDING; no real intelligence or PayPal result is claimed.
 5. Record the deployed commit and actual observations in a new dated evidence record, then update H1's status. A queued deploy or green API alone does not prove the worker is ready.
 
 The public API URL can be supplied back in chat for HTTP verification; no credentials or secret values are needed. Full sandbox checks remain deferred until the accounts exist.

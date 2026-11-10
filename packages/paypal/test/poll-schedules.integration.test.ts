@@ -24,18 +24,16 @@ describe.skipIf(!url)('H3 actual per-merchant cron schedules', () => {
   async function merchant(extra: Partial<typeof merchants.$inferInsert> = {}) {
     const id = randomUUID();
     ids.push(id);
-    await database.db
-      .insert(merchants)
-      .values({
-        id,
-        slug: 'h3-schedule-' + id,
-        name: 'Synthetic schedule merchant',
-        domain: 'synthetic.invalid',
-        country: 'US',
-        paypal_client_id: 'synthetic-client',
-        paypal_client_secret_enc: 'synthetic-not-decrypted',
-        ...extra,
-      });
+    await database.db.insert(merchants).values({
+      id,
+      slug: 'h3-schedule-' + id,
+      name: 'Synthetic schedule merchant',
+      domain: 'synthetic.invalid',
+      country: 'US',
+      paypal_client_id: 'synthetic-client',
+      paypal_client_secret_enc: 'synthetic-not-decrypted',
+      ...extra,
+    });
     return id;
   }
   it('retains independent one-minute UTC schedules for two configured real merchants', async () => {

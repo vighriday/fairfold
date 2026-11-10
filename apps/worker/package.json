@@ -11,6 +11,7 @@
     "@fairfold/contracts": "workspace:*",
     "@fairfold/db": "workspace:*",
     "@fairfold/jobs": "workspace:*",
+    "@fairfold/paypal": "workspace:*",
     "@fairfold/intelligence": "workspace:*",
     "dotenv": "18.0.10",
     "pino": "10.4.0"
