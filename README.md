@@ -92,7 +92,7 @@ Evaluation results measured on 10 November 2026 (details and method in [docs/ai-
 
 ## Data and labels
 
-All stores, buyers and orders in the tests and seed are fictional and synthetic. Seeded PayPal identifiers start with `SEED-`. Cross-merchant buyer data appears only as a clearly labelled simulation of a tier only PayPal could run. No buyer email or street address is ever sent to a model.
+All stores, buyers and orders in the tests and seed are fictional and synthetic. Seeded PayPal identifiers start with `SEED-`. Cross-merchant buyer data appears only as a clearly labelled simulation of a tier only PayPal could run. Stored buyer emails and addresses are never sent to a model, and emails and phone numbers that a buyer types into a complaint, review or dispute message are removed in code before any model reads the text. A street address typed into free text is not detected.
 
 ## More
 

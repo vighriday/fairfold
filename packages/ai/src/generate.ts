@@ -10,7 +10,7 @@ import type { z } from 'zod';
 import { cacheDir, cacheKey, readCached, writeCached } from './cache.js';
 import { getModel, hasModelConfig } from './config.js';
 import { hashInput, logAi, sha256Hex } from './log.js';
-import { wrapUntrusted } from './untrusted.js';
+import { removeContactDetails, wrapUntrusted } from './untrusted.js';
 
 /** Exact wording required by section 10 for every call that carries untrusted text. */
 export const UNTRUSTED_SYSTEM_RULE =
@@ -52,10 +52,11 @@ export interface StructuredResult<T> {
 
 /**
  * The only way Fairfold asks a model for anything: schema-validated output, temperature 0,
- * a 30-second timeout per attempt, no tools, untrusted text wrapped, every attempt logged.
+ * a 30-second timeout per attempt, no tools, untrusted text stripped of emails and phone numbers and wrapped,
+ * every attempt logged.
  */
 export async function generateStructured<T>(args: StructuredArgs<T>): Promise<StructuredResult<T>> {
-  const untrusted = args.untrusted ?? [];
+  const untrusted = (args.untrusted ?? []).map(removeContactDetails);
   const images = args.images ?? [];
   const kind = args.kind ?? (images.length > 0 ? 'vision' : 'text');
   if (!args.model && !hasModelConfig(kind)) {

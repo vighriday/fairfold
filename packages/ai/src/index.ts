@@ -4,7 +4,7 @@ export type { AiConfig, Env, ModelKind, Provider } from './config.js';
 export { generateStructured, UNTRUSTED_SYSTEM_RULE, MODEL_TIMEOUT_MS } from './generate.js';
 export type { StructuredArgs, StructuredResult } from './generate.js';
 export { embed } from './embed.js';
-export { wrapUntrusted } from './untrusted.js';
+export { removeContactDetails, wrapUntrusted } from './untrusted.js';
 export { hashInput, logAi } from './log.js';
 export type {
   LanguageModelV4 as LanguageModel,
