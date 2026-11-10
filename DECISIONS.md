@@ -128,3 +128,10 @@ Status: **DEFERRED BY USER; NOT RUN**. The user confirmed accounts do not curren
 ### I-D10 — Buyer message drafts: one per buyer, level kept in the action payload — 2026-11-10
 - `send_buyer_messages` carries `{ messageIds, level }`; `level` (`suspected` | `confirmed`) is additive and lets re-scans skip buyers already drafted at that level, so scans stay idempotent. Orders without a buyer get no draft (an in-app message needs a recipient). Drafts go to the hypothesis's in-transit and delivered-without-complaint orders (section 9 stage 5).
 - Contract change: additive field in an action payload.
+
+### I-D11 — Confirm, dismiss and trend details — 2026-11-10
+- Confirm counts one inspected unit per inspection attestation; a unit is defective when its `inspection.defectVisible` and `inspection.matchesCluster` are both true. With no defective unit, 409 `NO_DEFECTIVE_UNIT` carries `{ inspected, defective, clean, suggestDismiss }`; `suggestDismiss` is true at ten or more clean units. `HypothesisDetail` has no field for the suggestion, so it lives in that error.
+- Dismiss accepts open or confirmed hypotheses. The `{ reason }` has no column, so it is stored in the proposed `release_orders` payload (`{ orderIds, reason }`) and in the result of every still-proposed action, which dismiss withdraws (`status: failed`, `result: { withdrawn: 'hypothesis_dismissed', reason }`) so nothing is approved for a dismissed cause. A re-scan never reopens a dismissed hypothesis.
+- A superseded hypothesis is history: endpoint 22 leaves it out and endpoint 23 answers 409 `HYPOTHESIS_SUPERSEDED` (its status is not in `HypothesisDetail`'s enum).
+- Trend `rate` is complaints per order-day of exposure, exactly as stage 4 counts them; weeks are ISO weeks of delivery (of shipping for transit categories), keyed by their Monday.
+- Contract change: none.
