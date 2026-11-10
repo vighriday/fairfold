@@ -289,3 +289,10 @@ Status: **DEFERRED BY USER; NOT RUN**. The user confirmed accounts do not curren
 - Review item for Hriday: the `release_orders` executor (section 8: "clear holds, batch active, ledger released") should also set `inspection_rules.active = false` for `inspectionRuleIds`.
 - A reopened hypothesis withdraws its pending release (`hypothesis_reopened`) and proposes again: holds for orders it does not hold now (held orders and approved-but-not-executed holds count; withdrawn or released holds do not), the inspection rule unless one is proposed, approved or done, and buyer messages for buyers whose drafts were withdrawn (the stored template is reused, so no model call).
 - Contract change: additive field `inspectionRuleIds` in the `release_orders` payload; new `withdrawn` reasons in action results.
+
+### I-D35 — No pack rebuild for a resolved dispute or after a pack was approved or submitted — 2026-11-10
+- `dispute.synced`, `evidence.rebuild` (from a scan, a Confirm or a dispute update) and endpoint 19 rebuilt the pack whenever asked: after PayPal resolved the dispute, or after the merchant had approved a pack or it had been submitted, each rebuild superseded nothing useful and added a new draft beside the pack PayPal already has, inviting a second submission.
+- `buildEvidencePack` now refuses with 409 `DISPUTE_RESOLVED` when the dispute has `resolved_at` or status `RESOLVED`, and with 409 `PACK_SUBMITTED` when a pack for the dispute is `approved` or `submitted`. A pack whose submission `failed` can still be rebuilt. The job handlers skip such disputes instead of failing; endpoint 19 returns the 409.
+- `approved` is included although the task names only "submitted": an approved pack is the one Hriday's `evidence.submit` is about to file, and a new draft beside it would have to be approved again.
+- The buyer's later messages still reach the dispute's complaint (Shared Cause Detection uses them); only the pack is frozen.
+- Contract change: two new 409 codes on endpoint 19 and `buildEvidencePack`.

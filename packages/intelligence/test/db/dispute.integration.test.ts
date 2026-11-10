@@ -7,6 +7,7 @@ import {
   attestations,
   complaint_clusters,
   complaints,
+  disputes,
   evidence_blobs,
   evidence_packs,
   hypotheses,
@@ -404,6 +405,77 @@ describe.skipIf(!dbUrl)('dispute agent against Postgres', () => {
         .from(evidence_packs)
         .where(eq(evidence_packs.dispute_id, dispute.id)),
     ).toHaveLength(3);
+  });
+
+  describe('a pack is not rebuilt once it can no longer change anything', () => {
+    const packsOf = (disputeId: string) =>
+      database.db.select().from(evidence_packs).where(eq(evidence_packs.dispute_id, disputeId));
+
+    it('a resolved dispute: dispute.synced, evidence.rebuild and endpoint 19 build no pack', async () => {
+      const { merchant, dispute } = await packedOrder();
+      const { runtime } = testRuntime(database.db, { clock: fixedClock(NOW) });
+      const handlers = createHandlers(() => runtime);
+      await handlers['dispute.synced']!({
+        disputeId: dispute.id,
+        isNew: true,
+        newBuyerMessages: [],
+      });
+      expect(await packsOf(dispute.id)).toHaveLength(1);
+      await database.db
+        .update(disputes)
+        .set({ status: 'RESOLVED', resolved_at: new Date('2026-11-11T09:00:00Z') })
+        .where(eq(disputes.id, dispute.id));
+
+      await handlers['dispute.synced']!({
+        disputeId: dispute.id,
+        isNew: false,
+        newBuyerMessages: ['Thanks, the refund arrived.'],
+      });
+      await handlers['evidence.rebuild']!({ disputeIds: [dispute.id] });
+      expect(await packsOf(dispute.id)).toHaveLength(1);
+      // the buyer's words still reach the complaint
+      const [complaint] = await database.db
+        .select()
+        .from(complaints)
+        .where(eq(complaints.source_ref, dispute.id));
+      expect(complaint!.text).toContain('Thanks, the refund arrived.');
+
+      setIntelRuntime(runtime);
+      const { app, as } = await buildApi();
+      const res = await app.inject({
+        method: 'POST',
+        url: `/api/disputes/${dispute.id}/packs`,
+        headers: await as('merchant', merchant.id),
+      });
+      expect(res.statusCode).toBe(409);
+      expect(res.json()).toMatchObject({ error: { code: 'DISPUTE_RESOLVED' } });
+      await app.close();
+    });
+
+    it.each(['approved', 'submitted'])(
+      'a pack %s for PayPal: no further pack is built',
+      async (status) => {
+        const { dispute } = await packedOrder();
+        const { runtime } = testRuntime(database.db, { clock: fixedClock(NOW) });
+        const first = await buildEvidencePackWith(runtime, dispute.id);
+        await database.db
+          .update(evidence_packs)
+          .set({ status })
+          .where(eq(evidence_packs.id, first.packId));
+        const handlers = createHandlers(() => runtime);
+        await handlers['evidence.rebuild']!({ disputeId: dispute.id });
+        await handlers['dispute.synced']!({
+          disputeId: dispute.id,
+          isNew: false,
+          newBuyerMessages: ['Any update?'],
+        });
+        expect((await packsOf(dispute.id)).map((p) => p.status)).toEqual([status]);
+        await expect(buildEvidencePackWith(runtime, dispute.id)).rejects.toMatchObject({
+          code: 'PACK_SUBMITTED',
+          statusCode: 409,
+        });
+      },
+    );
   });
 
   it('routes 19 and 20: the owner rebuilds and downloads the PDF; another store cannot', async () => {

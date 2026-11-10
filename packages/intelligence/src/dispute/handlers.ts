@@ -6,7 +6,20 @@ import { complaints, disputes, evidence_packs, orders } from '@fairfold/db';
 import { createBlobStore } from '@fairfold/ledger';
 import { upsertComplaint } from '../complaints/create.js';
 import type { IntelRuntime } from '../runtime.js';
-import { buildEvidencePackWith, type EvidencePackResult } from './build.js';
+import { buildEvidencePackWith, FROZEN_PACK_CODES, type EvidencePackResult } from './build.js';
+
+/** Builds the pack, or returns null when the dispute's pack is final (resolved, or a pack approved or submitted). */
+async function rebuildUnlessFrozen(
+  rt: IntelRuntime,
+  disputeId: string,
+): Promise<EvidencePackResult | null> {
+  try {
+    return await buildEvidencePackWith(rt, disputeId);
+  } catch (err) {
+    if (err instanceof AppError && FROZEN_PACK_CODES.has(err.code)) return null;
+    throw err;
+  }
+}
 
 const RawMessages = z.object({
   messages: z
@@ -25,12 +38,13 @@ export function firstBuyerMessage(raw: unknown): string | null {
 
 /**
  * One complaint per dispute (source 'dispute', source_ref = dispute id). New buyer messages are appended to it
- * (DECISIONS.md I-D3). A new complaint and its complaint.created job commit together; then the pack is built.
+ * (DECISIONS.md I-D3). A new complaint and its complaint.created job commit together; then the pack is built,
+ * unless the dispute is resolved or a pack was already approved or submitted (null).
  */
 export async function syncDispute(
   rt: IntelRuntime,
   p: JobPayload<'dispute.synced'>,
-): Promise<EvidencePackResult> {
+): Promise<EvidencePackResult | null> {
   const [dispute] = await rt.db.select().from(disputes).where(eq(disputes.id, p.disputeId));
   if (!dispute) throw new AppError('DISPUTE_NOT_FOUND', 'Dispute not found', 404);
   const [existing] = await rt.db
@@ -77,15 +91,16 @@ export async function syncDispute(
       text: p.newBuyerMessages.join('\n\n'),
     });
   }
-  return buildEvidencePackWith(rt, dispute.id);
+  return rebuildUnlessFrozen(rt, dispute.id);
 }
 
+/** evidence.rebuild: each dispute's pack, except those that are final. */
 export async function rebuildPacks(
   rt: IntelRuntime,
   p: JobPayload<'evidence.rebuild'>,
 ): Promise<void> {
   const ids = 'disputeIds' in p ? p.disputeIds : [p.disputeId];
-  for (const id of ids) await buildEvidencePackWith(rt, id);
+  for (const id of ids) await rebuildUnlessFrozen(rt, id);
 }
 
 async function ownedDispute(rt: IntelRuntime, merchantId: string, disputeId: string) {

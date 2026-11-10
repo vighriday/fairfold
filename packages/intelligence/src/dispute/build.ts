@@ -153,12 +153,52 @@ function confidenceOf(d: Decision, attestationConfidence: number | null): number
   return 0.8;
 }
 
+/** The errors that mean "this dispute's pack is final": the job handlers skip such a dispute. */
+export const FROZEN_PACK_CODES: ReadonlySet<string> = new Set([
+  'DISPUTE_RESOLVED',
+  'PACK_SUBMITTED',
+]);
+
+/**
+ * A pack is not rebuilt once it can no longer change anything: PayPal has resolved the dispute, or the merchant has
+ * approved a pack for PayPal or it was submitted (a new draft beside it would only invite a second submission).
+ * A pack whose submission failed can be rebuilt.
+ */
+async function frozenPack(rt: IntelRuntime, dispute: typeof disputes.$inferSelect) {
+  if (dispute.resolved_at || dispute.status === 'RESOLVED')
+    return new AppError(
+      'DISPUTE_RESOLVED',
+      'This dispute is resolved; its evidence pack is no longer rebuilt',
+      409,
+    );
+  const [sent] = await rt.db
+    .select({ id: evidence_packs.id, status: evidence_packs.status })
+    .from(evidence_packs)
+    .where(
+      and(
+        eq(evidence_packs.dispute_id, dispute.id),
+        inArray(evidence_packs.status, ['approved', 'submitted']),
+      ),
+    )
+    .limit(1);
+  return sent
+    ? new AppError(
+        'PACK_SUBMITTED',
+        `A pack for this dispute is ${sent.status}; it is not rebuilt`,
+        409,
+        { packId: sent.id },
+      )
+    : null;
+}
+
 export async function buildEvidencePackWith(
   rt: IntelRuntime,
   disputeId: string,
 ): Promise<EvidencePackResult> {
   const [dispute] = await rt.db.select().from(disputes).where(eq(disputes.id, disputeId));
   if (!dispute) throw new AppError('DISPUTE_NOT_FOUND', 'Dispute not found', 404);
+  const frozen = await frozenPack(rt, dispute);
+  if (frozen) throw frozen;
   const blobs = createBlobStore(rt.db, rt.clock);
 
   const [order] = dispute.order_id
