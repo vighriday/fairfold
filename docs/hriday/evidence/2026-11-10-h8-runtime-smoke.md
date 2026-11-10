@@ -8,6 +8,7 @@
 - Agent demo login returns a token.
 - Authenticated MCP `initialize` returns protocol version `2025-03-26`.
 - Authenticated MCP `tools/list` exposes all four expected tools.
+- Authenticated MCP `tools/call` executes `search_catalog` and returns parseable JSON text content.
 
 Observed on 10 November 2026:
 
@@ -20,6 +21,7 @@ Observed on 10 November 2026:
   "demoLogin": "PASS",
   "authenticatedMcpInitialize": "PASS",
   "authenticatedMcpToolsList": "PASS",
+  "authenticatedMcpToolsCall": "PASS",
   "paypalRequests": 0,
   "acceptance": "A1-A14 NOT RUN"
 }

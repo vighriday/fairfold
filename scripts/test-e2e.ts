@@ -95,6 +95,23 @@ if (!databaseUrl) {
       'provide_dispute_evidence',
     ])
       if (!toolNames.has(name)) throw new Error(`MCP tools/list is missing ${name}`);
+    const search = await fetch(`${configuration.appBaseUrl}/mcp`, {
+      method: 'POST',
+      headers: mcpHeaders,
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 4,
+        method: 'tools/call',
+        params: { name: 'search_catalog', arguments: { query: 'navy hoodie', maxPrice: '45.00' } },
+      }),
+    });
+    if (!search.ok) throw new Error(`authenticated MCP tools/call returned ${search.status}`);
+    const searchBody = (await search.json()) as {
+      result?: { content?: Array<{ type?: string; text?: string }> };
+    };
+    const searchText = searchBody.result?.content?.find((entry) => entry.type === 'text')?.text;
+    if (searchText === undefined) throw new Error('MCP tools/call returned no text content');
+    JSON.parse(searchText);
 
     console.log(
       JSON.stringify({
@@ -105,6 +122,7 @@ if (!databaseUrl) {
         demoLogin: 'PASS',
         authenticatedMcpInitialize: 'PASS',
         authenticatedMcpToolsList: 'PASS',
+        authenticatedMcpToolsCall: 'PASS',
         paypalRequests: 0,
         acceptance: 'A1-A14 NOT RUN',
       }),
