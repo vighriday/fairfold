@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { generateStructured, type LanguageModel } from '@fairfold/ai';
 import type { Money } from '@fairfold/contracts';
+import { truncateSentences } from '../text.js';
 
 export const MAX_NARRATIVE = 2000;
 
@@ -68,7 +69,8 @@ export function templateNarrative(facts: string[]): string {
   return text.length <= MAX_NARRATIVE ? text : `${text.slice(0, MAX_NARRATIVE - 1).trimEnd()}…`;
 }
 
-const NarrativeSchema = z.object({ narrative: z.string().min(1).max(MAX_NARRATIVE) });
+/** No length limit in the schema: code keeps the whole sentences that fit (src/text.ts) instead of a retry. */
+const NarrativeSchema = z.object({ narrative: z.string().trim().min(1) });
 
 const SYSTEM = [
   'You write the short statement a merchant files with PayPal in a buyer dispute.',
@@ -90,7 +92,7 @@ export async function writeNarrative(
     fallback: () => ({ narrative: template }),
     model,
   });
-  const text = out.value.narrative.trim();
+  const text = truncateSentences(out.value.narrative, MAX_NARRATIVE);
   if (out.usedFallback || !isGrounded(text, facts)) return { text: template, usedTemplate: true };
   return { text, usedTemplate: false };
 }

@@ -1,9 +1,21 @@
 // Stage 2 — Understand (section 9 / 10 Complaint Reader). The model fills a ComplaintExtraction from the
 // complaint text (untrusted) and up to 4 buyer photos; code embeds "category | component | failure_mode".
+import { z } from 'zod';
 import { generateStructured, type LanguageModel } from '@fairfold/ai';
 import { ComplaintExtractionSchema, type ComplaintExtraction } from '@fairfold/contracts';
+import { truncateText } from '../text.js';
 
 export const MAX_COMPLAINT_PHOTOS = 4;
+export const MAX_SUMMARY = 140;
+
+/**
+ * What the model fills: ComplaintExtraction without its length limits, which code applies after the call. A summary
+ * one character too long would otherwise fail the schema, retry and fall back to category other.
+ */
+const ModelExtractionSchema = ComplaintExtractionSchema.extend({
+  summary: z.string(),
+  language: z.string(),
+});
 
 const SYSTEM = [
   'You read one customer complaint about an order from a small online clothing store.',
@@ -24,9 +36,22 @@ function fallbackExtraction(text: string): ComplaintExtraction {
     failureMode: null,
     locationOnItem: null,
     severity: 'cosmetic',
-    summary: clean.length <= 140 ? clean || 'Complaint received' : `${clean.slice(0, 139)}…`,
+    summary: truncateText(clean, MAX_SUMMARY) || 'Complaint received',
     language: 'und',
   };
+}
+
+/** The contract's limits, applied by code: the summary is cut to 140 characters, a too-short language is 'und'. */
+function withinLimits(
+  raw: z.infer<typeof ModelExtractionSchema>,
+  text: string,
+): ComplaintExtraction {
+  const language = raw.language.trim();
+  return ComplaintExtractionSchema.parse({
+    ...raw,
+    summary: truncateText(raw.summary, MAX_SUMMARY) || fallbackExtraction(text).summary,
+    language: language.length >= 2 ? language : 'und',
+  });
 }
 
 export async function extractComplaint(
@@ -36,7 +61,7 @@ export async function extractComplaint(
 ): Promise<{ extraction: ComplaintExtraction; model: string }> {
   const images = photos.slice(0, MAX_COMPLAINT_PHOTOS);
   const out = await generateStructured({
-    schema: ComplaintExtractionSchema,
+    schema: ModelExtractionSchema,
     system: SYSTEM,
     user: images.length
       ? `The complaint text is below. ${images.length} buyer photo(s) are attached.`
@@ -48,7 +73,7 @@ export async function extractComplaint(
     fallback: () => fallbackExtraction(text),
     model,
   });
-  return { extraction: out.value, model: out.model };
+  return { extraction: withinLimits(out.value, text), model: out.model };
 }
 
 export function embeddingText(

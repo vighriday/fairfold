@@ -1,25 +1,27 @@
 // Review Themer (section 10): the model names themes and cites review ids; code keeps only real ids,
-// drops themes with fewer than 2 reviews and counts them. Review text is untrusted third-party data.
+// drops themes with fewer than 2 reviews, counts them, cuts each label to 60 characters and keeps at most 8 themes
+// (limits in code, not in the schema, so a long label costs no retry). Review text is untrusted third-party data.
 // Themes are reused while the reviews the themer would read are unchanged, so a report refresh triggered by an
 // order or a dispute spends no model call.
 import { z } from 'zod';
 import { generateStructured, hashInput, type LanguageModel } from '@fairfold/ai';
 import type { StoreReport } from '@fairfold/contracts';
+import { truncateText } from '../text.js';
 
 export type Theme = StoreReport['reviews']['themes'][number];
 export const MIN_THEME_REVIEWS = 2;
 export const MAX_THEMED_REVIEWS = 100;
+export const MAX_THEME_LABEL = 60;
+export const MAX_THEMES = 8;
 
 const ThemesSchema = z.object({
-  themes: z
-    .array(
-      z.object({
-        label: z.string().trim().min(1).max(60),
-        tone: z.enum(['positive', 'negative']),
-        reviewIds: z.array(z.string()),
-      }),
-    )
-    .max(8),
+  themes: z.array(
+    z.object({
+      label: z.string().trim().min(1),
+      tone: z.enum(['positive', 'negative']),
+      reviewIds: z.array(z.string()),
+    }),
+  ),
 });
 
 const SYSTEM = [
@@ -36,9 +38,15 @@ export function cleanThemes(
   return raw
     .map((t) => {
       const ids = [...new Set(t.reviewIds.filter((id) => validIds.has(id)))];
-      return { label: t.label.trim(), tone: t.tone, count: ids.length, reviewIds: ids };
+      return {
+        label: truncateText(t.label, MAX_THEME_LABEL),
+        tone: t.tone,
+        count: ids.length,
+        reviewIds: ids,
+      };
     })
-    .filter((t) => t.count >= MIN_THEME_REVIEWS);
+    .filter((t) => t.count >= MIN_THEME_REVIEWS)
+    .slice(0, MAX_THEMES);
 }
 
 type ThemedReview = { id: string; rating: number; text: string };

@@ -2,9 +2,12 @@
 // never names, emails or addresses — and a template takes over if it fails.
 import { z } from 'zod';
 import { generateStructured, type LanguageModel } from '@fairfold/ai';
+import { truncateSentences } from '../text.js';
 import type { ScoredSignal } from './points.js';
 
-const SentenceSchema = z.object({ sentence: z.string().min(1).max(240) });
+export const MAX_SENTENCE = 240;
+/** No length limit in the schema: code cuts a long answer (src/text.ts) instead of spending a retry. */
+const SentenceSchema = z.object({ sentence: z.string().trim().min(1) });
 
 const SYSTEM = [
   'You explain a buyer risk signal to a small online merchant in exactly one plain sentence.',
@@ -44,5 +47,5 @@ export async function explainSignal(s: ScoredSignal, model?: LanguageModel): Pro
     fallback: () => ({ sentence: templateSentence(s) }),
     model,
   });
-  return out.value.sentence.trim();
+  return truncateSentences(out.value.sentence, MAX_SENTENCE);
 }
