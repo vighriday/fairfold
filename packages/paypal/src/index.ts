@@ -19,6 +19,12 @@ export { createPaymentOperations } from './payments.js';
 export { createReportingOperations } from './reporting.js';
 export { createDisputeReadOperations } from './dispute-reads.js';
 export { createDisputeActionOperations } from './dispute-actions.js';
+export {
+  newBuyerMessages,
+  sanitizeDisputeDetail,
+  type SanitizedDispute,
+  type SanitizedDisputeMessage,
+} from './dispute-policy.js';
 export { createWebhookOperations } from './webhooks.js';
 export { createCheckoutClientFactory, type CheckoutClient } from './checkout.js';
 export {

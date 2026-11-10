@@ -1,6 +1,6 @@
 # Hriday current status and next action
 
-Updated 10 November 2026 IST. Research and H2's ungated local implementation are ready. Formal H1/H2 acceptance remains IN PROGRESS: first Render deployment and real PayPal evidence are pending. Hriday explicitly authorized H3 and approved its [event policy](webhook-persistence-review.md). H3 local implementation and runtime checks are ready; see the [H3 closeout](h3-closeout.md). Real A5/verified capture delivery and H4 synchronization remain pending. H4–H8 remain unstarted.
+Updated 10 November 2026 IST. Research and H2's ungated local implementation are ready. Formal H1/H2 acceptance remains IN PROGRESS: first Render deployment and real PayPal evidence are pending. Hriday explicitly authorized H3 and approved its [event policy](webhook-persistence-review.md). H3 local implementation and runtime checks are ready; see the [H3 closeout](h3-closeout.md). Real A5/verified capture delivery and H4 synchronization remain pending. H4 is in progress with pure action guards and a pending retention/mapping review; H5–H8 remain unstarted.
 
 The user authorized the first Render deployment, then asked to wait for capacity/billing while continuing H2. On this pass Render account tools became available; Hriday confirmed My Workspace. Read-only discovery found no Fairfold services and no PostgreSQL instances. No infrastructure/billing action was taken. See the [current discovery record](evidence/2026-11-09-render-workspace.md) and [deployment guide](render-deployment.md); the earlier [preflight](evidence/2026-11-09-render-preflight.md) remains historical local validation.
 
@@ -34,7 +34,7 @@ The local checkout was initialized for the requested branch; no remote history w
 | H1        | Foundation and first deploy, 6 h         | IN PROGRESS                   | Local implementation/checks pass; first Render deployment remains open                                                                                                |
 | H2        | PayPal client and checkout, 5 h          | IN PROGRESS; LOCAL READY      | Complete 17-method client/runtime, seven routes, /dev and rehearsal/audit; 279 offline and 126 PostgreSQL/HTTP passes; real acceptance and Q2 return branches pending |
 | H3        | Verified webhooks and poll, 3 h          | IN PROGRESS; LOCAL READY      | 302 offline / 180 PostgreSQL checks; actual API/worker startup; real A5 and H4 sync pending                                                                           |
-| H4        | Disputes and approved actions, 5 h       | NOT STARTED                   | Real evidence/offer checks and A12                                                                                                                                    |
+| H4        | Disputes and approved actions, 5 h       | IN PROGRESS; POLICY APPROVED  | 23 pure current-state/options cases pass; retention/mapping approved; sync/execution next; actual A12 pending                                                         |
 | H5        | Pack Station and action execution, 5 h   | NOT STARTED                   | A6/A7/A11                                                                                                                                                             |
 | H6        | Watchdog and scan simulation, 2 h        | NOT STARTED                   | One deduplicated four-day-gap alert                                                                                                                                   |
 | H7        | MCP and shopping agent, 5 h              | NOT STARTED                   | A13 and sanitized agent transcript                                                                                                                                    |
@@ -44,7 +44,7 @@ The 33-hour estimates are inherited from the architecture. They exclude the pre-
 
 ## Immediate next action
 
-**H3 local delivery is ready:** use the [closeout](h3-closeout.md) for implemented surfaces, observed checks, recovery and remaining human steps. The next source task is H4; actual dispute synchronization and its retention review are outside this delivery. Keep H1/H2/H3 formally pending at their real acceptance gates.
+**H4 is in progress:** the [source plan](h4-disputes.md) and [retention/mapping proposal](dispute-persistence-review.md) are ready. The pure current-state/options guard passes 23 synthetic checks with typecheck/lint; no data writes or actions occur. Hriday approved the concrete Q3/Q4 policy and mapping; implement synchronization and approved execution next. See [guard evidence](evidence/2026-11-10-h4-guards.md). H3 local delivery remains ready; real H1–H3 acceptance stays pending.
 
 **Local H2 implementation is ready.** Use the [H2 closeout](h2-closeout.md) for the final handoff and remaining human work. The API and rehearsal now use the complete type-checked 17-method PayPalClient/ForMerchant, with the existing private capture-recovery helper. That H2 closeout introduced no shared DTO/schema changes; H3 has since added its own route and worker. H2 closeout checks: **279 offline and 126 real PostgreSQL/HTTP passes**, typecheck/lint/formatting and actual normal/rehearsal startup. See [complete-client evidence](evidence/2026-11-09-h2-complete-client.md).
 
@@ -54,7 +54,7 @@ Both return-based offer/accept-claim branches remain precise pre-OAuth Q2 review
 
 H1 remains IN PROGRESS. The latest confirmed My Workspace discovery found no Fairfold services/Postgres; quota recovery and screenshot-established billing readiness remain unverified. No plan/billing changes or new resources occurred. The [Render guide](render-deployment.md) and [conditional Ishaan handoff](ishaan-deployment-handoff.md) use the current H3 branch/runtime. The handoff is prepared and unsent.
 
-The real [sandbox dispute spike](sandbox-spike.md) remains deferred. **H3 is locally ready; H4–H8 are unstarted (five implementation tasks). H1–H3 real acceptance remains pending.** The Figma product frontend is outside Hriday's harness work.
+The real [sandbox dispute spike](sandbox-spike.md) remains deferred. **H3 is locally ready; H4 is in progress and H5–H8 are unstarted. H1–H3 real acceptance remains pending.** The Figma product frontend is outside Hriday's harness work.
 
 ## Original checkpoints and present risk
 

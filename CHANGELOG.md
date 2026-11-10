@@ -2,6 +2,13 @@
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
 
+## 2026-11-10 — H4 current-state guards and concrete retention review
+
+- Began H4 against the original source after H3 local closeout. Prepared the complete delivery sequence and exact dispute/message/action-summary allowlist, redaction limits and Q4 amount/approval-edit mapping for review.
+- Implemented pure fresh-state/options checks: all actions require the source seller-response state; offers/messages also require INQUIRY; current offer/claim option lists and existing Q2 return gate are enforced.
+- Added the pure approved dispute retention boundary: nested vendor fields are allowlisted, timestamps/money/symbols are validated, buyer/seller/arbiter text is normalized and conservatively redacted, and durable message fingerprints support idempotent buyer-message emission.
+- All 27 H4 guard/policy cases and typecheck passed. No dispute persistence, execution workflow or vendor call was introduced; Hriday approved the concrete Q3/Q4 policy/mapping for the next local increments.
+
 ## 2026-11-10 — H3 worker runtime and acceptance closeout
 
 - Wired both H3 handlers into the normal worker while preserving intelligence ownership, adding safe minimal configuration, schedule refresh and guarded startup/shutdown. The Blueprint worker references the API's existing encryption key; plans/resources are unchanged.
