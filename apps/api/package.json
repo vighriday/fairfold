@@ -25,6 +25,7 @@
     "@fairfold/ledger": "workspace:*",
     "@fairfold/jobs": "workspace:*",
     "drizzle-orm": "0.45.4",
-    "@fairfold/paypal": "workspace:*"
+    "@fairfold/paypal": "workspace:*",
+    "@fairfold/shopper": "workspace:*"
   }
 }

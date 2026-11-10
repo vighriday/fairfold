@@ -223,6 +223,9 @@ importers:
       '@fairfold/paypal':
         specifier: workspace:*
         version: link:../../packages/paypal
+      '@fairfold/shopper':
+        specifier: workspace:*
+        version: link:../../packages/shopper
       '@fastify/cors':
         specifier: 11.4.1
         version: 11.4.1

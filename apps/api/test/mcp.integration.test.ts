@@ -1,7 +1,15 @@
 import { randomUUID } from 'node:crypto';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createDatabase, merchants, migrateDatabase, orders, products } from '@fairfold/db';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import {
+  createDatabase,
+  merchants,
+  migrateDatabase,
+  orders,
+  products,
+  store_reports,
+} from '@fairfold/db';
 import { fixedClock } from '@fairfold/contracts';
+import { beginShopperRun, createMcpShopperTools } from '@fairfold/shopper';
 import { testDatabaseUrl } from '../../../packages/db/test/environment.js';
 import { createApi } from '../src/app.js';
 import { createAuth } from '../src/auth.js';
@@ -17,6 +25,7 @@ describe.skipIf(!databaseUrl)('authenticated MCP HTTP contract', () => {
   const database = createDatabase(databaseUrl!);
   const apps: Array<Awaited<ReturnType<typeof createApi>>> = [];
   let merchantId: string;
+  let productName: string;
   let orderId: string;
   let merchantToken: string;
   let agentToken: string;
@@ -24,6 +33,7 @@ describe.skipIf(!databaseUrl)('authenticated MCP HTTP contract', () => {
   beforeAll(async () => {
     await migrateDatabase(database.db);
     merchantId = randomUUID();
+    productName = 'MCP route navy hoodie ' + merchantId;
     await database.db.insert(merchants).values({
       id: merchantId,
       slug: 'mcp-route-' + merchantId,
@@ -35,11 +45,35 @@ describe.skipIf(!databaseUrl)('authenticated MCP HTTP contract', () => {
     await database.db.insert(products).values({
       merchant_id: merchantId,
       sku: 'MCP-NAVY-HOODIE',
-      name: 'MCP route navy hoodie',
+      name: productName,
       description: 'Synthetic MCP route listing',
       unit_value: '40.00',
       currency: 'USD',
       listing_version: 'mcp-test-v1',
+    });
+    await database.db.insert(store_reports).values({
+      merchant_id: merchantId,
+      report: {
+        merchantId,
+        band: 'verified',
+        facts: {
+          domain: 'mcp-route.example.invalid',
+          domainRegisteredAt: null,
+          policies: [],
+        },
+        fulfilment: {
+          ordersSealed90d: 2,
+          medianHoursCaptureToSeal: 4,
+          pctTrackingWithin72h: 1,
+          pctWithPackingEvidence: 1,
+          disputeRate90d: 0,
+          proactiveFixes90d: 1,
+          unansweredNotReceived: 0,
+        },
+        reviews: { count: 0, average: null, themes: [] },
+        sources: [],
+        computedAt: '2026-11-10T12:00:00.000Z',
+      },
     });
     orderId = randomUUID();
     await database.db.insert(orders).values({
@@ -114,11 +148,59 @@ describe.skipIf(!databaseUrl)('authenticated MCP HTTP contract', () => {
   it('runs catalog search through the authenticated route without PayPal access', async () => {
     const response = await call('tools/call', agentToken, {
       name: 'search_catalog',
-      arguments: { query: 'MCP route', maxPrice: '41.00' },
+      arguments: { query: productName, maxPrice: '41.00' },
     });
     expect(response.statusCode).toBe(200);
     expect(response.json().result.content[0].text).toContain(merchantId);
     expect(response.json().result.content[0].text).toContain('MCP-NAVY-HOODIE');
+  });
+
+  it('runs the shopper policy through the real MCP route boundary', async () => {
+    const tools = createMcpShopperTools({
+      endpoint: 'http://mcp.test/mcp',
+      bearerToken: agentToken,
+      fetchImpl: async (_input, init) => {
+        const request = JSON.parse(init?.body ?? '{}') as {
+          method: string;
+          params: Record<string, unknown>;
+        };
+        const response = await apps[0]!.inject({
+          method: 'POST',
+          url: '/mcp',
+          headers: {
+            authorization: init?.headers?.authorization ?? '',
+            'content-type': 'application/json',
+          },
+          payload: {
+            jsonrpc: '2.0',
+            id: 'shopper-http-test',
+            method: request.method,
+            params: request.params,
+          },
+        });
+        return {
+          ok: response.statusCode >= 200 && response.statusCode < 300,
+          status: response.statusCode,
+          json: async () => response.json(),
+        };
+      },
+    });
+    const createOrder = vi.fn(async () => ({
+      orderId: 'shopper-order-1',
+      approvalUrl: 'https://paypal.test/approve',
+    }));
+    const run = await beginShopperRun(
+      tools,
+      { createOrder, capture: vi.fn() },
+      { query: productName, maxPrice: '41.00' },
+    );
+    expect(run.status).toBe('awaiting_paypal_approval');
+    expect(createOrder).toHaveBeenCalledWith({
+      merchantId,
+      sku: 'MCP-NAVY-HOODIE',
+      quantity: 1,
+      context: { sandbox: true },
+    });
   });
 
   it('keeps private proof unavailable to agents at the HTTP boundary', async () => {
