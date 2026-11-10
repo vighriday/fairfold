@@ -24,6 +24,7 @@ All authored work in this checkout is on `Hriday`. Entries distinguish documenta
 - Extended the runtime smoke harness through authenticated MCP initialization and tool discovery, asserting the protocol version and all four exposed tool names.
 - Extended the runtime smoke harness through an authenticated `search_catalog` tool call, validating the MCP text-content envelope and JSON payload without any PayPal request.
 - Corrected the public verification instructions to describe the now-implemented `pnpm test:e2e` smoke behavior and its explicit A1–A14 limitation.
+- Guarded `pnpm test:e2e` against non-loopback or non-`fairfold_*test` PostgreSQL URLs before any database connection is opened.
 - Added PostgreSQL coverage for photo persistence, inspection queue publication and concurrent sealing. **192 database tests passed**; typecheck, targeted lint and formatting passed. I2 attestation/actions, real PayPal tracking and A6/A7/A11 remain **NOT RUN**.
 
 ## 2026-11-10 — H4 approved action execution

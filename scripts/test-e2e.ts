@@ -12,6 +12,15 @@ if (!databaseUrl) {
   );
   process.exitCode = 2;
 } else {
+  const parsedDatabaseUrl = new URL(databaseUrl);
+  if (
+    !['127.0.0.1', 'localhost', '[::1]'].includes(parsedDatabaseUrl.hostname) ||
+    !/^\/fairfold_[a-z0-9_]*test$/.test(parsedDatabaseUrl.pathname)
+  ) {
+    throw new Error(
+      'TEST_DATABASE_URL must identify a loopback PostgreSQL database named fairfold_*test',
+    );
+  }
   const port = Number(process.env.E2E_PORT ?? 3116);
   const database = createDatabase(databaseUrl);
   const configuration = readConfig({

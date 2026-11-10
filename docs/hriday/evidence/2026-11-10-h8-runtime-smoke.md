@@ -28,3 +28,5 @@ Observed on 10 November 2026:
 ```
 
 Without `TEST_DATABASE_URL`, the command reports `SKIPPED` and exits 2. This smoke check does not claim Render deployment, PayPal sandbox execution, model execution or A1–A14 acceptance.
+
+The harness rejects non-loopback or non-`fairfold_*test` database URLs before opening a connection.
