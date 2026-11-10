@@ -7,6 +7,7 @@ import * as schema from './schema.js';
 export * from './schema.js';
 export { schema };
 export type Database = ReturnType<typeof createDatabase>['db'];
+export type DatabaseConnection = pg.PoolClient;
 
 export function createDatabase(connectionString: string) {
   const pool = new pg.Pool({

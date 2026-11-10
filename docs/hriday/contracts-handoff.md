@@ -1,6 +1,6 @@
 # Contract and handoff inventory
 
-This inventory is derived from architecture sections 7–8, 11 and 14–17. It makes ownership and integration visible without replacing the original schemas. H1 now implements the 25-table schema, queue wrapper, shared contracts and endpoint 1; the other numbered endpoints remain planned. Intelligence functions remain explicitly labelled stubs. The API table retains the source numbering, auth, ownership and response labels.
+This inventory is derived from architecture sections 7–8, 11 and 14–17. It makes ownership and integration visible without replacing the original schemas. H1 implements the 25-table schema, queue wrapper, shared contracts and endpoint 1. H2 now wires endpoints 2/3/4/7/8/30/31 into the local API runtime; all other numbered endpoints remain planned. Intelligence functions remain explicitly labelled stubs. The API table retains the source numbering, auth, ownership and response labels.
 
 ## Ownership and handoff
 

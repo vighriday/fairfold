@@ -4,6 +4,8 @@ This is the implementation work order derived from architecture section 16. H1 i
 
 Hriday owns platform, PayPal, storage, outside-world actions and deployment. Ishaan owns interpretation, scoring, statistics and drafts. The Figma frontend is outside both task lists. Complete H1 → H8 in that order, on `Hriday`, using the fixed contracts and documented stubs. Every task needs its checks, `pnpm typecheck`, an evidence record and a task-prefixed commit before it is done.
 
+On 9 November the user asked to continue local work while waiting for Render capacity/billing. H2 may proceed locally in order under O15; H1's hosted completion remains pending. This is a recorded exception to waiting at the external hosting gate, not an H1 pass or permission to skip ahead to H3. See [H2 increments](h2-paypal.md) and the [conditional deployment handoff](ishaan-deployment-handoff.md).
+
 ## Before H1
 
 1. The source assigns the [sandbox dispute spike](sandbox-spike.md) before H1. The user has explicitly deferred it because accounts do not exist. Proceed with H1; retain the real dispute checks as NOT RUN and record their results when account access becomes available.
@@ -28,7 +30,7 @@ Source estimate: 6 hours. Sources: architecture 7, 10–12, 14–16. Status: IN 
 
 ## H2 PayPal client and checkout
 
-Source estimate: 5 hours. Sources: architecture 3, 8 F1/F6, 11–12, 16 H2. Status: NOT STARTED. Depends on H1.
+Source estimate: 5 hours. Sources: architecture 3, 8 F1/F6, 11–12, 16 H2. Status: IN PROGRESS under user instruction O15; H2.1's local authentication/HTTP transport is implemented and verified. Checkout operation bindings are next; H1 hosting and real H2 sandbox checks remain pending. See [H2.1 evidence](evidence/2026-11-09-h2-transport.md).
 
 1. Implement `forMerchant(merchantId)` with credential lookup/decryption and per-merchant in-memory token caching until 60 seconds before returned expiry. Reject non-sandbox configuration. Use the source's typed interface.
 2. Implement HTTP error normalization, bounded three retries on 429/5xx with backoff, deterministic operation request IDs, representation preference and PayPal debug-ID error logging. Protect against ambiguous retry outcomes; do not assume every endpoint honors the header identically.
@@ -67,13 +69,13 @@ Source estimate: 5 hours. Sources: architecture 3–4, 8 F4, 10–11, 16 H4. Sta
 
 ## H5 Pack Station and approved shared-cause actions
 
-Source estimate: 5 hours. Sources: architecture 7–9, 11–12, 16 H5. Status: NOT STARTED. Depends on H4; consumes Ishaan's I2/I6 interfaces or explicit stubs.
+Source estimate: 5 hours. Sources: architecture 7–9, 11–12, 16 H5. Status: IN PROGRESS; local Pack Station core implemented. Depends on H4; consumes Ishaan's I2/I6 interfaces or explicit stubs.
 
-1. Implement upload/pack/override/seal/ledger endpoints 10–14. Validate JPEG/PNG, maximum 12 MB each and six pack files, label/batch associations, EXIF freshness and cross-order reuse checks. Store normalized bytes and append photo entries; publish `pack.photos_uploaded`, return 202, and wait for the attestation job.
+1. **Implemented and database-verified locally:** upload/pack/override/seal core endpoints. JPEG/PNG, maximum 12 MB each and six pack files, label/batch associations, EXIF freshness and cross-order reuse checks are enforced. Normalized bytes are content-addressed, photo entries are appended, `pack.photos_uploaded` is published, and upload returns 202.
 2. Return active stocked batches, photos, latest attestation, inspection rule, `canSeal` and exact blockers. Preserve all five blocker codes. An override with a reason clears only ATTESTATION_MISMATCH, never a hold, required inspection, batch mismatch or tracking-label mismatch.
-3. Seal transaction locks the order, sets batch/packer/packed time, decrements inventory once, creates shipment, timestamps status and appends `sealed`. Commit before queueing tracking. Prevent repeat seals from double-decrementing stock; test concurrent attempts and no-stock cases.
-4. `tracking.push` sends flat tracking data with payer notification, stores tracker ID and shipment status, appends `tracking_pushed`, refreshes report; after three failed attempts raises `tracking_push_failed`. Keep local seal success distinct from PayPal tracking success.
-5. Implement endpoint 39: store batch inspection photos, publish `inspection.uploaded`, let Ishaan attest. A passing required inspection requires the correct photo label and `inspection.defectVisible = false` under the fixed rule.
+3. **Implemented and database-verified locally:** seal transaction locks the order, sets batch/packer/packed time, decrements inventory once, creates shipment, timestamps status and appends `sealed`. It commits before queueing tracking and rejects repeat/concurrent seals.
+4. **Implemented locally:** `tracking.push` sends flat tracking data with payer notification, stores tracker ID and shipment status, appends `tracking_pushed`, refreshes the report and raises a `tracking_push_failed` alert after three local attempts. Keep local seal success distinct from PayPal tracking success.
+5. **Implemented locally:** endpoint 39 validates the merchant-owned hypothesis and active batch inspection rule, stores normalized content-addressed photos, and publishes `inspection.uploaded` for Ishaan's attestation handler. A passing required inspection still requires the correct photo label and `inspection.defectVisible = false` under the fixed rule.
 6. Execute only approved action rows: hold orders/batch, add inspection rule, send messages, rebuild offer packs, proactive refund, release orders/batch. Ishaan proposes and confirms; Hriday executes and writes status/result. Check merchant ownership and parent hypothesis/action association.
 7. For approved messages, mark in-app delivery and use dispute send-message only for eligible INQUIRY cases. Never expose another buyer. No email provider is added; `email_outbox` is a documented channel, not permission to send real email.
 8. Add nightly retention after 180 days from delivery: purge blob bytes, retain rows/hashes. Shared blobs must remain available while another retained reference still needs them. No purge of local private source files.

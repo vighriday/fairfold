@@ -95,6 +95,31 @@ export const DisputeRowSchema = z.object({
     .nullable(),
 });
 export type DisputeRow = z.infer<typeof DisputeRowSchema>;
+export const DisputeMessageSchema = z.object({
+  postedBy: z.enum(['BUYER', 'SELLER', 'ARBITER']),
+  timePosted: z.iso.datetime(),
+  content: z.string(),
+});
+export const DisputeDetailSchema = DisputeRowSchema.extend({
+  amount: MoneySchema.nullable(),
+  outcomeCode: z.string().nullable(),
+  messages: z.array(DisputeMessageSchema),
+  evidences: z.array(
+    z.object({
+      evidenceType: z.string(),
+      source: z.string(),
+      date: z.iso.datetime().nullable(),
+      itemId: z.string().nullable(),
+    }),
+  ),
+  allowedResponseOptions: z
+    .object({
+      makeOffer: z.object({ offerTypes: z.array(z.string()) }).optional(),
+      acceptClaim: z.object({ acceptClaimTypes: z.array(z.string()) }).optional(),
+    })
+    .nullable(),
+});
+export type DisputeDetail = z.infer<typeof DisputeDetailSchema>;
 export const AlertSchema = z.object({
   id: UuidSchema,
   type: z.string(),

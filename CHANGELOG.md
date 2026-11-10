@@ -1,6 +1,13 @@
 # Changelog
 
+- Audit: completed the source-to-implementation audit against the protected architecture, endpoint/job inventories, schema and A1-A14 acceptance plan; corrected startup registration of H5 inspection and shared-cause approval routes and recorded remaining ownership/external gaps in `docs/hriday/source-implementation-audit.md`.
+
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.
+
+## 2026-11-11 — Ishaan: Hriday's platform merged into `ishaan` (local, M1)
+
+- M1: merged `origin/Hriday` at `762c497` (H2–H8 and the source audit) into `ishaan`. Hriday's files were taken as they are (API and worker entry points, `apps/api/package.json`, his docs under `docs/hriday/`); the API keeps registering both his routes and the intelligence routes. CHANGELOG, DECISIONS (normalised to LF, all 37 Ishaan decisions and all of Hriday's O sections kept) and README were combined; the lockfile is Hriday's plus the `packages/ai` and `packages/intelligence` dependencies at their existing pinned versions.
+- Resolved what the merge broke because Hriday's branch still assumed the H1 intelligence stubs: two API tests imported `@fairfold/contracts/stubs` (deleted on `ishaan`, I-D13) and now use a test-only double with the same fixed signal (`apps/api/test/buyer-signal-double.ts`); `/healthz` and the worker's ready log report `intelligence: 'ready'`; the worker registers 16 handlers (Hriday's 7 and the 9 intelligence handlers). Typecheck and lint pass; 628 offline tests, Hriday's 207 PostgreSQL tests and the 332 intelligence tests pass. Prettier still flags four of Hriday's PayPal files exactly as on his branch; they were not reformatted.
 
 ## 2026-11-10 — Ishaan: intelligence Phase 2 robustness for the free model tier (`ishaan` branch)
 
@@ -33,6 +40,257 @@ All authored work in this checkout is on `Hriday`. Entries distinguish documenta
 - I6: a complaint cluster's centroid is now exactly the normalised mean of its members (section 9 stage 3). The previous update, `normalise(centroid × n + v)`, weighted the stored unit centroid as if it were the sum of its members, which drifts from the mean (0.867 instead of 0.864 after three members in the new test). Each existing cluster is rebuilt from its members' embeddings on every scan, so stored centroids self-correct. The 2026-11-10 clustering precision (1.00, threshold 0.85) was measured with the old update and needs a re-run before it is quoted again. Two new unit tests; 254 offline and 263 intelligence tests pass. DECISIONS.md I-D24.
 - I6: the inspection rule a batch hypothesis proposes now asks for a close-up of the faulty part — the head of the reader's component, before any preposition (`left sleeve seam` → `seam_closeup`, `drawstring eyelet` → `eyelet_closeup`, `defect_closeup` when none is usable) — instead of `seam_closeup` for every fault. The B17 demo still asks for `seam_closeup`. Three new unit tests and one PostgreSQL test; 257 offline and 267 intelligence tests pass.
 - Docs: README.md and docs/ai-tools.md mark the published clustering precision as measured before I-D24 (re-run pending), describe the Evidence Agent's buyer-photo check, list the intelligence test command and state the current 267 intelligence tests. A sweep of `packages/ai`, `packages/intelligence` and `apps/api/src/routes/intel` found no TODO, placeholder, stub, debug logging or skipped test.
+
+## 2026-11-10 — H5 Pack Station core
+
+- Added merchant-owned Pack Station routes for state, photo upload, attestation-mismatch override and seal. Uploads enforce JPEG/PNG, six-file/12 MB limits, supported labels, EXIF freshness, normalized content-addressed bytes and merchant-local cross-order reuse protection.
+- Added blocker-aware pack projections and atomic sealing: order locking, batch ownership/stock checks, one-time inventory decrement, shipment creation, `sealed` ledger entry and post-commit `tracking.push` publication.
+- Added a tracking worker with deterministic request IDs, payer notification, bounded three-attempt handling, safe shipment/order projection, `tracking_pushed` ledger entry and failure alert.
+- Added endpoint 39 inspection-photo persistence with merchant-owned hypothesis/rule checks and `inspection.uploaded` publication for Ishaan's attestation handler.
+- Added merchant approval and worker execution for shared-cause actions: hold/release orders, inspection rules, buyer messages, offer evidence rebuilds and sandbox-bound refunds. Execution is ownership-checked, ledgered and idempotent for completed actions.
+- Added the nightly retention handler: after 180 days from delivery it purges blob bytes while retaining hashes/rows, and preserves shared blobs referenced by any undelivered or still-retained order.
+- Added PostgreSQL retention coverage for expired-byte purging and shared-blob preservation. **329 offline and 194 PostgreSQL tests passed**; typecheck, lint and formatting passed.
+- Added the H6 watchdog sweep on the documented 15-minute schedule. It raises deduplicated tracking-gap, seal-overdue and dispute-due alerts at the fixed 72-hour/48-hour thresholds, appends only the tracking `gap_alert` ledger entry, and never sends buyer messages.
+- Added PostgreSQL coverage for repeated-sweep deduplication and all three alert classes. **329 offline and 196 PostgreSQL tests passed**; typecheck, lint and formatting passed.
+- Added merchant alert listing/acknowledgement endpoints and DEMO_MODE-gated synthetic shipment scan/delivery routes. Synthetic courier updates are labelled, merchant-owned, ledgered and unavailable when demo mode is disabled.
+- Added authenticated `/mcp` JSON-RPC tool surface for catalog search, cached store reports, ownership-checked order proof and merchant-only dispute-evidence lookup. Agent access cannot read private order proof, and no PayPal action is performed by these read tools.
+- Added a deterministic shopper policy loop with sandbox-only context propagation, caution-store skipping, non-verified-store confirmation pause, PayPal approval pause and capture-after-approval enforcement. The loop is provider-injected and does not fabricate AI, approval or sandbox outcomes.
+- Added the deterministic `pnpm seed` command for fictional catalogue merchants/products. It is explicitly PayPal-free and reports the missing B17/Ishaan fixture and real sandbox-ID gates instead of fabricating them.
+- Added authenticated MCP HTTP contract coverage and explicit `MCP_METHOD_NOT_FOUND`/`MCP_TOOL_NOT_FOUND` responses instead of generic server errors for unsupported requests.
+- Added an injected authenticated MCP transport for the shopper policy loop. It validates JSON-RPC tool results, preserves explicit MCP error codes, requires a bearer token, and keeps the transport independent of model/provider execution.
+- Added PostgreSQL-backed end-to-end coverage that drives the shopper policy through the authenticated MCP route and verifies the sandbox context passed to checkout.
+- Replaced the dead `pnpm test:e2e` placeholder with an isolated local runtime smoke harness. It starts the assembled runtime, checks health/OpenAPI/authentication boundaries and reports A1–A14 as NOT RUN rather than mislabeling local smoke as acceptance.
+- Extended the runtime smoke harness through authenticated MCP initialization and tool discovery, asserting the protocol version and all four exposed tool names.
+- Extended the runtime smoke harness through an authenticated `search_catalog` tool call, validating the MCP text-content envelope and JSON payload without any PayPal request.
+- Corrected the public verification instructions to describe the now-implemented `pnpm test:e2e` smoke behavior and its explicit A1–A14 limitation.
+- Guarded `pnpm test:e2e` against non-loopback or non-`fairfold_*test` PostgreSQL URLs before any database connection is opened.
+- Added PostgreSQL coverage for photo persistence, inspection queue publication and concurrent sealing. **192 database tests passed**; typecheck, targeted lint and formatting passed. I2 attestation/actions, real PayPal tracking and A6/A7/A11 remain **NOT RUN**.
+
+## 2026-11-10 — H4 approved action execution
+
+- Added the worker-owned `evidence.submit` executor for approved evidence, offer and claim packs. It re-fetches authoritative dispute state/options, validates the approved pack and content-addressed blobs, uses deterministic PayPal request IDs, and sends no vendor request for stale or invalid state.
+- Added claim-before-POST idempotency. Successful responses retain only a bounded operation/status summary; definitive provider failures mark the pack failed and queue `evidence.rebuild`; network/unknown outcomes remain explicitly uncertain and are not replayed automatically.
+- Added four PostgreSQL execution cases covering exact multipart bytes, stale-stage rebuild, unknown-outcome no-repeat behavior and definitive 422 recovery. The full database suite passed 186 tests, with typecheck and targeted lint also passing. Real PayPal action execution remains **NOT RUN**.
+
+## 2026-11-10 — H4 approved tool and demo adjudication boundary
+
+- Added the merchant-bound `provide_dispute_evidence` tool binding with exactly `dispute_id`, `evidences` and `files` inputs. It requires an exact approved pack and only queues the existing worker path; it cannot approve or execute a request directly.
+- Added the DEMO_MODE-only merchant-owned adjudication route for simulated merchants, with explicit outcome validation and safe response projection. It is not invoked automatically and does not change the live/sandbox architecture.
+- The full PostgreSQL/API suite passed 189 tests, with typecheck, targeted lint and formatting passing. Real sandbox adjudication and A12 remain **NOT RUN**.
+
+## 2026-11-10 — H4 local completion audit
+
+- Added hash-chain ledger entries for successful evidence submission, offers and claim acceptance, while preserving the safe response summary and uncertain-outcome boundary.
+- Added execution coverage for both offer and claim operations, plus ledger persistence. The final local validation passed 329 offline tests and 189 PostgreSQL/API tests, typecheck, targeted lint and formatting.
+- H4 local implementation is **COMPLETE**. Real PayPal action acceptance, Q2 return-address review, A12 and hosted deployment remain explicitly pending; no account-backed success is claimed.
+
+## 2026-11-10 — H4 merchant evidence-pack approval
+
+- Added endpoint 21 for merchant-owned evidence-pack approval. It validates draft state, dispute/pack ownership, actionable recommendations, offer/claim types, currency and bounded amounts, while rejecting `inspect_first`, `merchant_decides` and Q2 return-based actions.
+- Approval identity/time and edited action parameters are persisted in the same PostgreSQL transaction as the `evidence.submit` pg-boss enqueue. Concurrent approval attempts serialize on the pack row; a queue failure rolls the approval back.
+- The PostgreSQL/API suite passed 182 cases, including the approval route and queue assertion. Typecheck and targeted lint passed. Real PayPal action execution and A12 remain **NOT RUN**.
+
+## 2026-11-10 — H4 current-state guards and concrete retention review
+
+- Began H4 against the original source after H3 local closeout. Prepared the complete delivery sequence and exact dispute/message/action-summary allowlist, redaction limits and Q4 amount/approval-edit mapping for review.
+- Implemented pure fresh-state/options checks: all actions require the source seller-response state; offers/messages also require INQUIRY; current offer/claim option lists and existing Q2 return gate are enforced.
+- Added the pure approved dispute retention boundary: nested vendor fields are allowlisted, timestamps/money/symbols are validated, buyer/seller/arbiter text is normalized and conservatively redacted, and durable message fingerprints support idempotent buyer-message emission.
+- All 27 H4 guard/policy cases and typecheck passed. No dispute persistence, execution workflow or vendor call was introduced; Hriday approved the concrete Q3/Q4 policy/mapping for the next local increments.
+
+## 2026-11-10 — H4 authoritative dispute synchronization
+
+- Added the merchant-scoped synchronizer shared by verified webhook and poll callbacks. It re-fetches authoritative dispute details, applies the approved retention boundary, maps seller transactions or exact merchant invoices, upserts the dispute, appends first-open/resolution ledger effects and publishes `dispute.synced` in the same PostgreSQL transaction.
+- Wired the worker to use this synchronizer by default while retaining injected synchronizers for tests. Existing event-handler/poller regression cases, typecheck and targeted lint passed.
+- Added five PostgreSQL synchronizer cases for capture/invoice mapping, message dedupe, resolution timestamps/ledger effects, queue rollback and detail-ID isolation. All five passed with the pure H4 suite, typecheck and targeted lint.
+- Real PayPal dispute delivery/action evidence remains NOT RUN; no vendor mutation or real fixture was created.
+
+## 2026-11-10 — H4 merchant dispute read surface
+
+- Added merchant-scoped dispute list/detail projections for endpoints 17/18 with bounded cursor pagination, latest evidence-pack summaries and explicit allowlisted messages, evidence and response options.
+- Wired both routes into the normal API/OpenAPI composition while retaining ownership and role guards; stored vendor fields are never returned.
+- The PostgreSQL API contract suite passed all 9 cases, including projection, hidden-field and wrong-role checks. Approval and PayPal execution remain separate H4 units.
+
+## 2026-11-10 — H3 worker runtime and acceptance closeout
+
+- Wired both H3 handlers into the normal worker while preserving intelligence ownership, adding safe minimal configuration, schedule refresh and guarded startup/shutdown. The Blueprint worker references the API's existing encryption key; plans/resources are unchanged.
+- Added read-only verified-event/order/ledger inspection and completed the H3 handoff, recovery limits and current deployment instructions. Local H3 is ready; H4 sync and all real acceptance remain explicit dependencies.
+- All 302 offline and 180 PostgreSQL/HTTP cases passed, along with actual API/rehearsal/worker startup. Typecheck/lint/formatting and the 162-link publication audit passed; all 51 outgoing files passed exact local-secret and protected-path checks. Current Render schema passes; CLI validation lacks login. Automatic review blocked actual registration execution, so no vendor mutation ran.
+
+## 2026-11-10 — H3 bounded polling and merchant schedules
+
+- Added complete-page dispute polling with ID-only H4 dispatch, per-merchant coalescing, unchanged page filters and bounded cursor/page checks. Watermarks advance only after success with overlap; a restart safely replays supported history.
+- Added actual keyed one-minute UTC pg-boss schedules for configured real merchants, excluding simulated/unconfigured rows and removing stale schedules.
+- Nine new polling cases and all 175 PostgreSQL/HTTP cases passed; typecheck/lint passed. Real scope/list behavior remains NOT RUN; worker lifecycle wiring and final acceptance tooling follow.
+
+## 2026-11-10 — H3 atomic capture imports and event processing
+
+- Shared the approved capture mapper/store between checkout and the worker. Known/unknown capture reconciliation, catalogue snapshots, buyer/ledger/job effects and the event success marker now share one PostgreSQL transaction; cross-event imports serialize by PayPal order ID.
+- Added SKU-first/name-fallback matching, exact catalogue/money/merchant guards, safe refund observation and explicit H4/reversal boundaries without financial POSTs or raw retention. Browser checkout retains its strict source checks.
+- All 288 offline and 172 PostgreSQL/HTTP cases passed, including 24 new reconciliation cases and real pg-boss delivery; typecheck/lint passed. Corrected three initial ledger-array test assertions before the final run. Real provider acceptance remains NOT RUN; polling and runtime closeout follow.
+
+## 2026-11-10 — H3 registration and durable verified ingress
+
+- Recorded Hriday's explicit H3 phase exception and event-policy approval. Added merchant-locked seven-event registration and endpoint 37 with isolated original-byte parsing and the approved nested allowlist.
+- Event and pg-boss job commit atomically; verified duplicates do not enqueue again, unverified rows cannot suppress authentic delivery, and provider failures never become trusted events.
+- All 148 PostgreSQL/HTTP checks and nine new policy checks passed; typecheck/lint passed after correcting initial missing logger/dependency/test typing. Real registration/signature/A5 and hosted acceptance remain NOT RUN. Reconciliation/polling are the next local H3 work.
+
+## 2026-11-10 — H3 source plan and event policy proposal
+
+- Prepared the complete H3 sequence and verification matrix against the original documents: exact registration/path, verified durable ingress, capture import/refund reconciliation and per-merchant dispute polling.
+- Added the registration recovery, real A5 redelivery and acceptance handoff, separating future-run instructions from implemented commands and observed results.
+- Proposed an explicit webhook payload allowlist, transient original-body verification, unverified-event isolation/promotion and atomic PostgreSQL/pg-boss delivery. Capture approval remains separate from event/dispute retention.
+- H3 implementation awaits the current no-H3 gate exception and this concrete Q3 review. No vendor, hosting or persistence action occurred; real acceptance remains pending.
+
+## 2026-11-09 — H2 complete ForMerchant and local closeout
+
+- Composed all 17 shared PayPalClient operations under a type-checked ForMerchant factory and wired it into the API/rehearsal runtime. The checkout adapter now projects from that complete composition; shared contracts remain unchanged.
+- Added cross-group method execution, token coalescing/isolation and credential-rotation/removal checks. All 279 offline and 126 PostgreSQL/HTTP cases passed; typecheck/lint and actual normal/rehearsal startup checks passed without vendor calls.
+- Finished the local H2 implementation pass and consolidated the exact account/approval/fixture checklist. Formal acceptance remains pending; Q2 return-address branches remain explicit review gates. No H3 processing was added.
+
+## 2026-11-09 — H2 exact-body webhook client
+
+- Implemented verify/register methods, preserving raw event formatting in signature postback and requiring the exact provider verification result. Added scoped raw-JSON transport, header/certificate/input checks, explicit registration snapshots and returned-resource validation.
+- All 80 targeted webhook/action/transport checks, typecheck and lint passed. No real webhook was registered/verified, no simulator bypass exists and no H3 handler/poll/persistence was added.
+- Recorded signature, registration-retry and raw-retention boundaries; complete ForMerchant composition is the next local client step.
+
+## 2026-11-09 — H2 dispute action and evidence bindings
+
+- Implemented the six source dispute action methods and stable, binary-preserving multipart evidence transport. Added exact amount/type rules, JSON/file guards and precise Q2 errors for unrepresentable return-address branches without changing contracts.
+- All 86 targeted action/order/transport checks, typecheck and lint passed. Raw payloads remain transient, no H4 action workflow is exposed and no actual vendor action ran.
+- Preserved bounded 429 retries and refused unsafe 5xx/network replays; documented current JSON-example/schema differences, file ceilings and real-test/review gates.
+
+## 2026-11-09 — H2 full-client dispute reads
+
+- Implemented dispute list/get bindings, UTC/date/state/page validation and both legacy-token and current page-number pagination through the unchanged opaque cursor field. Vendor links are validated for cursor extraction and never followed.
+- All 23 new synthetic transport/parser checks and typecheck passed; real dispute/scopes/pagination remain NOT RUN.
+- Corrected the H2 scope inventory: complete low-level PayPalClient/ForMerchant belongs to H2; H3/H4 event/poll/approved-action workflows remain unstarted. Added the client inventory and read evidence.
+
+## 2026-11-09 — Render workspace recheck and current deployment handoff
+
+- Confirmed the user's selected My Workspace through connected Render tools. Read-only discovery found no Fairfold services and no PostgreSQL instances; quota recovery, billing readiness and unapplied Blueprints remain unverified.
+- Updated deployment/handoff checks for the current H2 runtime and seven routes. Preserved the paid API/worker/Postgres architecture, private secret entry and pending first-deploy gate; no resource, plan or billing mutation occurred.
+- Updated current status and retained the prepared, unsent Ishaan handoff. This documentation increment completes no H task.
+
+## 2026-11-09 — H2 executable local rehearsal and A4 audit
+
+- Replaced the sandbox-command placeholder with read-only check, opt-in recorded rehearsal server and read-only capture verification. Normal and rehearsal servers share the existing H2 application composition; no payment starts automatically.
+- Added source merchant/item/amount checks, filled protection/account fields, first captured ledger identity/details/hash verification and matching sanitized create/capture observations. Maya/SDK claims remain separate human evidence steps.
+- All 126 PostgreSQL/HTTP cases and 201 offline cases passed; typecheck/lint/formatting passed. Actual normal-server demo-on/off checks and rehearsal CLI startup passed using isolated synthetic setup, without vendor calls.
+- Added the complete setup-to-evidence operator guide and recovery/handoff gates. Actual absent-account commands skip/block honestly; real A4, Maya, fixtures and H1 hosting remain pending. H3–H8 remain unstarted.
+
+## 2026-11-09 — H2 sanitized sandbox response recording
+
+- Added opt-in recording after the real create/capture/recovery parsers, with in-memory allowlisting and synthetic replacements for buyer/shipping fields. OAuth/raw bodies never reach a recording sink; recording failures preserve payment semantics.
+- Added atomic ignored-file writing, strict replay validation and recorded-response parser acceptance without a synthetic fallback. Captured GET records remain distinguishable from capture POST records.
+- Seventeen new offline checks passed (201 total); typecheck/lint passed. Actual recorded acceptance explicitly skipped because no real response records exist. See response-recording evidence; no PayPal success is claimed.
+
+## 2026-11-09 — H2 minimal sandbox merchant setup
+
+- Added setup:sandbox for the source Neel merchant and USD38 hoodie only, with encrypted credentials, local/demo/sandbox guards and transactional repeat/concurrency safety. Conflicting setup fails without overwriting existing data.
+- Nine new PostgreSQL cases passed (111 total) and eleven offline environment/error cases passed. Typecheck passed. The actual command skipped absent sandbox credentials without making database/vendor calls.
+- Full B17 seeding, Maya identity mapping and real PayPal acceptance remain pending; see the setup evidence.
+
+## 2026-11-09 — H2.4 unstyled sandbox checkout harness
+
+- Added /dev and its plain JavaScript asset behind DEMO_MODE. The source hoodie defaults, client-ID-only sandbox SDK, eligibility check and one-time payment session use the implemented API; no Figma/product UI or frontend scaffold was added.
+- Mapped the SDK’s order promise to { orderId: paypalOrderId }, started the session before awaiting creation, guarded double clicks/approval context, and printed the safe capture JSON as text. Cancellation/errors never claim payment completion or print raw SDK data.
+- Added explicit retry of the same approved capture after an uncertain failure, blocking a fresh purchase until that check completes. No automatic new payment, client token, browser credential or raw response persistence was introduced.
+- All 12 harness flow checks passed, bringing offline tests to 173; all 102 PostgreSQL/HTTP cases passed again. Actual API runs verified both demo-on 200 and demo-off 404 asset behavior. Typecheck/lint/formatting passed; real browser SDK/A4 remain NOT RUN.
+- Updated the integration handoff, source SDK reference decision and sandbox command wording to retain the real-account/fixture/Render gates honestly.
+
+## 2026-11-09 — H2.4 checkout/order HTTP and runtime wiring
+
+- Implemented source endpoints 2/3/4/7/8/30/31 with unchanged request/response fields, generated OpenAPI, shared safe errors, role guards and SQL ownership. Creation returns 201; capture accepts no body or an empty object.
+- Wired database credentials, the real checkout client, approved stores, order reads, intelligence seam and pg-boss into API startup/shutdown. Runtime health identifies H2 with the existing labelled intelligence stub.
+- All 102 PostgreSQL/HTTP checks passed, including eight new route cases; 161 offline tests passed. Corrected the initial optional-body schema failure before committing. Typecheck/lint/format checks passed.
+- The actual server bootstrap passed a temporary loopback HTTP smoke check for queue/database readiness, all seven documented routes and protected private access. No external PayPal request or Render deployment occurred.
+- Added the concrete checkout integration/handoff guide; /dev and real sandbox acceptance remain next.
+
+## 2026-11-09 — H2.3 checkout capture recovery
+
+- Added a real checkout client factory and authoritative captured-order GET parser inside packages/paypal, preserving the complete shared PayPalClient/ForMerchant contracts as unfinished rather than adding placeholders.
+- Added application orchestration using the stored order’s merchant, stable ff-capture ID, local callback coalescing and the existing minimized atomic capture store. Existing/uncertain/racing captures are re-fetched without an application-level second POST.
+- Added honest public configuration from stored merchant/catalogue fields and kept actual PayPal payer identity separate from browser demo subjects. Public capture returns only OrderSummary; private reads retain ownership requirements.
+- All 94 PostgreSQL checks and 161 offline tests passed, including 17 new workflow and 11 recovery-parser cases. Typecheck/lint/format results and source limits are recorded in the recovery evidence; no external PayPal request or hosted success is claimed.
+
+## 2026-11-09 — H2.3 owner-scoped order reads
+
+- Added merchant/buyer SQL ownership filters for lists and details, repeatable-read snapshots, status filtering and stable time/UUID pagination. Missing and foreign private orders share the same 404; admin/agent roles receive no implicit bypass.
+- Projected exact existing summary/row/detail DTOs. Buyer details neutralize merchant signals, hold/investigation links, stock batch and payer account status; hashes, credentials, raw dispute/scan data and ledger payloads never leave the read layer.
+- Read merchant-scoped latest stored signal summaries, unacknowledged alert counts, unresolved disputes and linked investigations. Merchant detail invokes the existing computeBuyerSignal seam only after ownership succeeds; its current labelled stub remains explicit.
+- Added 16 real PostgreSQL read cases; all 77 database checks passed. Typecheck/lint passed after correcting the initially rejected Drizzle read-only option. Full validation and remaining runtime gates are recorded in the read evidence.
+
+## 2026-11-09 — H2 repeatable creation test fixture
+
+- Fixed the listing-change integration test’s reused synthetic PayPal order ID. Its fixed value collided with a prior successful test row on the second suite run; application behavior was unchanged.
+- Derived the fixture ID from the test’s fresh server-owned UUID. All 19 creation cases passed twice consecutively against the same database; typecheck passed.
+- Recorded the observed failure and recovery in the repeatability evidence. This does not advance PayPal sandbox or deployment acceptance.
+
+## 2026-11-09 — H2.3 database-priced checkout creation
+
+- Added checkout creation using the unchanged request DTO and merchant-owned product records. Browser item prices/names/listing versions are ignored; duplicate SKU quantities combine with SQL-integer and exact decimal total bounds.
+- Sent the specified reference/custom/invoice and ff-create request IDs, then atomically stored the created order/items using the exact price/listing snapshot sent to PayPal. Shipping remains transient until the approved capture mapping.
+- Added guards for missing/simulated merchants, foreign/unavailable products, mixed currencies, invalid quantities and zero/overflow totals before vendor calls. Vendor or credential failures leave no local order.
+- Documented the existing vendor-create/local-write recovery gap: failed local persistence returns safe identifiers and never automatically replays creation. No new schema, shared contract or background recovery system was introduced.
+- All 61 PostgreSQL checks passed, including 19 new creation cases. Offline suite/typecheck/lint/format evidence is recorded with the increment. Routes, ownership reads, /dev and real PayPal/Render gates remain pending.
+
+## 2026-11-09 — H2.3 atomic capture persistence
+
+- Added the application capture store using a merchant-scoped order row lock and one checked-out PostgreSQL connection for buyer/order writes, ledger savepoint and pg-boss enqueue. No schema or shared DTO changed.
+- Matched actual order/capture money and source identifiers against the stored order; incomplete captures, foreign merchants, invalid transitions and conflicting capture IDs fail without partial effects.
+- Made repeated/concurrent callbacks no-ops after the first committed capture, preserving later fulfillment/refund states. The ledger/job contain only the approved minimal fields.
+- Verified 25 new real PostgreSQL cases, including eight concurrent callbacks and rollback after an actual queue insert. All 42 database checks and 150 offline tests passed; typecheck, lint and formatting passed. Recorded scope and remaining H2/H1 gates in the capture persistence evidence.
+
+## 2026-11-09 — H2.3 approved capture retention mapper
+
+- Recorded Hriday’s explicit approval of the concrete capture policy; Ishaan’s review and Q3’s other payload boundaries remain open.
+- Added an application-layer capture mapper using NFC/lowercase email hashing and canonical six-component address hashing, including transient address_line_2. Only the approved fields leave the mapper.
+- Added synthetic tests for normalization, excluded plaintext, unknown fields, response consistency and invalid amounts. Database writes, routes and real sandbox acceptance are separate increments.
+- Validation results are recorded in the H2.3 mapper evidence.
+
+## 2026-11-09 — Q3 capture persistence review package
+
+- Prepared a concrete existing-schema allowlist and proposed email/address hash normalization before H2.3. It includes address_line_2 only as transient hash input and keeps the shared CaptureResult unchanged.
+- Specified missing-data, capture-state/amount validation, exactly-once transaction and safe fixture boundaries. These are review/implementation requirements, not completed capture persistence tests.
+- Kept Q3 open and distinguished capture review from later webhook/dispute/reporting/action-response field reviews. No reviewer approval, outgoing message or database write was implied; application files are unchanged in this increment.
+
+## 2026-11-09 — H2.2c refund and bounded reporting helpers
+
+- Implemented the unchanged payment/refund and Transaction Search method groups. Full refunds send an empty object; partial amounts use exact decimal/currency checks. Refund IDs and actual statuses are returned without assuming PENDING means completed.
+- Added explicit RFC3339 millisecond/offset date validation, maximum 31-day windows, fields=all, fixed local pagination with 500 rows/page, stable metadata/count checks and a documented local 100-page budget. Incomplete or changing results fail instead of returning partial history; duplicate transaction IDs are preserved.
+- Verified official Payments 2.12 and Transaction Search 1.10 specifications. Refund retries use the documented request-ID support; no vendor pagination links are followed. No dependency or shared interface changed.
+- Added 25 synthetic refund/reporting cases. The complete offline suite passed 136 tests with 17 database checks skipped; typecheck and lint passed. Actual refunds/history calls, ownership/approval/balance guards in future callers, Q3 capture persistence, public routes and real sandbox checks remain pending.
+
+## 2026-11-09 — H2.2b tracking and carrier mapping
+
+- Completed the existing Orders method group with flat-body addTracking, explicit notification choice, validated returned tracker selection and unchanged request IDs. No seal, tracking job or notification was executed.
+- Added the source carrier crosswalk, including INDIA_POST to IN_INDIAPOST and named Indian carriers. Bare OTHER is rejected by the dispute mapper; callers must supply the stored actual carrier name, never a guessed default.
+- Preserved the required POST request-ID header while disabling automatic tracking 5xx replay because the operation does not document that idempotency header. HTTP 429 remains bounded by the existing transport.
+- Added 28 synthetic tracking/carrier cases. After correcting validation failures before commit, the full offline suite passed 111 tests with 17 DB checks skipped; typecheck and lint passed. Evidence distinguishes official response examples from unobserved real sandbox behavior.
+
+## 2026-11-09 — H2.2a Orders create, capture and get
+
+- Implemented the existing create/capture/get contracts using the sandbox merchant transport. Create sends one CAPTURE purchase unit, stable identifiers, string quantities and exact BigInt-derived totals; wire currency precision and numeric(12,2) bounds are checked without changing shared Money.
+- Added sandbox approval-link checks, modern/legacy payer parsing, actual capture status and seller protection, nullable absent fields and exact CaptureResult field mapping. Raw responses remain transient; no capture persistence or route was added.
+- Added validated transport responses so shape failures retain PayPal's debug ID and an explicit ambiguous-mutation flag without logging vendor bodies or payer fields. Such failures are not replayed.
+- Verified current official Orders 2.36 schema and currency documentation against the original H2 source. Retained the existing PostOpts limit and shared interfaces; no dependency version changed.
+- Added 34 synthetic Orders cases. The full offline suite passed 83 tests with 17 DB checks skipped; typecheck and lint passed. Recorded scope, source digest and pending real sandbox/hosting/privacy gates in the Orders evidence record.
+
+## 2026-11-09 — H2.1 sandbox authentication and HTTP transport
+
+- Implemented merchant-scoped encrypted credential lookup and sandbox-only OAuth/HTTP transport inside `packages/paypal`, using existing shared crypto, clock, PostOpts and error helpers. No shared contract, schema, API route, worker or Ishaan-owned package changed.
+- Added per-merchant/version in-memory token caching with early refresh, concurrent-grant coalescing, rotation/removal handling and rejected-token invalidation. Credentials and tokens are not logged or persisted by the transport.
+- Added bounded exponential retries with stable POST bodies/request IDs, explicit operation idempotency for 5xx replay, no ambiguous network replay, redirect rejection and safe debug-ID/symbolic-error diagnostics.
+- Added 30 synthetic offline transport cases and two real PostgreSQL credential-provider cases. The full offline suite passed 49 tests with 17 DB checks skipped; the explicit isolated database suite passed all 17 tests. Typecheck, lint and formatting passed.
+- Resolved the new workspace importer with the existing dependency versions and policies. Offline install encountered an absent cached tarball; the normal install passed policy checks. The lockfile changes only the new package importer.
+- Recorded exact scope and results in the H2 guide/status/evidence. Checkout operation bindings, full ForMerchant, persistence/privacy review, routes, `/dev`, real sandbox A4 and H1 hosting remain pending.
+
+## 2026-11-09 — Continue locally while hosting is pending
+
+- Recorded the user's instruction to wait for Render synchronization and continue the next local pieces, retaining H1's hosted gate and H2's sandbox acceptance gate.
+- Distinguished the reported Blueprint-capacity issue from the supplied screenshot's confirmed payment-information requirement. No reset time, payment, resource creation or change of service plan was claimed.
+- Prepared a conditional Ishaan deployment handoff and an ordered H2 work plan. No message was sent and deployment ownership was not reassigned.
+- Updated branch instructions and O15 to allow sequential local H2 increments while hosting is pending. Q3 still gates capture persistence; H3–H8 remain unstarted. Application files are unchanged in this documentation increment.
 
 ## 2026-11-09 — H1 initial hosted URL bootstrap
 

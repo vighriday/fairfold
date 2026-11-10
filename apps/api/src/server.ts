@@ -1,42 +1,23 @@
 import { config as loadEnv } from 'dotenv';
 import { fileURLToPath } from 'node:url';
-import { createDatabase } from '@fairfold/db';
-import { bindIntelRuntime } from '@fairfold/intelligence';
-import { createJobs } from '@fairfold/jobs';
-import { createApi } from './app.js';
 import { readConfig } from './config.js';
+import { createRuntime } from './runtime.js';
 
 loadEnv({ path: fileURLToPath(new URL('../../../.env', import.meta.url)), quiet: true });
-const config = readConfig();
-const database = createDatabase(config.databaseUrl);
-const jobs = createJobs(config.databaseUrl);
-await jobs.start();
-// The intelligence routes use this server's database and queue instead of opening their own.
-bindIntelRuntime({ db: database.db, jobs });
-const app = await createApi({
-  config,
-  checkDatabase: async () => {
-    await database.pool.query('select 1');
-  },
-});
-let stopping = false;
-async function shutdown() {
-  if (stopping) return;
-  stopping = true;
-  try {
-    await app.close();
-  } finally {
-    try {
-      await jobs.stop();
-    } finally {
-      await database.close();
-    }
-  }
-}
+const runtime = await createRuntime(readConfig());
 process.once('SIGINT', () => {
-  void shutdown();
+  void runtime.close();
 });
 process.once('SIGTERM', () => {
-  void shutdown();
+  void runtime.close();
 });
-await app.listen({ port: config.port, host: process.env.RENDER ? '0.0.0.0' : '127.0.0.1' });
+try {
+  await runtime.start(process.env.RENDER === 'true' ? '0.0.0.0' : '127.0.0.1');
+} catch (error) {
+  runtime.app.log.error(
+    { errorType: error instanceof Error ? error.name : 'Error' },
+    'API startup failed',
+  );
+  await runtime.close();
+  process.exitCode = 1;
+}

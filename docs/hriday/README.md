@@ -15,6 +15,16 @@ Read and act in this order:
 
 The [H1 foundation guide](h1-foundation.md) records the implemented local setup, tests, actual endpoints, handoff and pending deployment gate.
 
+While Render hosting is pending, follow [H2's local increments](h2-paypal.md). The [conditional Ishaan deployment handoff](ishaan-deployment-handoff.md) is prepared for the user's possible reassignment; it has not been sent.
+
+H2's local setup-to-evidence workflow is ready in the [sandbox rehearsal guide](sandbox-rehearsal.md). It provides the actual commands, recording/audit behavior and remaining account/approval gates; local readiness does not close H2.
+
+The [H2 local closeout](h2-closeout.md) is the current handoff: complete client composition and local checks are ready, with only the listed account-backed acceptance and review/deployment dependencies pending. Start there before repeating H2 work.
+
+The [H3 execution plan](h3-webhooks.md) is now authorized under the [approved event policy](webhook-persistence-review.md). Use the [H3 closeout](h3-closeout.md): registration, ingress, reconciliation, polling and worker runtime are locally ready. Real H1–H3 acceptance and the H4 sync dependency remain pending.
+
+H4 is in progress: the [source plan](h4-disputes.md), [pending retention/mapping review](dispute-persistence-review.md) and [first guard evidence](evidence/2026-11-10-h4-guards.md) distinguish the implemented pure checks from the persistence/execution work awaiting that review.
+
 Use the [evidence record template](evidence/README.md) for real runs. Keep unredacted working files under ignored `docs/hriday/evidence/local/` or `.work/`; publish only sanitized summaries. Maintain the root [changelog](../../CHANGELOG.md).
 
 The explicitly allocated research task is the sandbox dispute spike in architecture section 16. The source verification, contract inventory, execution breakdown and submission evidence plan here support that task; they are not a reassignment of Ishaan's research, intelligence, evals, Devpost text or narration.

@@ -1,0 +1,17 @@
+{
+  "name": "@fairfold/paypal",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "zod": "4.6.7",
+    "@fairfold/contracts": "workspace:*",
+    "@fairfold/db": "workspace:*",
+    "@fairfold/jobs": "workspace:*",
+    "@fairfold/ledger": "workspace:*",
+    "drizzle-orm": "0.45.4"
+  }
+}

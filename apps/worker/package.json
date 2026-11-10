@@ -11,7 +11,10 @@
     "@fairfold/contracts": "workspace:*",
     "@fairfold/db": "workspace:*",
     "@fairfold/jobs": "workspace:*",
+    "@fairfold/paypal": "workspace:*",
     "@fairfold/intelligence": "workspace:*",
+    "@fairfold/ledger": "workspace:*",
+    "drizzle-orm": "0.45.4",
     "dotenv": "18.0.10",
     "pino": "10.4.0"
   }

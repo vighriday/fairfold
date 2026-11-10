@@ -4,7 +4,7 @@ Fairfold is a neutral witness for both sides of a PayPal payment. It records pro
 
 Built by Hriday and Ishaan for the PayPal AI Hackathon. The target user is an Indian apparel exporter selling to overseas buyers through PayPal.
 
-> **Status (10 November 2026): work in progress.** This `ishaan` branch has the backend foundation and the complete intelligence layer, tested locally against PostgreSQL. PayPal checkout, dispute filing, the Pack Station flow, the MCP server and the frontend are still being built on the `Hriday` branch, so the end-to-end demo does not run yet. All PayPal activity is sandbox-only.
+> **Status (11 November 2026): work in progress, run locally.** This branch combines Hriday's platform (checkout, verified webhooks, disputes, Pack Station, watchdog, MCP tools and a catalogue seed, all implemented locally) with Ishaan's intelligence layer (Evidence Agent, Buyer Signal, Store Report, Dispute Agent, Shared Cause Detection), tested against PostgreSQL. Real PayPal sandbox acceptance, the Render deployment, the B17 demo seed and the frontend are still pending, so the end-to-end demo does not run yet. All PayPal activity is sandbox-only.
 
 ## What it does
 
@@ -30,9 +30,11 @@ packages/
   db/             Drizzle schema and SQL migration (PostgreSQL 16)
   ledger/         hash-chained ledger and content-addressed evidence storage
   jobs/           pg-boss wrapper
+  paypal/         sandbox-only PayPal client, checkout, webhooks, disputes and approved actions
+  shopper/        the AI shopping agent's MCP client
   ai/             the only code that talks to a model provider
   intelligence/   Evidence Agent, Buyer Signal, Store Report, Dispute Agent, Shared Cause Detection, evals
-scripts/          setup, migrations and test launchers
+scripts/          setup, seed, migrations, webhook registration and test launchers
 ```
 
 ## Run it locally
@@ -44,6 +46,7 @@ pnpm install --frozen-lockfile
 pnpm setup:local        # creates an ignored .env with fresh local keys; never overwrites an existing one
 docker compose up -d    # PostgreSQL 16 on localhost:5432
 pnpm db:migrate
+pnpm seed               # fictional catalogue merchants only; see "PayPal platform" below
 pnpm dev                # API on http://localhost:3000 (Swagger UI at /docs) and the worker
 ```
 
@@ -71,9 +74,14 @@ pnpm test:db           # adds PostgreSQL integration tests (needs TEST_DATABASE_
 pnpm --filter @fairfold/intelligence test:db   # the intelligence package's unit and PostgreSQL tests
 pnpm typecheck
 pnpm lint
+pnpm format:check
+pnpm test:sandbox      # PayPal sandbox checks; SKIPPED without credentials
+pnpm test:e2e          # starts the assembled local runtime for a credential-free smoke check
 pnpm --filter @fairfold/intelligence eval                 # prints the evaluation table
 pnpm --filter @fairfold/intelligence cost <eval log>      # call-log summary: calls, failures, tokens
 ```
+
+Offline tests do not contact external services. Database integration checks require an isolated loopback PostgreSQL 16 database named `fairfold_*test` in `TEST_DATABASE_URL`; they are skipped by the default offline run and explicitly executed by `test:db`. Sandbox checks report SKIPPED when credentials are absent. With `TEST_DATABASE_URL` set, `test:e2e` starts the assembled local runtime and performs a credential-free smoke check; without it, the command reports SKIPPED. Neither local smoke nor database tests satisfy the acceptance tests A1–A14.
 
 Tests never call a real model; the database test launcher strips model settings before it runs.
 
@@ -90,6 +98,12 @@ Evaluation results measured on 10 November 2026 (details and method in [docs/ai-
 
 \* Measured before the cluster centroid became the exact normalised mean of its members ([DECISIONS.md](DECISIONS.md) I-D24); re-run the evaluation before quoting it.
 
+## PayPal platform
+
+The PayPal side is built in `packages/paypal` (sandbox-only client, checkout, webhooks, disputes and approved actions), `apps/api` (checkout, orders, Pack Station, disputes, alerts, MCP and the demo-only `/dev` harness) and `apps/worker`. Start with the [platform build guide](docs/hriday/README.md) and the [current status](docs/hriday/status.md); the [sandbox rehearsal guide](docs/hriday/sandbox-rehearsal.md), [H2 closeout](docs/hriday/h2-closeout.md), [H3 closeout](docs/hriday/h3-closeout.md), [checkout guide](docs/hriday/checkout-integration.md) and [H3 acceptance guide](docs/hriday/h3-acceptance.md) cover the local rehearsal and the remaining real-account steps. Real SDK purchases, webhook delivery and hosted readiness are not yet verified.
+
+`pnpm seed` creates only the deterministic fictional catalogue merchants and products (`Neel`, `Indigo`, `QuickTees`). It makes no PayPal request and does not yet create the B17 orders, complaints, reviews or buyers that the acceptance tests need.
+
 ## Data and labels
 
 All stores, buyers and orders in the tests and seed are fictional and synthetic. Seeded PayPal identifiers start with `SEED-`. Cross-merchant buyer data appears only as a clearly labelled simulation of a tier only PayPal could run. Stored buyer emails and addresses are never sent to a model, and emails and phone numbers that a buyer types into a complaint, review or dispute message are removed in code before any model reads the text. A street address typed into free text is not detected.
@@ -100,6 +114,7 @@ All stores, buyers and orders in the tests and seed are fictional and synthetic.
 - [Decisions and contract questions](DECISIONS.md)
 - [Change history](CHANGELOG.md)
 - [Platform build guide (Hriday)](docs/hriday/README.md)
+- [Contributor instructions](AGENTS.md)
 
 ## Licence
 

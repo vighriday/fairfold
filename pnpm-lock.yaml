@@ -169,6 +169,9 @@ importers:
       '@eslint/js':
         specifier: 10.0.1
         version: 10.0.1(eslint@10.14.0(supports-color@10.2.2))
+      '@fairfold/db':
+        specifier: workspace:*
+        version: link:packages/db
       '@types/node':
         specifier: 22.20.5
         version: 22.20.5
@@ -214,6 +217,15 @@ importers:
       '@fairfold/jobs':
         specifier: workspace:*
         version: link:../../packages/jobs
+      '@fairfold/ledger':
+        specifier: workspace:*
+        version: link:../../packages/ledger
+      '@fairfold/paypal':
+        specifier: workspace:*
+        version: link:../../packages/paypal
+      '@fairfold/shopper':
+        specifier: workspace:*
+        version: link:../../packages/shopper
       '@fastify/cors':
         specifier: 11.4.1
         version: 11.4.1
@@ -232,6 +244,9 @@ importers:
       dotenv:
         specifier: 18.0.10
         version: 18.0.10
+      drizzle-orm:
+        specifier: 0.45.4
+        version: 0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(pg@8.23.1)
       fastify:
         specifier: 5.12.8
         version: 5.12.8
@@ -262,9 +277,18 @@ importers:
       '@fairfold/jobs':
         specifier: workspace:*
         version: link:../../packages/jobs
+      '@fairfold/ledger':
+        specifier: workspace:*
+        version: link:../../packages/ledger
+      '@fairfold/paypal':
+        specifier: workspace:*
+        version: link:../../packages/paypal
       dotenv:
         specifier: 18.0.10
         version: 18.0.10
+      drizzle-orm:
+        specifier: 0.45.4
+        version: 0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(pg@8.23.1)
       pino:
         specifier: 10.4.0
         version: 10.4.0
@@ -380,6 +404,33 @@ importers:
       zod:
         specifier: 4.6.7
         version: 4.6.7
+
+  packages/paypal:
+    dependencies:
+      '@fairfold/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@fairfold/db':
+        specifier: workspace:*
+        version: link:../db
+      '@fairfold/jobs':
+        specifier: workspace:*
+        version: link:../jobs
+      '@fairfold/ledger':
+        specifier: workspace:*
+        version: link:../ledger
+      drizzle-orm:
+        specifier: 0.45.4
+        version: 0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(pg@8.23.1)
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
+
+  packages/shopper:
+    dependencies:
+      '@fairfold/contracts':
+        specifier: workspace:*
+        version: link:../contracts
 
 packages:
 

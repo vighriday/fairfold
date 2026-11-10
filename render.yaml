@@ -43,6 +43,11 @@ services:
     buildCommand: pnpm install --frozen-lockfile --prod=false && pnpm build
     startCommand: pnpm --filter @fairfold/worker start
     envVars:
+      - key: APP_ENCRYPTION_KEY
+        fromService:
+          type: web
+          name: fairfold-api
+          envVarKey: APP_ENCRYPTION_KEY
       - key: NODE_VERSION
         value: '22'
       - key: DATABASE_URL
