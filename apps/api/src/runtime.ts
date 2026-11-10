@@ -29,7 +29,7 @@ export async function createRuntime(config: Config, options: { recording?: Order
   const database = createDatabase(config.databaseUrl);
   const jobs = createJobs(config.databaseUrl);
   // The intelligence routes and services use this API's database and queue (DECISIONS.md I-D37).
-  bindIntelRuntime({ db: database.db, jobs });
+  const intelligence = bindIntelRuntime({ db: database.db, jobs });
   try {
     const forMerchant = createPayPalClientFactory({
       credentials: databaseCredentials(database.db),
@@ -47,7 +47,7 @@ export async function createRuntime(config: Config, options: { recording?: Order
     const inspection = createInspectionService({ database, jobs });
     const actionApproval = createSharedCauseActionApproval({ database, jobs });
     const alertReads = createAlertReads(database.db);
-    const mcpService = createMcpService(database);
+    const mcpService = createMcpService(database, intelligence);
     const app = await createApi({
       config,
       phase: 'H5',

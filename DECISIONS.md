@@ -479,3 +479,10 @@ Hriday explicitly replied “Approve the H4 policy and mapping” on 10 November
 - Suggested change for his review: keep, in the same PayPal shape, only those buyer-authored fields (not seller or arbiter text), each passed through `redactMessage` like the messages, so `buyerTexts` reads them unchanged and no contract changes. Suggested test: a `dispute-policy` unit test that a buyer `supporting_info` note survives redacted while a seller note does not; I-D36's PostgreSQL test then covers the rest.
 - Alternative if he prefers not to persist them: list them in `dispute.synced` (`newBuyerMessages`) instead; that needs no stored copy but is a job-contract change.
 - Contract change: none proposed.
+
+### I-D41 — The MCP tools use the intelligence package's catalogue search and store reports — 2026-11-11
+
+- Section 16 H7: "search_catalog { query, maxPrice? } → Ishaan's searchCatalog; get_store_report { merchantId } → cached store_reports, else buildStoreReport". Hriday's MCP service (apps/api/src/mcp/service.ts) queried the database itself: the catalogue matched the whole query against product names only (so A13's "navy hoodie" could not find section 19's "Block-print cotton hoodie"), and `get_store_report` returned 404 for a store with no stored report.
+- Changed for his review (M11): `createMcpService(database, intelligence)` takes the intelligence runtime `createRuntime` binds (I-D37). `search_catalog` calls `searchCatalogWith` (every word against name, SKU, colour and description, I-D31; each store's band; first page of 50) and refuses a non-numeric `maxPrice` with 400; `get_store_report` calls `storeReportFor` (the stored report, else one built now) and refuses a non-uuid id with 400; an unknown store stays 404. The other two tools are unchanged.
+- Two PostgreSQL tests in Hriday's `apps/api/test/mcp.integration.test.ts`; his existing MCP and shopper-policy tests pass unchanged.
+- Contract change: none (the tools' inputs and outputs are as before).
