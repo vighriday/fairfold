@@ -6,14 +6,15 @@ import { CatalogItemSchema, ReviewSchema, StoreReportSchema } from '@fairfold/co
 import {
   CatalogQuerySchema,
   IdParamsSchema,
+  IntelListQuerySchema,
   MerchantParamsSchema,
   ReviewBodySchema,
   ReviewReplyBodySchema,
 } from '@fairfold/contracts/intel';
 import {
   createReview,
-  listReviews,
   replyToReview,
+  reviewPage,
   searchCatalogWith,
   storeReportFor,
 } from '@fairfold/intelligence';
@@ -32,14 +33,22 @@ const storeReportRoutes: FastifyPluginAsync = async (fastify) => {
   app.get(
     '/api/catalog',
     { schema: { querystring: CatalogQuerySchema, response: { 200: z.array(CatalogItemSchema) } } },
-    async (request) =>
-      searchCatalogWith(runtime(), { query: request.query.q, maxPrice: request.query.maxPrice }),
+    async (request) => {
+      const { q, maxPrice, limit, cursor } = request.query;
+      return searchCatalogWith(runtime(), { query: q, maxPrice }, { limit, cursor });
+    },
   );
 
   app.get(
     '/api/stores/:merchantId/reviews',
-    { schema: { params: MerchantParamsSchema, response: { 200: z.array(ReviewSchema) } } },
-    async (request) => listReviews(runtime(), request.params.merchantId),
+    {
+      schema: {
+        params: MerchantParamsSchema,
+        querystring: IntelListQuerySchema,
+        response: { 200: z.array(ReviewSchema) },
+      },
+    },
+    async (request) => reviewPage(runtime(), request.params.merchantId, request.query),
   );
 
   app.post(

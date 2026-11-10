@@ -9,7 +9,12 @@ import {
   HypothesisSummarySchema,
   UuidSchema,
 } from '@fairfold/contracts';
-import { DismissBodySchema, IdParamsSchema, TrendSchema } from '@fairfold/contracts/intel';
+import {
+  DismissBodySchema,
+  IdParamsSchema,
+  IntelListQuerySchema,
+  TrendSchema,
+} from '@fairfold/contracts/intel';
 import {
   confirmHypothesis,
   dismissHypothesis,
@@ -31,7 +36,7 @@ const sharedCauseRoutes: FastifyPluginAsync = async (fastify) => {
       schema: {
         security: bearer,
         // A1 passes ?merchantId=; the token's merchant decides, and a different id is refused.
-        querystring: z.object({ merchantId: UuidSchema.optional() }),
+        querystring: IntelListQuerySchema.extend({ merchantId: UuidSchema.optional() }),
         response: { 200: z.array(HypothesisSummarySchema) },
       },
     },
@@ -39,7 +44,8 @@ const sharedCauseRoutes: FastifyPluginAsync = async (fastify) => {
       const merchantId = subjectOf(request);
       if (request.query.merchantId && request.query.merchantId !== merchantId)
         throw new AppError('FORBIDDEN', 'You can only list your own store', 403);
-      return listHypotheses(runtime(), merchantId);
+      const { limit, cursor } = request.query;
+      return listHypotheses(runtime(), merchantId, { limit, cursor });
     },
   );
 

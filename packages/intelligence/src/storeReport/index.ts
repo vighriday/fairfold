@@ -1,7 +1,13 @@
 // Store Report (task I4): metrics, band, verified-payment reviews with themes, domain facts and sources.
 import { and, countDistinct, desc, eq, gte, inArray, isNotNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { AppError, StoreReportSchema, type Review, type StoreReport } from '@fairfold/contracts';
+import {
+  AppError,
+  StoreReportSchema,
+  UuidSchema,
+  type Review,
+  type StoreReport,
+} from '@fairfold/contracts';
 import {
   actions,
   complaints,
@@ -13,6 +19,7 @@ import {
   store_reports,
 } from '@fairfold/db';
 import { upsertComplaint } from '../complaints/create.js';
+import { DEFAULT_PAGE, invalidCursor, pageAfter, type Page } from '../paging.js';
 import { getIntelRuntime, type IntelRuntime } from '../runtime.js';
 import { storeBand } from './bands.js';
 import { computeFulfilment, WINDOW_DAYS, type FulfilmentInput } from './metrics.js';
@@ -123,7 +130,7 @@ export async function listReviews(rt: IntelRuntime, merchantId: string): Promise
     .select()
     .from(reviews)
     .where(eq(reviews.merchant_id, merchantId))
-    .orderBy(desc(reviews.created_at));
+    .orderBy(desc(reviews.created_at), desc(reviews.id));
   const buyerIds = [...new Set(rows.map((r) => r.buyer_id))];
   const stores = buyerIds.length
     ? await rt.db
@@ -146,6 +153,20 @@ export async function listReviews(rt: IntelRuntime, merchantId: string): Promise
     createdAt: r.created_at.toISOString(),
     weight: r.weight,
   }));
+}
+
+/**
+ * Endpoint 42: one page of the store's reviews, newest first. Weights need every review (at most three per buyer
+ * count, earliest first), so the whole list is weighted before the page is cut.
+ */
+export async function reviewPage(
+  rt: IntelRuntime,
+  merchantId: string,
+  page: Page = DEFAULT_PAGE,
+): Promise<Review[]> {
+  if (page.cursor !== undefined && !UuidSchema.safeParse(page.cursor).success)
+    throw invalidCursor();
+  return pageAfter(await listReviews(rt, merchantId), (r) => r.id, page);
 }
 
 export async function buildStoreReportWith(

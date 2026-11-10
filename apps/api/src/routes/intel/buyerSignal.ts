@@ -8,6 +8,7 @@ import {
   ContestBodySchema,
   ContestIdResponseSchema,
   IdParamsSchema,
+  IntelListQuerySchema,
   ResolveContestBodySchema,
 } from '@fairfold/contracts/intel';
 import {
@@ -64,9 +65,13 @@ const buyerSignalRoutes: FastifyPluginAsync = async (fastify) => {
     '/api/merchant/signal-contests',
     {
       preHandler: requireAuth('merchant'),
-      schema: { security: bearer, response: { 200: z.array(SignalContestSchema) } },
+      schema: {
+        security: bearer,
+        querystring: IntelListQuerySchema,
+        response: { 200: z.array(SignalContestSchema) },
+      },
     },
-    async (request) => listContests(runtime(), subjectOf(request)),
+    async (request) => listContests(runtime(), subjectOf(request), request.query),
   );
 
   app.post(

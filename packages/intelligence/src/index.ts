@@ -23,9 +23,10 @@ export {
   createReview,
   listReviews,
   replyToReview,
+  reviewPage,
   storeReportFor,
 } from './storeReport/index.js';
-export { searchCatalog, searchCatalogWith } from './catalog.js';
+export { catalogCursor, searchCatalog, searchCatalogWith } from './catalog.js';
 export { upsertComplaint } from './complaints/create.js';
 export { reportProblem } from './complaints/report.js';
 export { buildEvidencePack, buildEvidencePackWith } from './dispute/build.js';

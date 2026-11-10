@@ -1,5 +1,5 @@
 // Merchant views of Shared Cause hypotheses: endpoints 22 (summaries) and 23 (detail), section 11.
-import { and, asc, desc, eq, ne } from 'drizzle-orm';
+import { and, asc, desc, eq, ne, type SQL } from 'drizzle-orm';
 import {
   AffectedOrdersSchema,
   AppError,
@@ -7,11 +7,13 @@ import {
   DimensionSchema,
   HypothesisDetailSchema,
   HypothesisStatsSchema,
+  UuidSchema,
   ValueTestSchema,
   type HypothesisDetail,
   type HypothesisSummary,
 } from '@fairfold/contracts';
 import { actions, complaint_clusters, complaints, hypotheses } from '@fairfold/db';
+import { DEFAULT_PAGE, invalidCursor, olderThan, type Page } from '../paging.js';
 import type { IntelRuntime } from '../runtime.js';
 import { headline } from './wording.js';
 
@@ -38,17 +40,33 @@ async function clusterOf(rt: IntelRuntime, clusterId: string) {
   return cluster!;
 }
 
-/** Endpoint 22: the merchant's hypotheses, newest first; superseded ones are history and are left out. */
+/**
+ * Endpoint 22: the merchant's hypotheses, newest first, one page at a time; superseded ones are history and are
+ * left out. The cursor may name any of the merchant's hypotheses, so a page survives one being superseded meanwhile.
+ */
 export async function listHypotheses(
   rt: IntelRuntime,
   merchantId: string,
+  page: Page = DEFAULT_PAGE,
 ): Promise<HypothesisSummary[]> {
+  const own = eq(hypotheses.merchant_id, merchantId);
+  let after: SQL | undefined;
+  if (page.cursor !== undefined) {
+    if (!UuidSchema.safeParse(page.cursor).success) throw invalidCursor();
+    const [anchor] = await rt.db
+      .select({ id: hypotheses.id, createdAt: hypotheses.created_at })
+      .from(hypotheses)
+      .where(and(own, eq(hypotheses.id, page.cursor)));
+    if (!anchor) throw invalidCursor();
+    after = olderThan(hypotheses.created_at, hypotheses.id, anchor);
+  }
   const rows = await rt.db
     .select({ h: hypotheses, category: complaint_clusters.category })
     .from(hypotheses)
     .innerJoin(complaint_clusters, eq(complaint_clusters.id, hypotheses.cluster_id))
-    .where(and(eq(hypotheses.merchant_id, merchantId), ne(hypotheses.status, 'superseded')))
-    .orderBy(desc(hypotheses.created_at), asc(hypotheses.id));
+    .where(and(own, ne(hypotheses.status, 'superseded'), after))
+    .orderBy(desc(hypotheses.created_at), desc(hypotheses.id))
+    .limit(page.limit);
   const members = await rt.db
     .select({ clusterId: complaints.cluster_id, orderId: complaints.order_id })
     .from(complaints)

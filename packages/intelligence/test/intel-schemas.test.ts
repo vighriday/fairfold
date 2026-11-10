@@ -46,8 +46,18 @@ describe('intel request schemas', () => {
     expect(S.CatalogQuerySchema.parse({ q: 'navy hoodie', maxPrice: '45' })).toEqual({
       q: 'navy hoodie',
       maxPrice: 45,
+      limit: 50,
     });
     expect(S.CatalogQuerySchema.safeParse({ maxPrice: '-1' }).success).toBe(false);
+  });
+  it('IntelListQuerySchema: section 11 default of 50, at most 100, cursor passed through', () => {
+    expect(S.IntelListQuerySchema.parse({})).toEqual({ limit: 50 });
+    expect(S.IntelListQuerySchema.parse({ limit: '2', cursor: uuid })).toEqual({
+      limit: 2,
+      cursor: uuid,
+    });
+    expect(S.IntelListQuerySchema.safeParse({ limit: '0' }).success).toBe(false);
+    expect(S.IntelListQuerySchema.safeParse({ limit: '101' }).success).toBe(false);
   });
   it('BuyerSignalQuerySchema requires a merchant uuid', () => {
     expect(S.BuyerSignalQuerySchema.safeParse({ merchantId: uuid }).success).toBe(true);

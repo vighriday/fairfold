@@ -1,9 +1,10 @@
 // Buyer Signal service (task I3): compute and store per order, the buyer's own view, and contests.
-import { and, desc, eq, sql } from 'drizzle-orm';
-import { AppError, type BuyerSignal, type SignalContest } from '@fairfold/contracts';
+import { and, desc, eq, sql, type SQL } from 'drizzle-orm';
+import { AppError, UuidSchema, type BuyerSignal, type SignalContest } from '@fairfold/contracts';
 import type { BuyerSignalView } from '@fairfold/contracts/intel';
 import { alerts, buyer_signals, signal_contests } from '@fairfold/db';
 import type { DatabaseExecutor } from '@fairfold/ledger';
+import { DEFAULT_PAGE, invalidCursor, olderThan, type Page } from '../paging.js';
 import { getIntelRuntime, type IntelRuntime } from '../runtime.js';
 import { buyerFeatures, loadOrder } from './features.js';
 import { scoreBuyer, type BuyerFeatures } from './points.js';
@@ -167,14 +168,31 @@ export async function contestSignal(
   });
 }
 
-/** Endpoint 40: contests on this merchant's signals, newest first. */
-export async function listContests(rt: IntelRuntime, merchantId: string): Promise<SignalContest[]> {
+/** Endpoint 40: contests on this merchant's signals, newest first, one page at a time. */
+export async function listContests(
+  rt: IntelRuntime,
+  merchantId: string,
+  page: Page = DEFAULT_PAGE,
+): Promise<SignalContest[]> {
+  const own = eq(buyer_signals.merchant_id, merchantId);
+  let after: SQL | undefined;
+  if (page.cursor !== undefined) {
+    if (!UuidSchema.safeParse(page.cursor).success) throw invalidCursor();
+    const [anchor] = await rt.db
+      .select({ id: signal_contests.id, createdAt: signal_contests.created_at })
+      .from(signal_contests)
+      .innerJoin(buyer_signals, eq(buyer_signals.id, signal_contests.signal_id))
+      .where(and(own, eq(signal_contests.id, page.cursor)));
+    if (!anchor) throw invalidCursor();
+    after = olderThan(signal_contests.created_at, signal_contests.id, anchor);
+  }
   const rows = await rt.db
     .select({ contest: signal_contests })
     .from(signal_contests)
     .innerJoin(buyer_signals, eq(buyer_signals.id, signal_contests.signal_id))
-    .where(eq(buyer_signals.merchant_id, merchantId))
-    .orderBy(desc(signal_contests.created_at));
+    .where(and(own, after))
+    .orderBy(desc(signal_contests.created_at), desc(signal_contests.id))
+    .limit(page.limit);
   return rows.map((r) => toContest(r.contest));
 }
 

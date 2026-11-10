@@ -37,7 +37,20 @@ export const IdParamsSchema = z.object({ id: UuidSchema });
 export const DisputeParamsSchema = z.object({ id: z.string().min(1) });
 export const PackParamsSchema = z.object({ id: z.string().min(1), packId: UuidSchema });
 export const MerchantParamsSchema = z.object({ merchantId: UuidSchema });
-export const CatalogQuerySchema = z.object({
+
+/** Most items one page of an intelligence list returns; the catalogue and reviews are public endpoints. */
+export const MAX_LIST_LIMIT = 100;
+/**
+ * Section 11: "list endpoints accept ?limit= (default 50) and ?cursor=". As in the order lists, the cursor is the id
+ * of the last item already received (the catalogue's items have no id, so its cursor is `merchantId:sku`); an
+ * unknown cursor is answered with 400 INVALID_CURSOR.
+ */
+export const IntelListQuerySchema = z.object({
+  limit: z.coerce.number().int().positive().max(MAX_LIST_LIMIT).default(50),
+  cursor: z.string().min(1).max(300).optional(),
+});
+export type IntelListQuery = z.infer<typeof IntelListQuerySchema>;
+export const CatalogQuerySchema = IntelListQuerySchema.extend({
   q: z.string().optional(),
   maxPrice: z.coerce.number().positive().optional(),
 });
