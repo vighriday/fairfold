@@ -15,6 +15,7 @@ import {
   type DisputeSynchronizer,
 } from '@fairfold/paypal';
 import { createRetentionHandler } from '@fairfold/ledger';
+import { createWatchdogHandler } from './watchdog.js';
 
 export function readWorkerConfig(environment: NodeJS.ProcessEnv = process.env) {
   try {
@@ -153,10 +154,15 @@ export function createWorkerRuntime(
               database: database.db,
               clock: options.clock,
             }),
+            'watchdog.sweep': createWatchdogHandler({
+              database: database.db,
+              clock: options.clock,
+            }),
           };
           await jobs.start();
           if (closing) throw new AppError('WORKER_CLOSED', 'Worker closed during startup');
           await jobs.register(handlers);
+          await jobs.schedule('watchdog.sweep', '*/15 * * * *', {});
           const schedules = await refreshSchedules();
           timer = setInterval(() => {
             void refreshSchedules().catch(() =>

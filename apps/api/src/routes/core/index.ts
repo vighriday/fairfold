@@ -12,6 +12,7 @@ import {
   OrderRowSchema,
   OrderSummarySchema,
   UuidSchema,
+  AlertSchema,
 } from '@fairfold/contracts';
 import { requireAuth } from '../../auth.js';
 import { createDevRoutes } from '../../dev/routes.js';
@@ -20,6 +21,8 @@ import { OrderListQuerySchema, type createOrderReads } from '../../orders/read.j
 import { type createPackingService } from '../../packing/service.js';
 import { type createInspectionService } from '../../packing/inspection.js';
 import { type createSharedCauseActionApproval } from '../../shared-causes/approve-action.js';
+import { type createAlertReads } from '../../alerts/read.js';
+import { type Database } from '@fairfold/db';
 
 const PayPalOrderIdSchema = z.string().regex(/^[A-Z0-9]{1,36}$/);
 const errors = {
@@ -46,11 +49,18 @@ export function createCoreRoutes(options: {
   packing?: ReturnType<typeof createPackingService>;
   inspection?: ReturnType<typeof createInspectionService>;
   actionApproval?: ReturnType<typeof createSharedCauseActionApproval>;
+  alertReads?: ReturnType<typeof createAlertReads>;
+  database?: Database;
   demoMode: boolean;
 }): FastifyPluginAsync {
   return async (server) => {
     const app = server.withTypeProvider<ZodTypeProvider>();
-    await app.register(createDevRoutes(options.demoMode, { adjudicate: options.demoAdjudicate }));
+    await app.register(
+      createDevRoutes(options.demoMode, {
+        adjudicate: options.demoAdjudicate,
+        database: options.database,
+      }),
+    );
     if (options.disputeReads) {
       const disputeReads = options.disputeReads;
       app.get(
@@ -80,6 +90,35 @@ export function createCoreRoutes(options: {
           },
         },
         async (request) => disputeReads.detail(request.auth, request.params.id),
+      );
+    }
+    if (options.alertReads) {
+      const alertReads = options.alertReads;
+      app.get(
+        '/api/merchant/alerts',
+        {
+          preHandler: requireAuth('merchant'),
+          schema: {
+            tags: ['Alerts'],
+            security: bearer,
+            querystring: ListQuerySchema,
+            response: { 200: z.array(AlertSchema), ...errors },
+          },
+        },
+        async (request) => alertReads.list(request.auth, request.query),
+      );
+      app.post(
+        '/api/merchant/alerts/:id/ack',
+        {
+          preHandler: requireAuth('merchant'),
+          schema: {
+            tags: ['Alerts'],
+            security: bearer,
+            params: z.object({ id: UuidSchema }),
+            response: { 200: z.object({ ok: z.literal(true) }), ...errors },
+          },
+        },
+        async (request) => alertReads.acknowledge(request.auth, request.params.id),
       );
     }
     if (options.disputeApproval) {

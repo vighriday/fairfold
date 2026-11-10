@@ -49,7 +49,7 @@ describe.skipIf(!integrationUrl)('evidence retention', () => {
 
   it('purges expired bytes but preserves the row and hash', async () => {
     const created = await order('2026-01-01T00:00:00.000Z');
-    const bytes = Buffer.from('expired-retention-fixture');
+    const bytes = Buffer.from('expired-retention-fixture-' + randomUUID());
     const hash = sha256(bytes);
     await database.db.insert(evidence_blobs).values({
       sha256: hash,
@@ -76,7 +76,7 @@ describe.skipIf(!integrationUrl)('evidence retention', () => {
   it('keeps a shared blob while another order is still retained', async () => {
     const oldOrder = await order('2026-01-01T00:00:00.000Z');
     const retainedOrder = await order('2026-10-01T00:00:00.000Z');
-    const bytes = Buffer.from('shared-retention-fixture');
+    const bytes = Buffer.from('shared-retention-fixture-' + randomUUID());
     const hash = sha256(bytes);
     await database.db.insert(evidence_blobs).values({
       sha256: hash,

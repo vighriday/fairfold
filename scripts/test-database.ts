@@ -28,6 +28,7 @@ const result = spawnSync(
     'event-handler.integration.test.ts',
     'poll-schedules.integration.test.ts',
     'runtime.integration.test.ts',
+    'watchdog.integration.test.ts',
     'event-acceptance.integration.test.ts',
     'capture-store.integration.test.ts',
     'create-order.integration.test.ts',

@@ -1,13 +1,25 @@
 import { type FastifyPluginAsync } from 'fastify';
 import { type ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { ErrorEnvelopeSchema } from '@fairfold/contracts';
-import { requireAuth } from '../auth.js';
+import { AppError, ErrorEnvelopeSchema, systemClock, type Clock } from '@fairfold/contracts';
+import { and, eq } from 'drizzle-orm';
+import { orders, shipments, type Database } from '@fairfold/db';
+import { createLedger } from '@fairfold/ledger';
+import { requireAuth, type AuthContext } from '../auth.js';
 import { DevCheckoutHtml, DevCheckoutScript } from './page.js';
+
+const demoErrors = {
+  401: ErrorEnvelopeSchema,
+  403: ErrorEnvelopeSchema,
+  404: ErrorEnvelopeSchema,
+  409: ErrorEnvelopeSchema,
+};
 
 export function createDevRoutes(
   enabled: boolean,
   options: {
+    database?: Database;
+    clock?: Clock;
     adjudicate?: ReturnType<
       typeof import('../disputes/demo-adjudicate.js').createDemoDisputeAdjudication
     >;
@@ -60,6 +72,89 @@ export function createDevRoutes(
         },
         async (request) =>
           options.adjudicate!(request.auth, request.params.id, request.body.outcome),
+      );
+    }
+    if (options.database) {
+      const database = options.database;
+      async function updateShipment(
+        auth: AuthContext | null,
+        shipmentId: string,
+        delivered: boolean,
+      ) {
+        if (!auth || auth.role !== 'merchant')
+          throw new AppError('FORBIDDEN', 'Only a merchant may update demo shipments', 403);
+        const now = (options.clock ?? systemClock).now();
+        return database.transaction(async (tx) => {
+          const [row] = await tx
+            .select({ shipment: shipments, order: orders })
+            .from(shipments)
+            .innerJoin(orders, eq(orders.id, shipments.order_id))
+            .where(and(eq(shipments.id, shipmentId), eq(orders.merchant_id, auth.subjectId)))
+            .for('update');
+          if (!row) throw new Error('Shipment was not found');
+          const status = delivered ? 'delivered' : 'in_transit';
+          await tx
+            .update(shipments)
+            .set({
+              status,
+              last_scan_at: now,
+              events: [
+                ...(row.shipment.events as unknown[]),
+                { status, at: now.toISOString(), synthetic: true },
+              ],
+            })
+            .where(eq(shipments.id, shipmentId));
+          await tx
+            .update(orders)
+            .set(delivered ? { status: 'delivered', delivered_at: now } : { status: 'shipped' })
+            .where(eq(orders.id, row.order.id));
+          await createLedger(tx, options.clock ?? systemClock).append(row.order.id, {
+            type: delivered ? 'delivered' : 'scan',
+            actor: `merchant:${auth.subjectId}`,
+            payload: { shipmentId, status, synthetic: true },
+          });
+          return { shipmentId, status, synthetic: true as const };
+        });
+      }
+      typed.post(
+        '/api/dev/shipments/:id/scan',
+        {
+          preHandler: requireAuth('merchant'),
+          schema: {
+            tags: ['Demo'],
+            security: [{ bearerAuth: [] }],
+            params: z.object({ id: z.string().uuid() }),
+            response: {
+              200: z.object({
+                shipmentId: z.string().uuid(),
+                status: z.string(),
+                synthetic: z.literal(true),
+              }),
+              ...demoErrors,
+            },
+          },
+        },
+        async (request) => updateShipment(request.auth, request.params.id, false),
+      );
+      typed.post(
+        '/api/dev/shipments/:id/deliver',
+        {
+          preHandler: requireAuth('merchant'),
+          schema: {
+            tags: ['Demo'],
+            security: [{ bearerAuth: [] }],
+            params: z.object({ id: z.string().uuid() }),
+            response: {
+              200: z.object({
+                shipmentId: z.string().uuid(),
+                status: z.string(),
+                synthetic: z.literal(true),
+              }),
+              ...demoErrors,
+            },
+          },
+        },
+        async (request) => updateShipment(request.auth, request.params.id, true),
       );
     }
   };
