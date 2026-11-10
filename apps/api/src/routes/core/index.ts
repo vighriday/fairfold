@@ -245,85 +245,6 @@ export function createCoreRoutes(options: {
               } catch {
                 throw new AppError('BATCH_CODES_INVALID', 'batchCodes must be a JSON object', 400);
               }
-              if (options.inspection) {
-                const inspection = options.inspection;
-                app.post(
-                  '/api/shared-causes/:id/inspections',
-                  {
-                    preHandler: requireAuth('merchant'),
-                    schema: {
-                      tags: ['Shared Causes'],
-                      security: bearer,
-                      summary: 'Upload merchant-owned inspection photos',
-                      params: z.object({ id: UuidSchema }),
-                      querystring: z.object({ batchCode: z.string().min(1).max(255) }),
-                      response: {
-                        202: z.object({
-                          photoShas: z.array(z.string().regex(/^[a-f0-9]{64}$/)),
-                          requiredPhotoLabel: z.string(),
-                        }),
-                        ...errors,
-                      },
-                    },
-                  },
-                  async (request, reply) => {
-                    const files: Array<{ bytes: Buffer; mime: string }> = [];
-                    const labels: string[] = [];
-                    for await (const part of request.parts()) {
-                      if (part.type === 'file')
-                        files.push({ bytes: await part.toBuffer(), mime: part.mimetype });
-                      else if (part.fieldname === 'labels') labels.push(String(part.value));
-                    }
-                    if (options.actionApproval) {
-                      const actionApproval = options.actionApproval;
-                      app.post(
-                        '/api/shared-causes/:id/actions/:actionId/approve',
-                        {
-                          preHandler: requireAuth('merchant'),
-                          schema: {
-                            tags: ['Shared Causes'],
-                            security: bearer,
-                            summary: 'Approve a merchant-owned shared-cause action',
-                            params: z.object({ id: UuidSchema, actionId: UuidSchema }),
-                            body: z
-                              .object({ edits: z.record(z.string(), z.unknown()).optional() })
-                              .strict(),
-                            response: {
-                              200: z.object({
-                                status: z.literal('approved'),
-                                actionId: UuidSchema,
-                                approvedAt: z.iso.datetime(),
-                              }),
-                              ...errors,
-                            },
-                          },
-                        },
-                        async (request) =>
-                          actionApproval(
-                            request.auth!,
-                            request.params.id,
-                            request.params.actionId,
-                            request.body.edits,
-                          ),
-                      );
-                    }
-                    if (files.length !== labels.length)
-                      throw new AppError(
-                        'PHOTO_LABEL_COUNT_MISMATCH',
-                        'Each inspection photo requires one label',
-                        400,
-                      );
-                    const result = await inspection.upload(
-                      request.auth!,
-                      request.params.id,
-                      request.query.batchCode,
-                      files.map((file, index) => ({ ...file, label: labels[index]! })),
-                      labels,
-                    );
-                    return reply.status(202).send(result);
-                  },
-                );
-              }
             }
           }
           if (files.length !== labels.length)
@@ -336,6 +257,83 @@ export function createCoreRoutes(options: {
             );
         },
       );
+      if (options.inspection) {
+        const inspection = options.inspection;
+        app.post(
+          '/api/shared-causes/:id/inspections',
+          {
+            preHandler: requireAuth('merchant'),
+            schema: {
+              tags: ['Shared Causes'],
+              security: bearer,
+              summary: 'Upload merchant-owned inspection photos',
+              params: z.object({ id: UuidSchema }),
+              querystring: z.object({ batchCode: z.string().min(1).max(255) }),
+              response: {
+                202: z.object({
+                  photoShas: z.array(z.string().regex(/^[a-f0-9]{64}$/)),
+                  requiredPhotoLabel: z.string(),
+                }),
+                ...errors,
+              },
+            },
+          },
+          async (request, reply) => {
+            const files: Array<{ bytes: Buffer; mime: string }> = [];
+            const labels: string[] = [];
+            for await (const part of request.parts()) {
+              if (part.type === 'file')
+                files.push({ bytes: await part.toBuffer(), mime: part.mimetype });
+              else if (part.fieldname === 'labels') labels.push(String(part.value));
+            }
+            if (files.length !== labels.length)
+              throw new AppError(
+                'PHOTO_LABEL_COUNT_MISMATCH',
+                'Each inspection photo requires one label',
+                400,
+              );
+            const result = await inspection.upload(
+              request.auth!,
+              request.params.id,
+              request.query.batchCode,
+              files.map((file, index) => ({ ...file, label: labels[index]! })),
+              labels,
+            );
+            return reply.status(202).send(result);
+          },
+        );
+      }
+      if (options.actionApproval) {
+        const actionApproval = options.actionApproval;
+        app.post(
+          '/api/shared-causes/:id/actions/:actionId/approve',
+          {
+            preHandler: requireAuth('merchant'),
+            schema: {
+              tags: ['Shared Causes'],
+              security: bearer,
+              summary: 'Approve a merchant-owned shared-cause action',
+              params: z.object({ id: UuidSchema, actionId: UuidSchema }),
+              body: z.object({ edits: z.record(z.string(), z.unknown()).optional() }).strict(),
+              response: {
+                200: z.object({
+                  status: z.literal('approved'),
+                  actionId: UuidSchema,
+                  approvedAt: z.iso.datetime(),
+                }),
+                ...errors,
+              },
+            },
+          },
+          async (request) =>
+            actionApproval(
+              request.auth!,
+              request.params.id,
+              request.params.actionId,
+              request.body.edits,
+            ),
+        );
+      }
       app.post(
         '/api/orders/:id/pack/override',
         {
