@@ -61,6 +61,40 @@ if (!databaseUrl) {
     if (!login.ok) throw new Error(`demo login returned ${login.status}`);
     const loginBody = (await login.json()) as { token?: string };
     if (!loginBody.token) throw new Error('demo login did not return a token');
+    const mcpHeaders = {
+      authorization: `Bearer ${loginBody.token}`,
+      'content-type': 'application/json',
+    };
+    const initialize = await fetch(`${configuration.appBaseUrl}/mcp`, {
+      method: 'POST',
+      headers: mcpHeaders,
+      body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'initialize' }),
+    });
+    if (!initialize.ok)
+      throw new Error(`authenticated MCP initialize returned ${initialize.status}`);
+    const initializeBody = (await initialize.json()) as {
+      result?: { protocolVersion?: string; capabilities?: unknown };
+    };
+    if (initializeBody.result?.protocolVersion !== '2025-03-26')
+      throw new Error('MCP initialize returned an unexpected protocol version');
+
+    const toolsList = await fetch(`${configuration.appBaseUrl}/mcp`, {
+      method: 'POST',
+      headers: mcpHeaders,
+      body: JSON.stringify({ jsonrpc: '2.0', id: 3, method: 'tools/list' }),
+    });
+    if (!toolsList.ok) throw new Error(`authenticated MCP tools/list returned ${toolsList.status}`);
+    const toolsBody = (await toolsList.json()) as {
+      result?: { tools?: Array<{ name?: string }> };
+    };
+    const toolNames = new Set(toolsBody.result?.tools?.map((tool) => tool.name));
+    for (const name of [
+      'search_catalog',
+      'get_store_report',
+      'get_order_proof',
+      'provide_dispute_evidence',
+    ])
+      if (!toolNames.has(name)) throw new Error(`MCP tools/list is missing ${name}`);
 
     console.log(
       JSON.stringify({
@@ -69,6 +103,8 @@ if (!databaseUrl) {
         openapi: 'PASS',
         unauthenticatedMcp: 'PASS',
         demoLogin: 'PASS',
+        authenticatedMcpInitialize: 'PASS',
+        authenticatedMcpToolsList: 'PASS',
         paypalRequests: 0,
         acceptance: 'A1-A14 NOT RUN',
       }),

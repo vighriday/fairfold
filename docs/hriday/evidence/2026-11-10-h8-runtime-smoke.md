@@ -6,6 +6,8 @@
 - `/docs/json` contains `/healthz`, `/mcp` and demo-login routes.
 - Unauthenticated `POST /mcp` returns 401.
 - Agent demo login returns a token.
+- Authenticated MCP `initialize` returns protocol version `2025-03-26`.
+- Authenticated MCP `tools/list` exposes all four expected tools.
 
 Observed on 10 November 2026:
 
@@ -16,6 +18,8 @@ Observed on 10 November 2026:
   "openapi": "PASS",
   "unauthenticatedMcp": "PASS",
   "demoLogin": "PASS",
+  "authenticatedMcpInitialize": "PASS",
+  "authenticatedMcpToolsList": "PASS",
   "paypalRequests": 0,
   "acceptance": "A1-A14 NOT RUN"
 }

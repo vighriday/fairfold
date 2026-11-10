@@ -21,6 +21,7 @@ All authored work in this checkout is on `Hriday`. Entries distinguish documenta
 - Added an injected authenticated MCP transport for the shopper policy loop. It validates JSON-RPC tool results, preserves explicit MCP error codes, requires a bearer token, and keeps the transport independent of model/provider execution.
 - Added PostgreSQL-backed end-to-end coverage that drives the shopper policy through the authenticated MCP route and verifies the sandbox context passed to checkout.
 - Replaced the dead `pnpm test:e2e` placeholder with an isolated local runtime smoke harness. It starts the assembled runtime, checks health/OpenAPI/authentication boundaries and reports A1–A14 as NOT RUN rather than mislabeling local smoke as acceptance.
+- Extended the runtime smoke harness through authenticated MCP initialization and tool discovery, asserting the protocol version and all four exposed tool names.
 - Added PostgreSQL coverage for photo persistence, inspection queue publication and concurrent sealing. **192 database tests passed**; typecheck, targeted lint and formatting passed. I2 attestation/actions, real PayPal tracking and A6/A7/A11 remain **NOT RUN**.
 
 ## 2026-11-10 — H4 approved action execution
