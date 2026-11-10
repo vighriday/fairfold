@@ -115,3 +115,29 @@ Status: **DEFERRED BY USER; NOT RUN**. The user confirmed accounts do not curren
 - When `AI_EMBEDDING_PROVIDER` / `AI_MODEL_EMBEDDING` and its key are not set, `readComplaint` embeds the extracted `category | component | failure_mode` string with a deterministic local feature-hashed bag of stemmed words (`localEmbedding`, 256 dimensions), and logs `embedding: local`. A configured OpenAI or Google embedding model always takes precedence.
 - The clustering eval reports which embedding it used; the 0.80 threshold still applies (raise `CLUSTER_SIMILARITY` if precision falls below 0.85).
 - Contract change: none.
+
+### I-D8 — Hypothesis explanation, headline and cluster label are written by code — 2026-11-10
+- Section 11 calls `HypothesisDetail.explanation` "model-written, from the stats only", but none of section 10's five model components produces it. Code writes it from `HypothesisStats` alone (`sharedCause/wording.ts`): counts, rate ratio, p, q, tests run, median days since delivery, spread and the listing-change flag. No model call, so no number can be invented.
+- The cluster label is `component: failure_mode` from the first member's extraction (else the category). Model-extracted phrases are reduced to at most 60 plain characters before they reach the Message Drafter prompt or a buyer message.
+- Contract change: none.
+
+### I-D9 — A dispute that joins a live hypothesis gets its pack rebuilt — 2026-11-10
+- `dispute.synced` builds the first pack before the Complaint Reader and the debounced scan have placed the dispute's complaint in a cluster, so that first pack cannot see the hypothesis. After a scan, every open dispute whose complaint was newly clustered with an open or confirmed hypothesis (or whose cluster's hypothesis is new) is sent to `evidence.rebuild`, which supersedes the earlier draft with `inspect_first`. Maya's live dispute therefore shows `inspect_first` about a minute after it syncs.
+- Contract change: none.
+
+### I-D10 — Buyer message drafts: one per buyer, level kept in the action payload — 2026-11-10
+- `send_buyer_messages` carries `{ messageIds, level }`; `level` (`suspected` | `confirmed`) is additive and lets re-scans skip buyers already drafted at that level, so scans stay idempotent. Orders without a buyer get no draft (an in-app message needs a recipient). Drafts go to the hypothesis's in-transit and delivered-without-complaint orders (section 9 stage 5).
+- Contract change: additive field in an action payload.
+
+### I-D11 — Confirm, dismiss and trend details — 2026-11-10
+- Confirm counts one inspected unit per inspection attestation; a unit is defective when its `inspection.defectVisible` and `inspection.matchesCluster` are both true. With no defective unit, 409 `NO_DEFECTIVE_UNIT` carries `{ inspected, defective, clean, suggestDismiss }`; `suggestDismiss` is true at ten or more clean units. `HypothesisDetail` has no field for the suggestion, so it lives in that error.
+- Dismiss accepts open or confirmed hypotheses. The `{ reason }` has no column, so it is stored in the proposed `release_orders` payload (`{ orderIds, reason }`) and in the result of every still-proposed action, which dismiss withdraws (`status: failed`, `result: { withdrawn: 'hypothesis_dismissed', reason }`) so nothing is approved for a dismissed cause. A re-scan never reopens a dismissed hypothesis.
+- A superseded hypothesis is history: endpoint 22 leaves it out and endpoint 23 answers 409 `HYPOTHESIS_SUPERSEDED` (its status is not in `HypothesisDetail`'s enum).
+- Trend `rate` is complaints per order-day of exposure, exactly as stage 4 counts them; weeks are ISO weeks of delivery (of shipping for transit categories), keyed by their Monday.
+- Contract change: none.
+
+### I-D12 — Shared Cause and report-problem routes — 2026-11-10
+- Endpoint 22 takes the merchant from the token. A1 calls it with `?merchantId=`; the parameter is accepted and must equal the token's merchant (403 otherwise).
+- Endpoint 32 accepts files in `photos` or `photos[]` (at most 4, else 400 `TOO_MANY_PHOTOS`) and a required `text`; only the buyer's own paid order (captured or later) can be reported. Photos go through `blobs.put`, so its JPEG/PNG and size checks apply. No ledger entry is written for a report (section 8 names none).
+- Clustering precision on `complaints.json` (task I6 gate) needs the real model's extractions and is measured in I7's eval run; it is NOT RUN as of this entry because no provider key is configured locally.
+- Contract change: none.

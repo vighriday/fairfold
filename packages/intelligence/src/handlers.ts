@@ -5,6 +5,7 @@ import { rebuildPacks, syncDispute } from './dispute/handlers.js';
 import { createEvidenceHandlers } from './evidence/handlers.js';
 import { buildStoreReportWith } from './storeReport/index.js';
 import { dbEvidenceStore } from './evidence/store.js';
+import { sharedCauseHandlers } from './sharedCause/handlers.js';
 import { getIntelRuntime, type IntelRuntime } from './runtime.js';
 
 /** Builds the handler map; `runtime` is resolved per job so the worker can import before the environment loads. */
@@ -26,6 +27,7 @@ export function createHandlers(runtime: () => IntelRuntime): HandlerMap {
     'storereport.refresh': async ({ merchantId }) => {
       await buildStoreReportWith(runtime(), merchantId);
     },
+    ...sharedCauseHandlers(runtime),
   };
 }
 

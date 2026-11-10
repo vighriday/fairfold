@@ -27,10 +27,16 @@ export {
 } from './storeReport/index.js';
 export { searchCatalog, searchCatalogWith } from './catalog.js';
 export { upsertComplaint } from './complaints/create.js';
+export { reportProblem } from './complaints/report.js';
 export { buildEvidencePack, buildEvidencePackWith } from './dispute/build.js';
 export type { EvidencePackResult } from './dispute/build.js';
 export { decide } from './dispute/decide.js';
 export type { Decision, DisputeFacts } from './dispute/decide.js';
+export { readComplaint, runSharedCauseScan, sweepSharedCauses } from './sharedCause/scan.js';
+export { draftBuyerMessages } from './sharedCause/actions.js';
+export { confirmHypothesis, dismissHypothesis, inspectionCounts } from './sharedCause/confirm.js';
+export { hypothesisTrend } from './sharedCause/trend.js';
+export { hypothesisDetail, listHypotheses } from './sharedCause/views.js';
 export {
   packPdfForMerchant,
   rebuildPackForMerchant,
