@@ -368,6 +368,12 @@ importers:
         specifier: 4.6.7
         version: 4.6.7
 
+  packages/shopper:
+    dependencies:
+      '@fairfold/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+
 packages:
 
   '@cacheable/memory@2.2.0':
