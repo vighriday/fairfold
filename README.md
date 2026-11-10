@@ -68,6 +68,7 @@ Without a key, every AI step uses its fixed fallback and the rest of the app sti
 ```sh
 pnpm test              # offline unit and API tests; no network
 pnpm test:db           # adds PostgreSQL integration tests (needs TEST_DATABASE_URL, an isolated *test database)
+pnpm --filter @fairfold/intelligence test:db   # the intelligence package's unit and PostgreSQL tests
 pnpm typecheck
 pnpm lint
 pnpm --filter @fairfold/intelligence eval                 # prints the evaluation table
@@ -80,12 +81,14 @@ Evaluation results measured on 10 November 2026 (details and method in [docs/ai-
 
 | Set                                         | Target                 | Result                                                           |
 | ------------------------------------------- | ---------------------- | ---------------------------------------------------------------- |
-| 24 complaint texts, 3 true clusters + noise | Precision ≥ 0.85       | 1.00 over 45 grouped pairs (Gemini embeddings)                   |
+| 24 complaint texts, 3 true clusters + noise | Precision ≥ 0.85       | 1.00 over 45 grouped pairs (Gemini embeddings); re-run pending\* |
 | 8 scripted disputes                         | 8 of 8                 | 8 of 8                                                           |
 | 30 synthetic buyer profiles                 | 30 of 30               | 30 of 30                                                         |
 | Batch B17 scenario (unit fixture)           | B17, strong            | B17, strong: rate ratio 30, p 0.000129, q 0.00154                |
 | Same volume, no defect                      | No hypothesis          | No hypothesis                                                    |
 | 20 packing-photo sets                       | ≥ 18 of 20; ≥ 16 of 20 | Not measured yet (free-tier quota; current photos are synthetic) |
+
+\* Measured before the cluster centroid became the exact normalised mean of its members ([DECISIONS.md](DECISIONS.md) I-D24); re-run the evaluation before quoting it.
 
 ## Data and labels
 
