@@ -51,13 +51,22 @@ import {
 
 export const SCAN_DEBOUNCE_SECONDS = 60;
 
-/** Embeds texts in one request (batched by the provider's limit), in input order. */
-async function embedTexts(rt: IntelRuntime, texts: string[]): Promise<number[][]> {
+/**
+ * Embeds texts in one request (batched by the provider's limit), in input order. null when the request timed out or
+ * was refused: packages/ai has logged it, and the complaints stay unembedded until the next scan embeds them.
+ */
+async function embedTexts(rt: IntelRuntime, texts: string[]): Promise<number[][] | null> {
   if (!texts.length) return [];
   const model =
     rt.models.embedding ??
     (hasModelConfig('embedding', rt.env) ? getModel('embedding', rt.env) : null);
-  if (model) return embed(texts, { model, component: 'complaint_reader' });
+  if (model) {
+    try {
+      return await embed(texts, { model, component: 'complaint_reader' });
+    } catch {
+      return null;
+    }
+  }
   // DECISIONS.md I-D7: no embedding provider configured (xAI has none), so embed locally.
   logAi({
     event: 'ai_embed',
@@ -69,14 +78,15 @@ async function embedTexts(rt: IntelRuntime, texts: string[]): Promise<number[][]
   return texts.map(localEmbedding);
 }
 
-async function embedOne(rt: IntelRuntime, text: string): Promise<number[]> {
-  return (await embedTexts(rt, [text]))[0]!;
+async function embedOne(rt: IntelRuntime, text: string): Promise<number[] | null> {
+  return (await embedTexts(rt, [text]))?.[0] ?? null;
 }
 
 /**
  * complaint.created (F5 step 1): Complaint Reader → extraction; code sets the item and product (single-item
  * orders directly, else the item the text names, else the first), embeds "category | component | failure_mode",
- * saves, then schedules a debounced scan for the merchant. A complaint's cluster is never changed here.
+ * saves, then schedules a debounced scan for the merchant. A complaint's cluster is never changed here. A failed
+ * embedding request does not fail the job: the extraction is saved and the scan embeds the complaint later.
  */
 export async function readComplaintWith(
   rt: IntelRuntime,
@@ -181,8 +191,9 @@ export function toHypothesis(row: HypothesisRow): Hypothesis {
 
 /**
  * Read complaints without an embedding — the seed's pre-read rows (section 19 fixtures, model 'seed'), stored with
- * their extraction and no complaint.created — are embedded together in one request before grouping, so seeding
- * makes no Complaint Reader call and one embedding request. Category other never groups, so it is not embedded.
+ * their extraction and no complaint.created, and reads whose embedding request failed — are embedded together in one
+ * request before grouping, so seeding makes no Complaint Reader call and one embedding request. Category other never
+ * groups, so it is not embedded. If the request fails, the scan goes on without them.
  */
 async function embedMissing(rt: IntelRuntime, rows: ComplaintRow[]): Promise<ComplaintRow[]> {
   const missing = rows.flatMap((r) => {
@@ -194,6 +205,7 @@ async function embedMissing(rt: IntelRuntime, rows: ComplaintRow[]): Promise<Com
     rt,
     missing.map((m) => m.text),
   );
+  if (!vectors) return rows;
   const byId = new Map(missing.map((m, i) => [m.id, vectors[i]!]));
   await rt.db.transaction(async (tx) => {
     for (const [id, embedding] of byId)

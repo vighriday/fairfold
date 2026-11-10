@@ -235,3 +235,9 @@ Status: **DEFERRED BY USER; NOT RUN**. The user confirmed accounts do not curren
 - `runSharedCauseScan` now embeds every read complaint without an embedding (category `other` excepted) in one `embed()` request before grouping, and stores the vectors. Seeding therefore makes no Complaint Reader call and one embedding request (none when the local embedding is used). The seed's vectors come from the same embedding model as the live complaints, so Maya's live dispute is compared in the same space. The same step re-embeds a complaint whose embedding was never stored.
 - The scan's own proposals still cost what they cost: one Message Drafter call for the suspected template (I-D10) and none for the themes when the reviews are unchanged (I-D25).
 - Contract change: additive fields in Ishaan's fixture JSON.
+
+### I-D27 — Embeddings follow the same timeout and no-retry policy as other model calls — 2026-11-10
+- `generateStructured` had a 30-second timeout and retried only schema failures (I-D15), but `embed()` called `embedMany` with the AI SDK defaults: no timeout and two automatic retries, so a 429 quota refusal cost three embedding requests and a hung provider could hold a `complaint.created` job indefinitely.
+- `embed()` now makes one attempt with `maxRetries: 0` and a 30-second abort (`MODEL_TIMEOUT_MS`), and logs every call with `ok`, latency, count and, on failure, the error name and HTTP status, like `ai_call` lines. A failure is thrown: an embedding has no meaningful fallback (a local vector lives in another space and would not group with the rest).
+- Callers degrade instead of failing: the Complaint Reader saves the extraction with no embedding and still schedules the scan; the scan leaves complaints whose embedding request failed ungrouped and goes on. The next scan embeds them in its single batched request (I-D26).
+- Contract change: none.

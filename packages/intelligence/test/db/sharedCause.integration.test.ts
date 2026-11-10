@@ -14,6 +14,7 @@ import { createHandlers } from '../../src/handlers.js';
 import { setIntelRuntime } from '../../src/runtime.js';
 import { readComplaintWith, runSharedCauseScanWith } from '../../src/sharedCause/scan.js';
 import { readFileSync } from 'node:fs';
+import { APICallError } from 'ai';
 import { MockEmbeddingModelV4 } from 'ai/test';
 import { LOCAL_EMBEDDING_DIM, localEmbedding } from '../../src/sharedCause/reader.js';
 import { mockModel } from '../helpers/mockModel.js';
@@ -247,6 +248,68 @@ describe.skipIf(!dbUrl)('shared cause scan against Postgres', () => {
       .from(actions)
       .where(and(eq(actions.hypothesis_id, h!.id), eq(actions.type, 'add_inspection_rule')));
     expect(rule!.payload).toMatchObject({ batchCode: 'B17', requiredPhotoLabel: 'eyelet_closeup' });
+  });
+
+  it('an embedding request that fails keeps the extraction; a later scan embeds the complaint', async () => {
+    const w = await buildWorld(database.db, NOW);
+    const refusing = new MockEmbeddingModelV4({
+      provider: 'mock',
+      modelId: 'refusing-embedding',
+      doEmbed: async () => {
+        throw new APICallError({
+          message: 'quota exceeded',
+          url: 'https://example.invalid/embed',
+          requestBodyValues: {},
+          statusCode: 429,
+          isRetryable: true,
+        });
+      },
+    });
+    const { runtime, jobs } = testRuntime(database.db, {
+      clock: fixedClock(NOW),
+      models: { text: mockModel([SEAM]).model, embedding: refusing },
+    });
+    const { id } = await upsertComplaint(runtime, {
+      merchantId: w.merchant.id,
+      orderId: w.world[0]!.id,
+      buyerId: null,
+      source: 'buyer_report',
+      sourceRef: 'report-embed',
+      text: 'The sleeve seam came apart.',
+    });
+
+    await expect(readComplaintWith(runtime, id)).resolves.toMatchObject({
+      category: 'product_defect',
+    });
+    const [read] = await database.db.select().from(complaints).where(eq(complaints.id, id));
+    expect(read!.extracted).toMatchObject({ component: 'sleeve seam' });
+    expect(read!.embedding).toBeNull();
+    expect(jobs.debounced).toHaveLength(1);
+    expect(refusing.doEmbedCalls).toHaveLength(1); // no retry
+
+    // the scan still runs while embeddings are refused; the complaint simply waits ungrouped
+    const [h] = await runSharedCauseScanWith(runtime, w.merchant.id);
+    expect(h).toMatchObject({ value: 'B17' });
+    expect(refusing.doEmbedCalls).toHaveLength(2);
+
+    // once the embedding model answers, the next scan embeds and groups it
+    const embedding = new MockEmbeddingModelV4({
+      provider: 'mock',
+      modelId: 'mock-embedding',
+      maxEmbeddingsPerCall: 100,
+      doEmbed: async ({ values }) => ({
+        embeddings: values.map((v) => localEmbedding(v)),
+        warnings: [],
+      }),
+    });
+    const { runtime: later } = testRuntime(database.db, {
+      clock: fixedClock(NOW),
+      models: { embedding },
+    });
+    await runSharedCauseScanWith(later, w.merchant.id);
+    const [embedded] = await database.db.select().from(complaints).where(eq(complaints.id, id));
+    expect(embedded!.embedding).toHaveLength(LOCAL_EMBEDDING_DIM);
+    expect(embedded!.cluster_id).not.toBeNull();
   });
 
   it('a single safety-severity complaint raises safety_complaint as soon as it is read, once (section 12)', async () => {
