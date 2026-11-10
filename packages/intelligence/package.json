@@ -10,6 +10,7 @@
   },
   "scripts": {
     "eval": "tsx --env-file-if-exists=../../.env eval/run.ts",
+    "cost": "tsx eval/cost.ts",
     "photos:synthetic": "tsx eval/synthetic-photos.ts",
     "test:db": "tsx scripts/test-db.ts"
   },
