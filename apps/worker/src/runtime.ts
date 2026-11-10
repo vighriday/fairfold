@@ -166,6 +166,8 @@ export function createWorkerRuntime(
           if (closing) throw new AppError('WORKER_CLOSED', 'Worker closed during startup');
           await jobs.register(handlers);
           await jobs.schedule('watchdog.sweep', '*/15 * * * *', {});
+          // Section 8 F5: the nightly shared-cause sweep at 02:00 IST (it queues one scan per merchant).
+          await jobs.schedule('sharedcause.sweep', '0 2 * * *', {}, 'Asia/Kolkata');
           const schedules = await refreshSchedules();
           timer = setInterval(() => {
             void refreshSchedules().catch(() =>

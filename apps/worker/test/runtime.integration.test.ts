@@ -97,6 +97,21 @@ describe.skipIf(!url)('H3 normal worker lifecycle with actual pg-boss', () => {
       await worker.close();
     }
   });
+  it('schedules the nightly shared-cause sweep at 02:00 IST (section 8)', async () => {
+    const { worker } = runtime();
+    try {
+      await worker.start();
+      expect(await worker.jobs.boss.getSchedules('sharedcause.sweep')).toEqual([
+        expect.objectContaining({
+          name: 'sharedcause.sweep',
+          cron: '0 2 * * *',
+          timezone: 'Asia/Kolkata',
+        }),
+      ]);
+    } finally {
+      await worker.close();
+    }
+  });
   it('handles closing during startup without leaking a queue or refresh timer', async () => {
     const { worker } = runtime(),
       started = worker.start(),
