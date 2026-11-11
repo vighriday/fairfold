@@ -9,11 +9,13 @@ import {
   orders,
   shipments,
   type Database,
+  withTransaction,
 } from '@fairfold/db';
 import { createBlobStore, inspectImage } from '@fairfold/ledger';
 import { createLedger } from '@fairfold/ledger';
 import type { Jobs } from '@fairfold/jobs';
 import type { AuthContext } from '../auth.js';
+import { redactDisputeText } from '@fairfold/paypal';
 
 const PhotoLabels = new Set(['item', 'size_label', 'batch_label', 'sealed_parcel', 'seam_closeup']);
 const CarrierPattern = /^[A-Z0-9_]{1,64}$/;
@@ -43,7 +45,7 @@ function hasPassingInspection(
   latest: typeof attestations.$inferSelect | undefined,
   rule: typeof inspection_rules.$inferSelect | undefined,
 ): boolean {
-  if (!latest || !rule || latest.step !== 'inspection' || latest.status !== 'match') return false;
+  if (!latest || !rule) return false;
   const result = asJsonObject(latest.result);
   const inspection = result.inspection;
   if (!inspection || typeof inspection !== 'object' || Array.isArray(inspection)) return false;
@@ -94,7 +96,7 @@ export function createPackingService(options: {
       const [latest] = await options.database.db
         .select()
         .from(attestations)
-        .where(eq(attestations.order_id, orderId))
+        .where(and(eq(attestations.order_id, orderId), eq(attestations.step, 'pack')))
         .orderBy(desc(attestations.created_at))
         .limit(1);
       const productIds = items.map((item) => item.productId);
@@ -129,7 +131,14 @@ export function createPackingService(options: {
             )
         : [];
       const rule = rules[0];
-      const blockers = await this.blockers(order, latest, rule, false);
+      const blockers = await this.blockers(order, latest, rule);
+      if (
+        latest &&
+        photos.at(-1) &&
+        !latest.photo_shas.includes(photos.at(-1)!.sha256) &&
+        !blockers.includes('ATTESTATION_MISMATCH')
+      )
+        blockers.push('ATTESTATION_MISMATCH');
       const attestationStatus: 'match' | 'mismatch' | 'could_not_verify' | null = latest
         ? latest.status === 'match' ||
           latest.status === 'mismatch' ||
@@ -161,7 +170,7 @@ export function createPackingService(options: {
             }
           : null,
         batches,
-        canSeal: blockers.length === 0,
+        canSeal: blockers.length === 0 && ['captured', 'packing'].includes(order.status),
         blockers,
       };
     },
@@ -193,13 +202,26 @@ export function createPackingService(options: {
             'Batch code references another order item',
             409,
           );
+      if (!items.length || items.some((item) => !input.batchCodes[item.id]?.trim()))
+        throw new AppError('BATCH_CODE_REQUIRED', 'Every order item requires a batch code', 400);
+      const rules = await options.database.db.select().from(inspection_rules).where(and(
+        eq(inspection_rules.merchant_id, merchant), eq(inspection_rules.active, true),
+        inArray(inspection_rules.batch_code, Object.values(input.batchCodes)),
+      ));
+      const allowedLabels = new Set([...PhotoLabels, ...rules.map((rule) => rule.required_photo_label)]);
       const stored: Array<{ hash: string; label: string }> = [];
-      const database = options.database.db;
-      await database.transaction(async (tx) => {
+      await withTransaction(options.database, async (tx, queueDb) => {
+        const [current] = await tx
+          .select()
+          .from(orders)
+          .where(and(eq(orders.id, orderId), eq(orders.merchant_id, merchant)))
+          .for('update');
+        if (!current || !['captured', 'packing'].includes(current.status))
+          throw new AppError('PACK_STATE_CONFLICT', 'Only captured orders can be packed', 409);
         const blobs = createBlobStore(tx, clock);
         const ledger = createLedger(tx, clock);
         for (const photo of input.photos) {
-          if (!PhotoLabels.has(photo.label))
+          if (!allowedLabels.has(photo.label))
             throw new AppError('PHOTO_LABEL_INVALID', 'Photo label is not supported', 400);
           const inspected = await inspectImage(photo.bytes, photo.mime, clock);
           if (inspected.exifOutsideWindow)
@@ -209,6 +231,9 @@ export function createPackingService(options: {
               422,
             );
           const hash = await blobs.put(photo.bytes, photo.mime);
+          await tx.execute(
+            sql`select pg_advisory_xact_lock(hashtextextended(${merchant + ':' + hash}, 0))`,
+          );
           const reused = await blobs.photoUsedByMerchant(hash, merchant);
           if (reused.some((id) => id !== orderId))
             throw new AppError(
@@ -220,7 +245,7 @@ export function createPackingService(options: {
             type: 'photo',
             actor: actor(merchant),
             blob_sha256: hash,
-            payload: { label: photo.label },
+            payload: { label: photo.label, batchCodes: input.batchCodes },
           });
           stored.push({ hash, label: photo.label });
         }
@@ -233,7 +258,7 @@ export function createPackingService(options: {
             labels: stored.map((photo) => photo.label),
             batchCodes: input.batchCodes,
           },
-          { db: { executeSql: (query, values) => options.database.pool.query(query, values) } },
+          { db: queueDb },
         );
         if (!jobId)
           throw new AppError(
@@ -258,7 +283,7 @@ export function createPackingService(options: {
       const [latest] = await options.database.db
         .select()
         .from(attestations)
-        .where(eq(attestations.order_id, orderId))
+        .where(and(eq(attestations.order_id, orderId), eq(attestations.step, 'pack')))
         .orderBy(desc(attestations.created_at))
         .limit(1);
       if (!latest || latest.status === 'match')
@@ -270,7 +295,7 @@ export function createPackingService(options: {
       await createLedger(options.database.db, clock).append(orderId, {
         type: 'override',
         actor: actor(merchant),
-        payload: { reason: reason.trim(), attestationId: latest.id },
+        payload: { reason: redactDisputeText(reason.trim()), attestationId: latest.id },
       });
       return { status: 'overridden' as const };
     },
@@ -306,7 +331,7 @@ export function createPackingService(options: {
         throw new AppError('TRACKING_NUMBER_INVALID', 'Tracking number is invalid', 400);
       if (!input.packer.trim() || input.packer.length > 255)
         throw new AppError('PACKER_INVALID', 'Packer is invalid', 400);
-      const result = await options.database.db.transaction(async (tx) => {
+      const result = await withTransaction(options.database, async (tx, queueDb) => {
         const [order] = await tx
           .select()
           .from(orders)
@@ -324,6 +349,8 @@ export function createPackingService(options: {
         const items = await tx.select().from(order_items).where(eq(order_items.order_id, orderId));
         if (!items.length || items.some((item) => !input.batchCodes[item.id]))
           throw new AppError('BATCH_MISMATCH', 'Every order item must have a batch code', 409);
+        if (Object.keys(input.batchCodes).some((id) => !items.some((item) => item.id === id)))
+          throw new AppError('BATCH_MISMATCH', 'Batch code references another order item', 409);
         const codes = items.map((item) => input.batchCodes[item.id]!);
         const batches = await tx
           .select()
@@ -334,18 +361,27 @@ export function createPackingService(options: {
               inArray(inventory_batches.batch_code, codes),
             ),
           )
+          .orderBy(inventory_batches.id)
           .for('update');
+        const required = new Map<string, number>();
         for (const item of items) {
           const batch = batches.find(
             (candidate) => candidate.batch_code === input.batchCodes[item.id],
           );
-          if (!batch || batch.status !== 'active' || batch.qty_remaining < item.quantity)
+          if (
+            !batch ||
+            batch.product_id !== item.product_id ||
+            !['active', 'on_hold'].includes(batch.status)
+          )
             throw new AppError('NO_STOCK', 'The selected batch cannot fulfil this order', 409);
+          required.set(batch.id, (required.get(batch.id) ?? 0) + item.quantity);
         }
+        if (batches.some((batch) => batch.qty_remaining < (required.get(batch.id) ?? 0)))
+          throw new AppError('NO_STOCK', 'The selected batch cannot fulfil this order', 409);
         const [latest] = await tx
           .select()
           .from(attestations)
-          .where(eq(attestations.order_id, orderId))
+          .where(and(eq(attestations.order_id, orderId), eq(attestations.step, 'pack')))
           .orderBy(desc(attestations.created_at))
           .limit(1);
         const rules = await tx
@@ -359,8 +395,69 @@ export function createPackingService(options: {
             ),
           );
         const blockers = await this.blockers(order, latest, rules[0], true, tx);
+        for (const rule of rules.slice(1))
+          if (!hasPassingInspection(latest, rule) && !blockers.includes('INSPECTION_REQUIRED'))
+            blockers.push('INSPECTION_REQUIRED');
+        const photoRows = await tx
+          .select()
+          .from(ledger_entries)
+          .where(and(eq(ledger_entries.order_id, orderId), eq(ledger_entries.type, 'photo')))
+          .orderBy(desc(ledger_entries.seq));
+        if (
+          !latest ||
+          !latest.photo_shas.length ||
+          (photoRows[0]?.blob_sha256 && !latest.photo_shas.includes(photoRows[0].blob_sha256)) ||
+          photoRows.some((photo) => photo.server_time > latest.created_at)
+        ) {
+          if (!blockers.includes('ATTESTATION_MISMATCH')) blockers.push('ATTESTATION_MISMATCH');
+        }
+        if (latest) {
+          const covered = photoRows.filter(
+            (photo) => photo.blob_sha256 && latest.photo_shas.includes(photo.blob_sha256),
+          );
+          if (latest.photo_shas.some((sha) => !covered.some((photo) => photo.blob_sha256 === sha)))
+            blockers.push('ATTESTATION_MISMATCH');
+          if (
+            covered.some((photo) => {
+              const payload = asJsonObject(photo.payload);
+              const uploaded = payload.batchCodes;
+              return (
+                uploaded &&
+                typeof uploaded === 'object' &&
+                items.some(
+                  (item) =>
+                    (uploaded as Record<string, unknown>)[item.id] !== input.batchCodes[item.id],
+                )
+              );
+            })
+          )
+            blockers.push('BATCH_MISMATCH');
+          const result = asJsonObject(latest.result);
+          if (
+            typeof result.batchLabelText === 'string' &&
+            !codes.includes(result.batchLabelText.normalize('NFC').trim())
+          )
+            blockers.push('BATCH_MISMATCH');
+          const label = result.shippingLabel;
+          if (
+            label &&
+            typeof label === 'object' &&
+            'trackingNumberText' in label &&
+            typeof label.trackingNumberText === 'string' &&
+            label.trackingNumberText.trim() !== input.trackingNumber.trim()
+          )
+            blockers.push('TRACKING_LABEL_MISMATCH');
+        }
+        if (
+          batches.some((batch) => batch.status === 'on_hold') &&
+          !rules.length &&
+          !blockers.includes('ORDER_HELD')
+        )
+          blockers.push('ORDER_HELD');
         if (blockers.length)
-          throw new AppError('PACK_BLOCKED', 'Order cannot be sealed', 409, { blockers });
+          throw new AppError(blockers[0]!, 'Order cannot be sealed', 409, {
+            blockers: [...new Set(blockers)],
+          });
         const now = new Date(Math.trunc(clock.now().getTime()));
         for (const item of items) {
           const code = input.batchCodes[item.id]!;
@@ -399,11 +496,10 @@ export function createPackingService(options: {
             shipmentId: shipment!.id,
           },
         });
+        if (!(await options.jobs.publish('tracking.push', { orderId }, { db: queueDb })))
+          throw new AppError('TRACKING_JOB_NOT_CREATED', 'Tracking could not be queued', 503);
         return { orderId, shipmentId: shipment!.id };
       });
-      const jobId = await options.jobs.publish('tracking.push', { orderId });
-      if (!jobId)
-        throw new AppError('TRACKING_JOB_NOT_CREATED', 'Tracking could not be queued', 503);
       return { ...result, status: 'sealed' as const };
     },
 
@@ -416,9 +512,9 @@ export function createPackingService(options: {
         .db,
     ) {
       const blockers: string[] = [];
-      if (order.hold_reason) blockers.push('ORDER_HELD');
+      if (order.hold_reason && !hasPassingInspection(latest, rule)) blockers.push('ORDER_HELD');
       if (rule && !hasPassingInspection(latest, rule)) blockers.push('INSPECTION_REQUIRED');
-      if (includeAttestation && latest && latest.status !== 'match')
+      if (includeAttestation && (!latest || latest.status !== 'match'))
         blockers.push('ATTESTATION_MISMATCH');
       const overrides = await executor
         .select({

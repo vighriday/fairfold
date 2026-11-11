@@ -9,6 +9,7 @@ import {
   evidence_packs,
   merchants,
   migrateDatabase,
+  messages,
 } from '@fairfold/db';
 import { createJobs, type Jobs } from '@fairfold/jobs';
 import { testDatabaseUrl } from '../../../packages/db/test/environment.js';
@@ -63,6 +64,7 @@ describe.skipIf(!integrationUrl)('H2 HTTP contracts with real database/client/qu
       clock: checkoutClock,
       logger: false,
       routes: createCoreRoutes({
+        database: database.db,
         demoMode: config.demoMode,
         checkout: f.service,
         reads: createOrderReads({ database: database.db, computeBuyerSignal }),
@@ -122,6 +124,54 @@ describe.skipIf(!integrationUrl)('H2 HTTP contracts with real database/client/qu
     expect(spec.paths['/api/dev/disputes/{id}/adjudicate'].post.security).toEqual([
       { bearerAuth: [] },
     ]);
+  });
+  it('shows owned ledger proof and only sent buyer messages with stable pagination', async () => {
+    const f = await fixture();
+    const ids = await f.create();
+    const headers = await f.headers('buyer');
+    await f.app.inject({
+      method: 'POST',
+      url: `/api/checkout/orders/${ids.paypalOrderId}/capture`,
+      headers,
+    });
+    await database.db.insert(messages).values([
+      {
+        merchant_id: f.merchant.id,
+        buyer_id: f.buyerId,
+        order_id: ids.orderId,
+        channel: 'in_app',
+        body: 'Sent synthetic message',
+        status: 'sent',
+      },
+      {
+        merchant_id: f.merchant.id,
+        buyer_id: f.buyerId,
+        order_id: ids.orderId,
+        channel: 'in_app',
+        body: 'Private draft',
+        status: 'draft',
+      },
+    ]);
+    const response = await f.app.inject({ url: '/api/buyer/messages?limit=1', headers });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toHaveLength(1);
+    expect(response.body).not.toContain('Private draft');
+    expect(
+      (
+        await f.app.inject({ url: '/api/buyer/messages?cursor=' + response.json()[0].id, headers })
+      ).json(),
+    ).toEqual([]);
+    const proof = await f.app.inject({ url: `/api/orders/${ids.orderId}/ledger`, headers });
+    expect(proof.statusCode).toBe(200);
+    expect(proof.json()).toMatchObject({ verified: true, brokenAtSeq: null });
+    expect(
+      (
+        await f.app.inject({
+          url: `/api/orders/${ids.orderId}/ledger`,
+          headers: await f.headers('buyer', randomUUID()),
+        })
+      ).statusCode,
+    ).toBe(404);
   });
   it('keeps demo adjudication merchant-authenticated and explicitly simulated', async () => {
     const f = await fixture();

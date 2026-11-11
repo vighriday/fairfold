@@ -1,6 +1,12 @@
 import { and, eq } from 'drizzle-orm';
-import { AppError, UuidSchema } from '@fairfold/contracts';
-import { complaint_clusters, createDatabase, hypotheses, inspection_rules } from '@fairfold/db';
+import { AppError, UuidSchema, systemClock, type Clock } from '@fairfold/contracts';
+import {
+  complaint_clusters,
+  createDatabase,
+  hypotheses,
+  inspection_rules,
+  withTransaction,
+} from '@fairfold/db';
 import { createBlobStore, inspectImage } from '@fairfold/ledger';
 import type { Jobs } from '@fairfold/jobs';
 import type { AuthContext } from '../auth.js';
@@ -15,18 +21,19 @@ function merchantId(auth: AuthContext): string {
 export function createInspectionService(options: {
   database: Pick<ReturnType<typeof createDatabase>, 'db' | 'pool'>;
   jobs: Pick<Jobs, 'publish'>;
+  clock?: Clock;
 }) {
   return {
     async upload(
       auth: AuthContext,
       hypothesisId: string,
-      batchCode: string,
+      batchCode: string | undefined,
       photos: InspectionPhoto[],
       labels: string[],
     ) {
       const merchant = merchantId(auth);
       UuidSchema.parse(hypothesisId);
-      if (!batchCode.trim() || batchCode.length > 255)
+      if (batchCode !== undefined && (!batchCode.trim() || batchCode.length > 255))
         throw new AppError('BATCH_CODE_INVALID', 'Batch code is invalid', 400);
       if (photos.length < 1 || photos.length > 6 || photos.length !== labels.length)
         throw new AppError(
@@ -44,31 +51,35 @@ export function createInspectionService(options: {
         .innerJoin(complaint_clusters, eq(complaint_clusters.id, hypotheses.cluster_id))
         .where(and(eq(hypotheses.id, hypothesisId), eq(hypotheses.merchant_id, merchant)));
       if (!hypothesis) throw new AppError('HYPOTHESIS_NOT_FOUND', 'Hypothesis not found', 404);
-      const [rule] = await options.database.db
+      const rules = await options.database.db
         .select()
         .from(inspection_rules)
         .where(
           and(
             eq(inspection_rules.merchant_id, merchant),
-            eq(inspection_rules.batch_code, batchCode.trim()),
+            ...(batchCode ? [eq(inspection_rules.batch_code, batchCode.trim())] : []),
             eq(inspection_rules.created_by_hypothesis_id, hypothesisId),
             eq(inspection_rules.active, true),
           ),
         );
-      if (!rule)
+      if (!rules.length)
         throw new AppError(
           'INSPECTION_RULE_NOT_FOUND',
           'No active inspection rule covers this hypothesis and batch',
           409,
         );
+      if (rules.length !== 1)
+        throw new AppError('BATCH_CODE_REQUIRED', 'Select a batch when multiple inspection rules apply', 400);
+      const rule = rules[0]!;
       const stored: string[] = [];
-      await options.database.db.transaction(async (tx) => {
-        const blobs = createBlobStore(tx);
+      await withTransaction(options.database, async (tx, queueDb) => {
+        const clock = options.clock ?? systemClock;
+        const blobs = createBlobStore(tx, clock);
         for (const [index, photo] of photos.entries()) {
           const label = labels[index]!.trim();
-          if (!label || label.length > 255)
+          if (label !== rule.required_photo_label || photo.label !== label)
             throw new AppError('PHOTO_LABEL_INVALID', 'Inspection photo label is invalid', 400);
-          const inspected = await inspectImage(photo.bytes, photo.mime);
+          const inspected = await inspectImage(photo.bytes, photo.mime, clock);
           if (inspected.exifOutsideWindow)
             throw new AppError(
               'PHOTO_EXIF_STALE',
@@ -79,8 +90,8 @@ export function createInspectionService(options: {
         }
         const jobId = await options.jobs.publish(
           'inspection.uploaded',
-          { hypothesisId, batchCode: batchCode.trim(), photoShas: stored },
-          { db: { executeSql: (query, values) => options.database.pool.query(query, values) } },
+          { hypothesisId, batchCode: rule.batch_code, photoShas: stored },
+          { db: queueDb },
         );
         if (!jobId)
           throw new AppError(

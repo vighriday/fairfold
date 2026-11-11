@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-11 — H5 audit: packing transactions and read surfaces
+
+- Bound packing/inspection jobs to the same checked-out PostgreSQL transaction as their writes. Sealing checks current pack evidence, actual product stock and all fixed blockers; clean inspection can clear a held batch under the source rules.
+- Added owned order proof and merchant/buyer sent-message reads with stable PostgreSQL cursor comparisons. A unique inspection batch can be inferred from its active rule.
+- Validation: typecheck and 18 PostgreSQL/HTTP checks PASS. Provider photo evaluation and real tracking remain pending.
+
 ## 2026-11-11 — H4 audit: canonical dispute API contracts
 
 - Restored source GET `/api/disputes/:id` and POST `/api/disputes/:id/packs/:packId/approve`, with the documented detail envelope and direct approval body.

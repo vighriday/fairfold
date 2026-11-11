@@ -23,6 +23,7 @@ import { type createInspectionService } from '../../packing/inspection.js';
 import { type createSharedCauseActionApproval } from '../../shared-causes/approve-action.js';
 import { type createAlertReads } from '../../alerts/read.js';
 import { type Database } from '@fairfold/db';
+import { createProofMessageRoutes } from './proof-messages.js';
 
 const PayPalOrderIdSchema = z.string().regex(/^[A-Z0-9]{1,36}$/);
 const errors = {
@@ -55,6 +56,7 @@ export function createCoreRoutes(options: {
 }): FastifyPluginAsync {
   return async (server) => {
     const app = server.withTypeProvider<ZodTypeProvider>();
+    if (options.database) await app.register(createProofMessageRoutes(options.database));
     await app.register(
       createDevRoutes(options.demoMode, {
         adjudicate: options.demoAdjudicate,
@@ -276,7 +278,7 @@ export function createCoreRoutes(options: {
               security: bearer,
               summary: 'Upload merchant-owned inspection photos',
               params: z.object({ id: UuidSchema }),
-              querystring: z.object({ batchCode: z.string().min(1).max(255) }),
+              querystring: z.object({ batchCode: z.string().min(1).max(255).optional() }),
               response: {
                 202: z.object({
                   photoShas: z.array(z.string().regex(/^[a-f0-9]{64}$/)),

@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { fixedClock } from '@fairfold/contracts';
 import {
   attestations,
@@ -15,6 +15,7 @@ import {
   orders,
   products,
   shipments,
+  ledger_entries,
 } from '@fairfold/db';
 import { createJobs, type Jobs } from '@fairfold/jobs';
 import { testDatabaseUrl } from '../../../packages/db/test/environment.js';
@@ -149,6 +150,36 @@ describe.skipIf(!integrationUrl)('H5 Pack Station persistence', () => {
     );
   }
 
+  async function attest(
+    f: Awaited<ReturnType<typeof fixture>>,
+    service: ReturnType<typeof createPackingService>,
+    result: Record<string, unknown> = {},
+  ) {
+    const uploaded = await service.uploadPhotos(
+      { role: 'merchant', subjectId: f.merchant.id },
+      f.order.id,
+      {
+        photos: [{ bytes: await photo(), mime: 'image/png', label: 'seam_closeup' }],
+        batchCodes: { [f.item.id]: f.batch.batch_code },
+      },
+    );
+    const [row] = await database.db
+      .insert(attestations)
+      .values({
+        order_id: f.order.id,
+        step: 'pack',
+        photo_shas: uploaded.photoShas,
+        photo_labels: ['seam_closeup'],
+        model: 'synthetic-audit',
+        result,
+        status: 'match',
+        confidence: 1,
+        created_at: clock.now(),
+      })
+      .returning();
+    return row!;
+  }
+
   it('stores normalized photos, publishes one attestation job, and reports exact pack state', async () => {
     const f = await fixture();
     await database.db
@@ -198,6 +229,7 @@ describe.skipIf(!integrationUrl)('H5 Pack Station persistence', () => {
       trackingNumber: '1Z-H5-' + f.order.id.slice(0, 8),
       packer: 'station-1',
     };
+    await attest(f, service);
     const results = await Promise.allSettled([
       service.seal({ role: 'merchant', subjectId: f.merchant.id }, f.order.id, input),
       service.seal({ role: 'merchant', subjectId: f.merchant.id }, f.order.id, input),
@@ -238,5 +270,140 @@ describe.skipIf(!integrationUrl)('H5 Pack Station persistence', () => {
         return data.hypothesisId === f.hypothesis.id && data.batchCode === f.batch.batch_code;
       }),
     ).toBe(true);
+  });
+
+  it('enforces missing attestation, batch/tracking labels and a passing held-order inspection', async () => {
+    const f = await fixture();
+    const service = createPackingService({ database, jobs, clock });
+    const auth = { role: 'merchant' as const, subjectId: f.merchant.id };
+    const input = {
+      batchCodes: { [f.item.id]: f.batch.batch_code },
+      carrier: 'UPS',
+      trackingNumber: 'AUDIT-TRACK',
+      packer: 'station-1',
+    };
+    await expect(service.seal(auth, f.order.id, input)).rejects.toMatchObject({
+      details: {
+        blockers: expect.arrayContaining(['INSPECTION_REQUIRED', 'ATTESTATION_MISMATCH']),
+      },
+    });
+    const row = await attest(f, service, {
+      batchLabelText: 'OTHER-BATCH',
+      shippingLabel: { trackingNumberText: 'OTHER-TRACK' },
+      inspection: { defectVisible: false },
+    });
+    await expect(service.seal(auth, f.order.id, input)).rejects.toMatchObject({
+      details: { blockers: expect.arrayContaining(['BATCH_MISMATCH', 'TRACKING_LABEL_MISMATCH']) },
+    });
+    await database.db
+      .update(attestations)
+      .set({
+        result: {
+          batchLabelText: f.batch.batch_code,
+          shippingLabel: { trackingNumberText: input.trackingNumber },
+          inspection: { defectVisible: false },
+        },
+      })
+      .where(eq(attestations.id, row.id));
+    await database.db
+      .update(orders)
+      .set({ hold_reason: 'Synthetic hold', held_by_hypothesis_id: f.hypothesis.id })
+      .where(eq(orders.id, f.order.id));
+    await database.db
+      .update(inventory_batches)
+      .set({ status: 'on_hold' })
+      .where(eq(inventory_batches.id, f.batch.id));
+    expect(await service.seal(auth, f.order.id, input)).toMatchObject({ status: 'sealed' });
+  });
+
+  it('rolls back photo writes and sealing when their queue insert fails', async () => {
+    const f = await fixture();
+    await database.db
+      .delete(inspection_rules)
+      .where(eq(inspection_rules.batch_code, f.batch.batch_code));
+    const publish = vi.fn<Jobs['publish']>(async () => null);
+    const failing = createPackingService({ database, jobs: { publish }, clock });
+    const auth = { role: 'merchant' as const, subjectId: f.merchant.id };
+    await expect(
+      failing.uploadPhotos(auth, f.order.id, {
+        photos: [{ bytes: await photo(), mime: 'image/png', label: 'item' }],
+        batchCodes: { [f.item.id]: f.batch.batch_code },
+      }),
+    ).rejects.toMatchObject({ code: 'PACK_JOB_NOT_CREATED' });
+    expect(
+      await database.db
+        .select()
+        .from(ledger_entries)
+        .where(eq(ledger_entries.order_id, f.order.id)),
+    ).toHaveLength(0);
+    const service = createPackingService({ database, jobs, clock });
+    await attest(f, service);
+    await expect(
+      failing.seal(auth, f.order.id, {
+        batchCodes: { [f.item.id]: f.batch.batch_code },
+        carrier: 'UPS',
+        trackingNumber: 'AUDIT-ROLLBACK',
+        packer: 'station-1',
+      }),
+    ).rejects.toMatchObject({ code: 'TRACKING_JOB_NOT_CREATED' });
+    expect(
+      await database.db.select().from(shipments).where(eq(shipments.order_id, f.order.id)),
+    ).toHaveLength(0);
+    expect(
+      (
+        await database.db
+          .select()
+          .from(inventory_batches)
+          .where(eq(inventory_batches.id, f.batch.id))
+      )[0]?.qty_remaining,
+    ).toBe(2);
+    expect(
+      (await database.db.select().from(orders).where(eq(orders.id, f.order.id)))[0]?.status,
+    ).toBe('packing');
+  });
+
+  it('rejects stock shared across duplicate items and batches from another product', async () => {
+    const f = await fixture();
+    await database.db
+      .delete(inspection_rules)
+      .where(eq(inspection_rules.batch_code, f.batch.batch_code));
+    const service = createPackingService({ database, jobs, clock });
+    const auth = { role: 'merchant' as const, subjectId: f.merchant.id };
+    const [extra] = await database.db
+      .insert(order_items)
+      .values({
+        order_id: f.order.id,
+        product_id: f.item.product_id,
+        sku: f.item.sku,
+        name: f.item.name,
+        quantity: 2,
+        unit_value: '38.00',
+        listing_version: 'v1',
+      })
+      .returning();
+    const input = {
+      batchCodes: { [f.item.id]: f.batch.batch_code, [extra!.id]: f.batch.batch_code },
+      carrier: 'UPS',
+      trackingNumber: 'STOCK',
+      packer: 'station-1',
+    };
+    await expect(service.seal(auth, f.order.id, input)).rejects.toMatchObject({ code: 'NO_STOCK' });
+    await database.db.delete(order_items).where(eq(order_items.id, extra!.id));
+    const [other] = await database.db
+      .insert(products)
+      .values({
+        merchant_id: f.merchant.id,
+        sku: 'OTHER',
+        name: 'Other',
+        description: 'Synthetic',
+        unit_value: '1.00',
+      })
+      .returning();
+    await database.db
+      .update(inventory_batches)
+      .set({ product_id: other!.id })
+      .where(eq(inventory_batches.id, f.batch.id));
+    delete input.batchCodes[extra!.id];
+    await expect(service.seal(auth, f.order.id, input)).rejects.toMatchObject({ code: 'NO_STOCK' });
   });
 });
