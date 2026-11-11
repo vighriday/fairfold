@@ -1,6 +1,6 @@
 import { createDatabase } from '@fairfold/db';
 import { decodeEncryptionKey } from '@fairfold/contracts';
-import { computeBuyerSignal } from '@fairfold/intelligence';
+import { bindIntelRuntime, computeBuyerSignal } from '@fairfold/intelligence';
 import { createJobs } from '@fairfold/jobs';
 import {
   createPayPalClientFactory,
@@ -28,6 +28,8 @@ import { createMcpRoutes } from './mcp/routes.js';
 export async function createRuntime(config: Config, options: { recording?: OrderRecording } = {}) {
   const database = createDatabase(config.databaseUrl);
   const jobs = createJobs(config.databaseUrl);
+  // The intelligence routes and services use this API's database and queue (DECISIONS.md I-D37).
+  bindIntelRuntime({ db: database.db, jobs });
   try {
     const forMerchant = createPayPalClientFactory({
       credentials: databaseCredentials(database.db),

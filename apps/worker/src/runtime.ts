@@ -1,6 +1,7 @@
 import { AppError, decodeEncryptionKey, type Clock, type HandlerMap } from '@fairfold/contracts';
 import { createDatabase } from '@fairfold/db';
 import { createJobs } from '@fairfold/jobs';
+import { bindIntelRuntime } from '@fairfold/intelligence';
 import { handlers as intelligenceHandlers } from '@fairfold/intelligence/handlers';
 import {
   createPayPalClientFactory,
@@ -54,6 +55,8 @@ export function createWorkerRuntime(
     clock: options.clock,
     onError: () => options.log.error({ code: 'QUEUE_ERROR' }, 'Queue error'),
   });
+  // The intelligence handlers use this worker's database, queue and clock (DECISIONS.md I-D37).
+  bindIntelRuntime({ db: database.db, jobs, clock: options.clock });
   const forMerchant = createPayPalClientFactory({
     credentials: databaseCredentials(database.db),
     encryptionKey,
