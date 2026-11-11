@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-11-12 — Standalone browser build of the landing page and console
+
+- Added `standalone/`: a static browser build of the Claude Design landing page and merchant console. It opens straight from disk or any static server, without the export's in-page unpacking runtime. The original exports are kept unchanged in `standalone/design-export/`. It shows the design's fixed demo data and is not connected to the API.
+- Background: the thread field is drawn with WebGL (2D-canvas fallback). The frame loop no longer forces layout, per-frame animations are compositor-only, and a frame-pacing governor reduces background quality when frames are missed. The 3D parcel was refined (shading, tape, labels, seal, tissue interior); no components were removed.
+- Console: fixed text collisions. The Status column fits "Delivered · dispute", the orders table scrolls instead of collapsing on phones, inspection tiles wrap, the sandbox-calls dock reserves space and folds back after calls, and on phones the tab strip fades at its edges.
+- `standalone/` is excluded from ESLint and Prettier, because it is plain browser scripts plus generated exports outside the TypeScript workspace.
+- Validation (Chromium only, Intel Iris Xe, 3-run medians):
+  - Landing layout identical to the export: 202/202 elements at 1440 and 390 px.
+  - Console: 0 overlapping or spilling text in all views at six widths, 390–1440 px.
+  - Scrolling at 150 % scaling: 57 % → 0.4 % dropped frames. Idle on the hero: 78 % → 0 %.
+  - Firefox and Safari NOT RUN.
+
 ## 2026-11-11 — H8 integrated audit closeout
 
 - Integrated Ishaan's existing Hriday merge, intelligence, full B17 world and fixtures while preserving the focused platform repairs and all 52 incoming commits. Restored approved source scoring/history/default threshold and disabled the unapproved automatic embedding substitute.

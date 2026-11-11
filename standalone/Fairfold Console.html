@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fairfold Console — Neel Block Prints</title>
+<meta name="theme-color" content="#f3f1f6">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 19 19'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='1' y1='0' x2='0' y2='1'%3E%3Cstop offset='.27' stop-color='%23000' stop-opacity='0'/%3E%3Cstop offset='.27' stop-color='%236b3fe6'/%3E%3Cstop offset='.51' stop-color='%236b3fe6'/%3E%3Cstop offset='.51' stop-color='%2315131d'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='19' height='19' rx='4' fill='url(%23g)'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/fonts.css">
+<style>
+body{margin:0;background:#f3f1f6;color:#15131d;font-family:'Geist',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#15131d;text-decoration:none}
+a:hover{color:oklch(0.53 0.23 295)}
+::selection{background:oklch(0.53 0.23 295);color:#fff}
+button{font-family:inherit}
+html,body{height:100%;margin:0}#dc-root,#dc-root>.sc-host{height:100%}
+/* layout fixes (see the template comments in assets/console.js) */
+.ff-orders{overflow-x:auto!important;overscroll-behavior-x:contain;scrollbar-width:thin}
+.ff-orders>div{min-width:620px}
+@media (max-width:560px){.ff-hide-sm{display:none!important}}
+/* on narrow screens the tab strip scrolls; fade its edges instead of cutting a tab in half */
+@media (max-width:760px){header nav{padding:0 10px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 12px,#000 calc(100% - 12px),transparent);mask-image:linear-gradient(90deg,transparent,#000 12px,#000 calc(100% - 12px),transparent)}}
+</style>
+</head>
+<body>
+<div id="dc-root"><div class="sc-host"></div></div>
+<noscript><p style="font:14px/1.5 'Geist',system-ui,sans-serif;padding:24px">The Fairfold console needs JavaScript.</p></noscript>
+<!-- The design's console template, unchanged apart from the layout fixes listed in assets/console.js. -->
+<template id="ff-console">
+<div style="min-height:100vh;position:relative">
+<header style="position:sticky;top:12px;z-index:30;margin:12px auto 0;width:min(1320px,calc(100% - 24px));box-sizing:border-box;display:flex;align-items:center;gap:14px;padding:8px 14px 8px 18px;border-radius:999px;background:rgba(251,250,253,.8);backdrop-filter:blur(16px) saturate(1.4);border:1px solid rgba(21,19,29,.08);box-shadow:0 14px 36px -22px rgba(21,19,29,.45)">
+  <a href="Fairfold.html" style="flex:none;display:flex;align-items:center;gap:10px;font:500 21px/1 'Geist',sans-serif;letter-spacing:-.035em;color:#15131d">
+    <span style="width:19px;height:19px;border-radius:4px;background:linear-gradient(225deg,transparent 0 27%,oklch(0.53 0.23 295) 27% 51%,#15131d 51%)"></span>Fairfold
+  </a>
+  <span class="ff-hide-sm" style="flex:none;font:500 10px/1 'Geist Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#625e70">Console</span>
+  <nav style="flex:1 1 0;min-width:0;display:flex;gap:2px;justify-content:safe center;overflow-x:auto;scrollbar-width:none">
+    <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="5">
+      <button sc-camel-on-click="{{ t.go }}" style="appearance:none;border:0;cursor:pointer;flex:none;display:flex;align-items:center;gap:7px;padding:9px 12px;border-radius:999px;font-size:14px;font-weight:500;white-space:nowrap;background:{{ t.bg }};color:{{ t.fg }};transition:background .2s,color .2s">{{ t.label }}<span style="font:500 10px/1 'Geist Mono',monospace;opacity:.7">{{ t.n }}</span></button>
+    </sc-for>
+  </nav>
+  <div style="flex:none;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500"><span style="padding:5px 9px;border-radius:999px;background:oklch(0.94 0.035 295);color:oklch(0.4 0.2 295);font:500 10px/1 'Geist Mono',monospace;letter-spacing:.1em">SANDBOX</span></div>
+</header>
+
+<main style="width:min(1320px,calc(100% - 24px));margin:0 auto;padding:34px 0 max(150px,calc(var(--ff-dock,0px) + 48px));box-sizing:border-box">
+
+<sc-if value="{{ isOrders }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start">
+  <div style="flex:1 1 640px;min-width:0">
+    <div style="font:500 10px/1.3 'Geist Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#625e70">neelblockprints.example · Jaipur, IN</div>
+    <h1 style="margin:10px 0 0;font:500 clamp(32px,3.6vw,48px)/1.02 'Geist',sans-serif;letter-spacing:-.045em">Orders <em style="font-family:'Instrument Serif',serif;font-weight:400;font-size:1.1em;letter-spacing:-.01em;color:oklch(0.53 0.23 295)">to witness</em></h1>
+    <div style="margin-top:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">
+      <button sc-camel-on-click="{{ goSc }}" style="appearance:none;border:0;cursor:pointer;text-align:left;border-radius:20px;background:#15131d;color:#f3f1f6;padding:18px 20px;transition:transform .3s cubic-bezier(.2,.8,.2,1)" style-hover="transform:translateY(-3px)">
+        <div style="display:flex;justify-content:space-between;font:500 10px/1 'Geist Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:rgba(243,241,246,.65)"><span>Shared cause · {{ scTag }}</span><span>Review →</span></div>
+        <div style="margin-top:12px;font:500 21px/1.2 'Geist',sans-serif;letter-spacing:-.03em">Batch B17: 6 seam complaints on 40 delivered hoodies</div>
+        <div style="margin-top:6px;font-size:13px;color:rgba(243,241,246,.7)">1 on 200 from every other batch. 18 unshipped orders could be affected.</div>
+      </button>
+      <div style="border-radius:20px;background:#fbfafd;border:1px solid rgba(21,19,29,.09);padding:18px 20px">
+        <div style="display:flex;justify-content:space-between;font:500 10px/1 'Geist Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#625e70"><span>Watchdog · tracking gap</span><span>{{ gapTag }}</span></div>
+        <div style="margin-top:12px;font:500 21px/1.2 'Geist',sans-serif;letter-spacing:-.03em">FF-6E12: no courier scan for 4 days</div>
+        <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px;color:#625e70"><span>A status update to the buyer is drafted and waits for approval.</span><button sc-camel-on-click="{{ ackGap }}" style="appearance:none;cursor:pointer;flex:none;padding:8px 14px;border-radius:999px;border:1px solid rgba(21,19,29,.2);background:transparent;font-size:13px;font-weight:600;color:#15131d" style-hover="background:#15131d;color:#f3f1f6">{{ gapBtn }}</button></div>
+      </div>
+    </div>
+    <div style="margin-top:24px;display:flex;flex-wrap:wrap;gap:6px">
+      <sc-for list="{{ filters }}" as="f" hint-placeholder-count="6">
+        <button sc-camel-on-click="{{ f.go }}" style="appearance:none;cursor:pointer;padding:8px 14px;border-radius:999px;border:1px solid rgba(21,19,29,.14);font-size:13px;font-weight:500;background:{{ f.bg }};color:{{ f.fg }}">{{ f.label }}</button>
+      </sc-for>
+    </div>
+    <div class="ff-orders" style="margin-top:12px;background:#fbfafd;border:1px solid rgba(21,19,29,.09);border-radius:20px;overflow:hidden">
+      <div style="display:grid;grid-template-columns:78px minmax(0,1fr) minmax(0,1.5fr) 62px 128px 86px;gap:12px;padding:12px 18px;font:500 10px/1 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:#625e70"><span>Order</span><span>Buyer</span><span>Item</span><span>Amount</span><span>Status</span><span>Signal</span></div>
+      <sc-for list="{{ rows }}" as="r" hint-placeholder-count="8">
+        <div sc-camel-on-click="{{ r.pick }}" style="display:grid;grid-template-columns:78px minmax(0,1fr) minmax(0,1.5fr) 62px 128px 86px;gap:12px;align-items:center;padding:14px 18px;border-top:1px solid rgba(21,19,29,.07);cursor:pointer;font-size:14px;background:{{ r.bg }};transition:background .2s" style-hover="background:oklch(0.95 0.028 295)">
+          <span style="font:500 12px/1 'Geist Mono',monospace">{{ r.id }}</span>
+          <span style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.buyer }}</span>
+          <span style="color:#625e70;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.item }}</span>
+          <span>{{ r.amt }}</span>
+          <span><span style="display:inline-block;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;background:{{ r.stBg }};color:{{ r.stFg }}">{{ r.st }}</span></span>
+          <span style="display:flex;align-items:center;gap:8px;font-weight:500"><span style="width:10px;height:10px;border-radius:50%;flex:none;background:{{ r.bandC }}"></span>{{ r.band }}</span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="margin-top:10px;font-size:13px;color:#625e70">Showing 9 of 342 seeded orders. Only orders created through checkout are real sandbox orders.</div>
+  </div>
+
+  <aside style="flex:1 1 340px;min-width:0;max-width:460px;position:sticky;top:92px;box-sizing:border-box;background:#fbfafd;border:1px solid rgba(21,19,29,.09);border-radius:24px;padding:22px;box-shadow:0 30px 60px -40px rgba(21,19,29,.4)">
+    <div style="display:flex;justify-content:space-between;gap:10px;font:500 10px/1 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:#625e70"><span>{{ o.id }} · {{ o.st }}</span><span>{{ o.amt }}</span></div>
+    <div style="margin-top:16px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px">
+      <div><div style="font:500 10px/1 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:#625e70">Buyer signal</div><div style="font:500 54px/1 'Geist',sans-serif;letter-spacing:-.05em;margin-top:8px">{{ o.band }}</div></div>
+      <div style="text-align:right;font-size:13px;line-height:1.5;color:#625e70"><b style="color:#15131d;font-weight:600">{{ o.buyer }}</b><br>PayPal account {{ o.acct }}</div>
+    </div>
+    <div style="position:relative;margin-top:14px;height:16px">
+      <div style="position:absolute;left:0;right:0;top:5px;display:flex;gap:5px">
+        <span style="flex:1;height:6px;border-radius:3px;background:oklch(0.72 0.012 290)"></span><span style="flex:1;height:6px;border-radius:3px;background:oklch(0.64 0.15 155)"></span><span style="flex:1;height:6px;border-radius:3px;background:oklch(0.8 0.15 85)"></span><span style="flex:1;height:6px;border-radius:3px;background:oklch(0.62 0.2 25)"></span>
+      </div>
+      <span style="position:absolute;top:0;left:{{ o.pos }};width:16px;height:16px;margin-left:-8px;border-radius:50%;background:#15131d;border:3px solid #fbfafd;box-sizing:border-box;transition:left .5s cubic-bezier(.2,.8,.2,1)"></span>
+    </div>
+    <div style="margin-top:14px">
+      <sc-for list="{{ o.reasons }}" as="x" hint-placeholder-count="3">
+        <div style="padding:10px 0;border-top:1px solid rgba(21,19,29,.09)"><div style="font:500 10.5px/1.3 'Geist Mono',monospace;color:oklch(0.47 0.22 295)">{{ x.code }}</div><div style="font-size:13.5px;line-height:1.4;margin-top:3px">{{ x.text }}</div></div>
+      </sc-for>
+    </div>
+    <div style="margin-top:6px;border-radius:16px;background:#15131d;color:#f3f1f6;padding:16px">
+      <div style="font:500 10px/1 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:rgba(243,241,246,.65)">Recommended action</div>
+      <div style="font:500 18px/1.3 'Geist',sans-serif;letter-spacing:-.02em;margin-top:8px">{{ o.rec }}</div>
+    </div>
+    <div style="margin-top:14px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;font-size:13px">
+      <span style="color:#625e70">Item</span><span>{{ o.item }}</span>
+      <span style="color:#625e70">Seller protection</span><span style="font:500 12px/1.5 'Geist Mono',monospace">{{ o.prot }}</span>
+      <span style="color:#625e70">Ledger</span><span>{{ o.ledger }}</span>
+    </div>
+    <button sc-camel-on-click="{{ o.go }}" style="appearance:none;border:0;cursor:pointer;width:100%;margin-top:16px;padding:14px;border-radius:999px;background:oklch(0.53 0.23 295);color:#fff;font-size:14px;font-weight:600;transition:background .2s" style-hover="background:#15131d">{{ o.cta }}</button>
+    <div style="margin-top:12px;font-size:12px;line-height:1.5;color:#625e70">A signal, not a verdict. It never recommends “cancel”, and the buyer can see and contest it.</div>
+  </aside>
+</div>
+</sc-if>
+
+<sc-if value="{{ isPack }}" hint-placeholder-val="{{ false }}">
+<div>
+  <div style="font:500 10px/1.3 'Geist Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#625e70">Pack Station · station-1 · in-app camera only</div>
+  <h1 style="margin:10px 0 0;font:500 clamp(32px,3.6vw,48px)/1.02 'Geist',sans-serif;letter-spacing:-.045em">Pack FF-3D90 <em style="font-family:'Instrument Serif',serif;font-weight:400;font-size:1.1em;letter-spacing:-.01em;color:oklch(0.53 0.23 295)">for Alex R.</em></h1>
+  <div style="margin-top:22px;display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+    <div style="flex:1 1 280px;min-width:0;display:flex;flex-direction:column;gap:16px">
+      <div style="background:#fbfafd;border:1px solid rgba(21,19,29,.09);border-radius:20px;padding:20px">
+        <div style="font:500 10px/1 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:#625e70">PayPal order line items</div>
+        <div style="margin-top:12px;font:500 20px/1.2 'Geist',sans-serif;letter-spacing:-.03em">Block-print cotton hoodie</div>
+        <div style="margin-top:10px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px 14px;font-size:13.5px"><span style="color:#625e70">SKU</span><span style="font:500 12px/1.6 'Geist Mono',monospace">HD-IND-01</span><span style="color:#625e70">Colour</span><span>navy</span><span style="color:#625e70">Size</span><span>M</span><span style="color:#625e70">Quantity</span><span>1</span><span style="color:#625e70">Listing</span><span>v1</span></div>
+      </div>
+      <div style="border-radius:20px;background:oklch(0.95 0.06 85);padding:18px 20px">
+        <div style="display:flex;align-items:center;gap:8px;font:500 10px/1 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:oklch(0.38 0.08 85)"><span style="width:9px;height:9px;border-radius:50%;background:oklch(0.8 0.15 85)"></span>Buyer signal · yellow</div>
+        <div style="margin-top:10px;font-size:15px;line-height:1.4;font-weight:500">Capture extra packing evidence and ship tracked.</div>
+      </div>
+      <sc-if value="{{ p.ruleOn }}" hint-placeholder-val="{{ false }}">
+        <div style="border-radius:20px;background:#15131d;color:#f3f1f6;padding:18px 20px">
+          <div style="font:500 10px/1 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:oklch(0.8 0.13 295)">{{ p.ruleTag }}</div>
+          <div style="margin-top:10px;font-size:15px;line-height:1.4">Batch B17: photograph the left sleeve seam before sealing. Label the photo <span style="font-family:'Geist Mono',monospace;font-size:13px">seam_closeup</span>.</div>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="flex:1.5 1 380px;min-width:0;background:#fbfafd;border:1px solid rgba(21,19,29,.09);border-radius:20px;padding:20px">
+      <div style="display:flex;justify-content:space-between;font:500 10px/1 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:#625e70"><span>Packing photos</span><span>{{ p.count }}</span></div>
+      <div style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px">
+        <sc-for list="{{ p.tiles }}" as="t" hint-placeholder-count="4">
+          <button sc-camel-on-click="{{ t.shoot }}" style="appearance:none;cursor:pointer;aspect-ratio:1;border-radius:14px;padding:10px;display:flex;flex-direction:column;justify-content:space-between;text-align:left;border:{{ t.bd }};background:{{ t.bg }};color:#15131d;transition:transform .25s cubic-bezier(.2,.8,.2,1)" style-hover="transform:translateY(-3px)">
+            <span style="font:500 11px/1 'Geist Mono',monospace">{{ t.label }}</span>
+            <span style="font:500 10px/1.4 'Geist Mono',monospace;color:#625e70;overflow-wrap:anywhere">{{ t.sub }}</span>
+          </button>
+        </sc-for>
+      </div>
+      <div style="margin-top:16px;border-radius:16px;background:oklch(0.95 0.028 295);padding:16px 18px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="font:500 18px/1.1 'Geist',sans-serif;letter-spacing:-.03em">Evidence Agent</span><span style="padding:5px 10px;border-radius:999px;font-size:11px;font-weight:600;background:{{ p.attBg }};color:{{ p.attFg }}">{{ p.attPill }}</span></div>
+        <div style="margin-top:10px;font-size:13.5px;line-height:1.5;color:#625e70">{{ p.attNote }}</div>
+        <sc-for list="{{ p.attLines }}" as="l" hint-placeholder-count="0">
+          <div style="display:grid;grid-template-columns:110px minmax(0,1fr);gap:10px;padding:7px 0;border-top:1px solid rgba(21,19,29,.09);font-size:13.5px"><span style="color:#625e70">{{ l.k }}</span><span>{{ l.v }}</span></div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="flex:1 1 300px;min-width:0;display:flex;flex-direction:column;gap:16px">
+      <div style="background:#fbfafd;border:1px solid rgba(21,19,29,.09);border-radius:20px;padding:20px">
+        <div style="font:500 10px/1 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:#625e70">Seal and push tracking</div>
+        <div style="margin-top:14px;font-size:12px;color:#625e70">Batch code</div>
+        <div style="margin-top:6px;display:flex;gap:6px">
+          <sc-for list="{{ p.batches }}" as="b" hint-placeholder-count="3">
+            <button sc-camel-on-click="{{ b.pick }}" style="appearance:none;cursor:pointer;padding:8px 14px;border-radius:999px;border:1px solid rgba(21,19,29,.16);font:500 12px 'Geist Mono',monospace;background:{{ b.bg }};color:{{ b.fg }}">{{ b.label }}</button>
+          </sc-for>
+        </div>
+        <div style="margin-top:12px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;font-size:13.5px"><span style="color:#625e70">Carrier</span><span style="font:500 12px/1.6 'Geist Mono',monospace">DHL</span><span style="color:#625e70">Tracking</span><span style="font:500 12px/1.6 'Geist Mono',monospace">7340 1182 61</span><span style="color:#625e70">notify_payer</span><span style="font:500 12px/1.6 'Geist Mono',monospace">true</span></div>
+        <sc-for list="{{ p.blockers }}" as="k" hint-placeholder-count="0">
+          <div style="margin-top:10px;border-radius:12px;background:oklch(0.95 0.035 25);padding:10px 12px"><div style="font:500 10.5px/1.3 'Geist Mono',monospace;color:oklch(0.45 0.17 25)">{{ k.code }}</div><div style="font-size:13px;line-height:1.4;margin-top:3px">{{ k.text }}</div></div>
+        </sc-for>
+        <button sc-camel-on-click="{{ p.seal }}" style="appearance:none;border:0;cursor:pointer;width:100%;margin-top:14px;padding:14px;border-radius:999px;font-size:14px;font-weight:600;background:{{ p.sealBg }};color:{{ p.sealFg }};transition:background .2s">{{ p.sealLabel }}</button>
+      </div>
+      <div style="background:#15131d;color:#f3f1f6;border-radius:20px;padding:20px">
+        <div style="display:flex;justify-content:space-between;font:500 10px/1 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:rgba(243,241,246,.65)"><span>Proof Ledger · sha-256 chain</span><span style="color:oklch(0.82 0.14 155)">verified</span></div>
+        <div style="margin-top:10px;font:400 11.5px/1 'Geist Mono',monospace">
+          <sc-for list="{{ p.ledger }}" as="e" hint-placeholder-count="1">
+            <div style="display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid rgba(255,255,255,.1)"><span>{{ e.seq }} {{ e.type }}</span><span style="color:rgba(243,241,246,.6)">{{ e.hash }}</span></div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isDisputes }}" hint-placeholder-val="{{ false }}">
+<div>
+  <div style="font:500 10px/1.3 'Geist Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#625e70">Webhooks verified · reconciliation poll every minute</div>
+  <h1 style="margin:10px 0 0;font:500 clamp(32px,3.6vw,48px)/1.02 'Geist',sans-serif;letter-spacing:-.045em">Dispute <em style="font-family:'Instrument Serif',serif;font-weight:400;font-size:1.1em;letter-spacing:-.01em;color:oklch(0.53 0.23 295)">Room</em></h1>
+  <div style="margin-top:22px;display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+    <div style="flex:1 1 300px;min-width:0;max-width:420px">
+      <sc-for list="{{ disputes }}" as="d" hint-placeholder-count="2">
+        <button sc-camel-on-click="{{ d.pick }}" style="appearance:none;cursor:pointer;display:block;width:100%;text-align:left;margin-bottom:10px;border-radius:20px;padding:18px 20px;border:1px solid rgba(21,19,29,.09);background:{{ d.bg }};color:{{ d.fg }};transition:background .25s,color .25s">
+          <span style="display:flex;justify-content:space-between;font:500 10px/1 'Geist Mono',monospace;letter-spacing:.1em;opacity:.7"><span>{{ d.id }}</span><span>{{ d.status }}</span></span>
+          <span style="display:block;margin-top:12px;font:500 19px/1.2 'Geist',sans-serif;letter-spacing:-.03em">{{ d.title }}</span>
+          <span style="display:block;margin-top:6px;font-size:13px;opacity:.75">{{ d.sub }}</span>
+        </button>
+      </sc-for>
+    </div>
+    <div style="flex:2 1 440px;min-width:0;background:#fbfafd;border:1px solid rgba(21,19,29,.09);border-radius:24px;padding:24px">
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 14px;font:500 10px/1.4 'Geist Mono',monospace;letter-spacing:.08em;color:#625e70"><span>{{ dd.reason }}</span><span>{{ dd.stage }}</span></div>
+      <div style="margin-top:14px;font:italic 400 clamp(26px,3vw,38px)/1.1 'Instrument Serif',serif">{{ dd.quote }}</div>
+      <div style="margin-top:18px;display:flex;flex-wrap:wrap;gap:16px">
+        <div style="flex:1 1 220px;min-width:0">
+          <div style="font:500 10px/1 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:#625e70">Timeline</div>
+          <sc-for list="{{ dd.timeline }}" as="x" hint-placeholder-count="4">
+            <div style="display:grid;grid-template-columns:10px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid rgba(21,19,29,.08);margin-top:8px;font-size:13.5px;line-height:1.4"><span style="width:7px;height:7px;margin-top:6px;border-radius:50%;background:oklch(0.53 0.23 295)"></span><span>{{ x }}</span></div>
+          </sc-for>
+        </div>
+        <div style="flex:1.4 1 300px;min-width:0;border-radius:18px;background:oklch(0.95 0.028 295);padding:18px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="font:500 10px/1 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:#625e70">Evidence pack · {{ dd.packStatus }}</span><span style="padding:5px 10px;border-radius:999px;background:#15131d;color:#f3f1f6;font:500 11px/1 'Geist Mono',monospace">{{ dd.rec }}</span></div>
+          <div style="margin-top:12px;font:500 20px/1.25 'Geist',sans-serif;letter-spacing:-.03em">{{ dd.headline }}</div>
+          <sc-for list="{{ dd.items }}" as="x" hint-placeholder-count="3">
+            <div style="display:flex;gap:9px;margin-top:8px;font-size:13.5px;line-height:1.4"><span style="color:oklch(0.47 0.22 295);font-weight:600">✓</span><span>{{ x }}</span></div>
+          </sc-for>
+          <sc-if value="{{ dd.isOffer }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px">
+              <sc-for list="{{ dd.offers }}" as="f" hint-placeholder-count="3">
+                <button sc-camel-on-click="{{ f.pick }}" style="appearance:none;cursor:pointer;padding:8px 12px;border-radius:999px;border:1px solid rgba(21,19,29,.16);font:500 10.5px 'Geist Mono',monospace;background:{{ f.bg }};color:{{ f.fg }}">{{ f.label }}</button>
+              </sc-for>
+            </div>
+          </sc-if>
+          <div style="margin-top:14px;border-radius:12px;background:#15131d;color:#f3f1f6;padding:11px 13px;font:400 11px/1.5 'Geist Mono',monospace;overflow-wrap:anywhere">{{ dd.call }}</div>
+          <button sc-camel-on-click="{{ dd.act }}" style="appearance:none;border:0;cursor:pointer;width:100%;margin-top:12px;padding:14px;border-radius:999px;font-size:14px;font-weight:600;background:{{ dd.btnBg }};color:#fff;transition:background .2s">{{ dd.btn }}</button>
+          <div style="margin-top:10px;font-size:12px;line-height:1.5;color:#625e70">{{ dd.note }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSc }}" hint-placeholder-val="{{ false }}">
+<div>
+  <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;font:500 10px/1.3 'Geist Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#625e70"><span>Shared cause detection · hypothesis</span><span style="padding:5px 10px;border-radius:999px;background:{{ sc.pillBg }};color:{{ sc.pillFg }}">{{ sc.status }}</span><span style="padding:5px 10px;border-radius:999px;background:#15131d;color:#f3f1f6">strong</span></div>
+  <h1 style="margin:10px 0 0;font:500 clamp(32px,3.6vw,48px)/1.02 'Geist',sans-serif;letter-spacing:-.045em">Batch B17, <em style="font-family:'Instrument Serif',serif;font-weight:400;font-size:1.1em;letter-spacing:-.01em;color:oklch(0.53 0.23 295)">left sleeve seam</em></h1>
+  <p style="margin:12px 0 0;max-width:720px;font-size:16px;line-height:1.55;color:#625e70;text-wrap:pretty">Six seam complaints on 40 delivered B17 hoodies, against one on 200 from every other batch. Couriers, packers and listing version are spread evenly, so the batch is the likeliest common factor. Code ran the statistics; the model only read the complaints.</p>
+
+  <div style="margin-top:22px;display:flex;flex-wrap:wrap;gap:16px;align-items:stretch">
+    <div style="flex:1.2 1 420px;min-width:0;background:#15131d;color:#f3f1f6;border-radius:24px;padding:24px">
+      <div style="display:flex;justify-content:space-between;font:500 10px/1 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:rgba(243,241,246,.65)"><span>240 delivered hoodie orders, by batch</span><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:oklch(0.7 0.2 25);margin-right:6px"></span>seam complaint</span></div>
+      <div style="margin-top:22px;display:flex;flex-wrap:wrap;gap:22px 28px;align-items:flex-end">
+        <div><div style="position:relative;width:168px;height:60px;background-image:radial-gradient(circle,rgba(243,241,246,.3) 2.6px,transparent 3.2px);background-size:12px 12px"></div><div style="margin-top:8px;font:500 11px/1 'Geist Mono',monospace;color:rgba(243,241,246,.65)">B14 · 70</div></div>
+        <div><div style="position:relative;width:168px;height:60px;background-image:radial-gradient(circle,rgba(243,241,246,.3) 2.6px,transparent 3.2px);background-size:12px 12px"><span style="position:absolute;left:109px;top:25px;width:10px;height:10px;border-radius:50%;background:oklch(0.7 0.2 25)"></span></div><div style="margin-top:8px;font:500 11px/1 'Geist Mono',monospace;color:rgba(243,241,246,.65)">B15 · 70</div></div>
+        <div><div style="position:relative;width:144px;height:60px;background-image:radial-gradient(circle,rgba(243,241,246,.3) 2.6px,transparent 3.2px);background-size:12px 12px"></div><div style="margin-top:8px;font:500 11px/1 'Geist Mono',monospace;color:rgba(243,241,246,.65)">B16 · 60</div></div>
+        <div style="padding:12px;margin:-12px;border-radius:16px;border:1px solid oklch(0.74 0.16 295)">
+          <div style="position:relative;width:120px;height:48px;background-image:radial-gradient(circle,oklch(0.78 0.14 295) 2.6px,transparent 3.2px);background-size:12px 12px">
+            <span style="position:absolute;left:13px;top:1px;width:10px;height:10px;border-radius:50%;background:oklch(0.7 0.2 25)"></span><span style="position:absolute;left:49px;top:13px;width:10px;height:10px;border-radius:50%;background:oklch(0.7 0.2 25)"></span><span style="position:absolute;left:85px;top:1px;width:10px;height:10px;border-radius:50%;background:oklch(0.7 0.2 25)"></span><span style="position:absolute;left:25px;top:37px;width:10px;height:10px;border-radius:50%;background:oklch(0.7 0.2 25)"></span><span style="position:absolute;left:97px;top:25px;width:10px;height:10px;border-radius:50%;background:oklch(0.7 0.2 25)"></span><span style="position:absolute;left:61px;top:37px;width:10px;height:10px;border-radius:50%;background:oklch(0.7 0.2 25);box-shadow:0 0 0 3px #15131d,0 0 0 4.5px #f3f1f6"></span>
+          </div>
+          <div style="margin-top:8px;font:500 11px/1 'Geist Mono',monospace;color:oklch(0.82 0.12 295)">B17 · 40</div>
+        </div>
+      </div>
+      <div style="margin-top:26px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:14px">
+        <div><div style="font:500 44px/1 'Geist',sans-serif;letter-spacing:-.05em">≈31×</div><div style="margin-top:6px;font-size:12.5px;color:rgba(243,241,246,.7)">rate ratio, exposure-adjusted</div></div>
+        <div><div style="font:500 44px/1 'Geist',sans-serif;letter-spacing:-.05em">0.0014</div><div style="margin-top:6px;font-size:12.5px;color:rgba(243,241,246,.7)">BH q across 12 values tested</div></div>
+        <div><div style="font:500 44px/1 'Geist',sans-serif;letter-spacing:-.05em">15%</div><div style="margin-top:6px;font-size:12.5px;color:rgba(243,241,246,.7)">complaint share, Wilson 95% 7–29%</div></div>
+      </div>
+      <div style="margin-top:18px;font-size:12.5px;line-height:1.5;color:rgba(243,241,246,.65)">The ringed dot is Maya’s live dispute, the sixth complaint. Confounders: 4 different couriers, both packers, listing v1 throughout, no other value with q ≤ 0.2.</div>
+    </div>
+
+    <div style="flex:1 1 340px;min-width:0;background:#fbfafd;border:1px solid rgba(21,19,29,.09);border-radius:24px;padding:24px">
+      <div style="font:500 10px/1 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:#625e70">Exact conditional test on exposure-days</div>
+      <div style="margin-top:12px;font-size:13.5px">
+        <div style="display:grid;grid-template-columns:minmax(0,1.3fr) 1fr 1fr;gap:10px;padding:9px 0;font:500 10px/1 'Geist Mono',monospace;letter-spacing:.08em;color:#625e70"><span></span><span>B17</span><span>ALL OTHERS</span></div>
+        <div style="display:grid;grid-template-columns:minmax(0,1.3fr) 1fr 1fr;gap:10px;padding:9px 0;border-top:1px solid rgba(21,19,29,.08)"><span style="color:#625e70">Delivered orders</span><span>40</span><span>200</span></div>
+        <div style="display:grid;grid-template-columns:minmax(0,1.3fr) 1fr 1fr;gap:10px;padding:9px 0;border-top:1px solid rgba(21,19,29,.08)"><span style="color:#625e70">Exposure, order-days</span><span>546</span><span>2,800</span></div>
+        <div style="display:grid;grid-template-columns:minmax(0,1.3fr) 1fr 1fr;gap:10px;padding:9px 0;border-top:1px solid rgba(21,19,29,.08)"><span style="color:#625e70">Seam complaints</span><span style="font-weight:600">6</span><span>1</span></div>
+        <div style="display:grid;grid-template-columns:minmax(0,1.3fr) 1fr 1fr;gap:10px;padding:9px 0;border-top:1px solid rgba(21,19,29,.08)"><span style="color:#625e70">Share, Wilson 95%</span><span>15% (7–29)</span><span>0.5% (0.1–2.8)</span></div>
+        <div style="display:grid;grid-template-columns:minmax(0,1.3fr) 1fr 1fr;gap:10px;padding:9px 0;border-top:1px solid rgba(21,19,29,.08)"><span style="color:#625e70">Exact p</span><span>0.00011</span><span>—</span></div>
+      </div>
+      <div style="margin-top:16px;font:500 10px/1 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:#625e70">Affected orders</div>
+      <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="border-radius:14px;background:oklch(0.95 0.028 295);padding:12px 14px"><div style="font:500 28px/1 'Geist',sans-serif;letter-spacing:-.04em">18</div><div style="font-size:12.5px;color:#625e70;margin-top:4px">unshipped</div></div>
+        <div style="border-radius:14px;background:oklch(0.95 0.028 295);padding:12px 14px"><div style="font:500 28px/1 'Geist',sans-serif;letter-spacing:-.04em">4</div><div style="font-size:12.5px;color:#625e70;margin-top:4px">in transit</div></div>
+        <div style="border-radius:14px;background:oklch(0.95 0.028 295);padding:12px 14px"><div style="font:500 28px/1 'Geist',sans-serif;letter-spacing:-.04em">34</div><div style="font-size:12.5px;color:#625e70;margin-top:4px">delivered, no complaint</div></div>
+        <div style="border-radius:14px;background:oklch(0.95 0.028 295);padding:12px 14px"><div style="font:500 28px/1 'Geist',sans-serif;letter-spacing:-.04em">1</div><div style="font-size:12.5px;color:#625e70;margin-top:4px">open dispute</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+    <div style="flex:1.2 1 420px;min-width:0">
+      <div style="font:500 10px/1 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:#625e70;margin-bottom:10px">Proposed actions · each needs your approval</div>
+      <sc-for list="{{ sc.actions }}" as="a" hint-placeholder-count="3">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;margin-bottom:10px;background:#fbfafd;border:1px solid rgba(21,19,29,.09);border-radius:18px;padding:16px 18px">
+          <div style="flex:1 1 260px;min-width:0"><div style="font:500 10.5px/1.3 'Geist Mono',monospace;color:oklch(0.47 0.22 295)">{{ a.type }}</div><div style="margin-top:4px;font-size:15px;line-height:1.4;font-weight:500">{{ a.text }}</div><div style="margin-top:3px;font-size:13px;line-height:1.45;color:#625e70">{{ a.sub }}</div></div>
+          <button sc-camel-on-click="{{ a.go }}" style="appearance:none;border:0;cursor:pointer;flex:none;padding:11px 18px;border-radius:999px;font-size:13px;font-weight:600;background:{{ a.bg }};color:{{ a.fg }};transition:background .2s">{{ a.btn }}</button>
+        </div>
+      </sc-for>
+    </div>
+    <div style="flex:1 1 340px;min-width:0;background:#fbfafd;border:1px solid rgba(21,19,29,.09);border-radius:24px;padding:22px">
+      <div style="display:flex;justify-content:space-between;font:500 10px/1 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:#625e70"><span>Inspect B17 stock · seam_closeup</span><span>{{ sc.inspCount }}</span></div>
+      <div style="margin-top:14px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">
+        <sc-for list="{{ sc.units }}" as="u" hint-placeholder-count="3">
+          <button sc-camel-on-click="{{ u.shoot }}" style="appearance:none;cursor:pointer;aspect-ratio:1;border-radius:14px;padding:10px;display:flex;flex-direction:column;justify-content:space-between;text-align:left;border:{{ u.bd }};background:{{ u.bg }};color:#15131d;transition:transform .25s cubic-bezier(.2,.8,.2,1)" style-hover="transform:translateY(-3px)">
+            <span style="font:500 11px/1 'Geist Mono',monospace">{{ u.label }}</span>
+            <span style="font:500 10px/1.4 'Geist Mono',monospace;color:{{ u.fg }};overflow-wrap:anywhere">{{ u.sub }}</span>
+          </button>
+        </sc-for>
+      </div>
+      <div style="margin-top:14px;font-size:13.5px;line-height:1.5;color:#625e70">{{ sc.inspNote }}</div>
+      <div style="margin-top:14px;display:flex;gap:8px">
+        <button sc-camel-on-click="{{ sc.confirm }}" style="appearance:none;border:0;cursor:pointer;flex:1;padding:13px;border-radius:999px;font-size:14px;font-weight:600;background:{{ sc.confBg }};color:{{ sc.confFg }}">{{ sc.confLabel }}</button>
+        <button sc-camel-on-click="{{ sc.dismiss }}" style="appearance:none;cursor:pointer;padding:13px 18px;border-radius:999px;border:1px solid rgba(21,19,29,.2);background:transparent;font-size:14px;font-weight:600;color:#15131d" style-hover="background:#15131d;color:#f3f1f6">Dismiss</button>
+      </div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isReport }}" hint-placeholder-val="{{ false }}">
+<div>
+  <div style="font:500 10px/1.3 'Geist Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#625e70">What buyers and AI shopping agents see · 90-day window</div>
+  <h1 style="margin:10px 0 0;font:500 clamp(32px,3.6vw,48px)/1.02 'Geist',sans-serif;letter-spacing:-.045em">Store <em style="font-family:'Instrument Serif',serif;font-weight:400;font-size:1.1em;letter-spacing:-.01em;color:oklch(0.53 0.23 295)">Report</em></h1>
+  <div style="margin-top:22px;display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+    <div style="flex:1.3 1 440px;min-width:0;background:#fbfafd;border:1px solid rgba(21,19,29,.09);border-radius:24px;padding:24px">
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px"><span style="font:500 24px/1.1 'Geist',sans-serif;letter-spacing:-.035em">What we found about Neel Block Prints</span><span style="padding:6px 12px;border-radius:999px;background:oklch(0.9 0.08 155);color:oklch(0.33 0.09 155);font-size:12px;font-weight:600">Verified Fulfilment</span></div>
+      <div style="margin-top:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
+        <sc-for list="{{ metrics }}" as="m" hint-placeholder-count="6">
+          <div style="border-radius:16px;background:oklch(0.95 0.028 295);padding:14px 16px"><div style="font:500 32px/1 'Geist',sans-serif;letter-spacing:-.045em">{{ m.v }}</div><div style="margin-top:6px;font-size:12.5px;line-height:1.35;color:#625e70">{{ m.k }}</div></div>
+        </sc-for>
+      </div>
+      <div style="margin-top:20px;font:500 10px/1 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:#625e70">60 verified-payment reviews · 4.4 average · themes link to their reviews</div>
+      <div style="margin-top:6px">
+        <div style="display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid rgba(21,19,29,.08);font-size:14.5px"><span>Print quality and colour</span><span style="color:oklch(0.47 0.22 295);font-weight:600">31 reviews ↗</span></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid rgba(21,19,29,.08);font-size:14.5px"><span>Runs small</span><span style="color:oklch(0.47 0.22 295);font-weight:600">3 reviews ↗</span></div>
+        <div style="padding:12px 0;border-top:1px solid rgba(21,19,29,.08);font-size:14.5px"><div style="display:flex;justify-content:space-between;gap:12px"><span>Late delivery</span><span style="color:oklch(0.47 0.22 295);font-weight:600">2 reviews ↗</span></div>
+          <div style="margin-top:10px;border-radius:14px;background:#15131d;color:#f3f1f6;padding:12px 14px;font-size:13.5px;line-height:1.5"><span style="font:500 10px/1 'Geist Mono',monospace;letter-spacing:.1em;color:rgba(243,241,246,.65)">MERCHANT REPLY · ALWAYS SHOWN</span><br>Both parcels were held at customs for a week. We now ship those routes with a faster carrier and refunded the shipping on both orders.</div>
+        </div>
+      </div>
+    </div>
+    <div style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:16px">
+      <div style="background:#fbfafd;border:1px solid rgba(21,19,29,.09);border-radius:24px;padding:22px">
+        <div style="font:500 10px/1 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:#625e70">Bands across seeded stores</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;margin-top:8px;border-top:1px solid rgba(21,19,29,.08);font-size:14.5px"><span style="font-weight:600">Neel Block Prints</span><span style="padding:5px 10px;border-radius:999px;background:oklch(0.9 0.08 155);color:oklch(0.33 0.09 155);font-size:11px;font-weight:600">verified</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-top:1px solid rgba(21,19,29,.08);font-size:14.5px"><span style="font-weight:600">Indigo Loom<span style="display:block;margin-top:2px;font-size:12px;font-weight:400;color:#625e70">simulated store</span></span><span style="padding:5px 10px;border-radius:999px;background:oklch(0.9 0.08 155);color:oklch(0.33 0.09 155);font-size:11px;font-weight:600">verified</span></div>
+        <div style="padding:12px 0;border-top:1px solid rgba(21,19,29,.08);font-size:14.5px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="font-weight:600">QuickTees Outlet<span style="display:block;margin-top:2px;font-size:12px;font-weight:400;color:#625e70">simulated store</span></span><span style="padding:5px 10px;border-radius:999px;background:oklch(0.93 0.07 85);color:oklch(0.38 0.08 85);font-size:11px;font-weight:600">caution</span></div><div style="margin-top:6px;font-size:13px;color:#625e70">4 “never arrived” complaints older than 72 hours with no reply.</div></div>
+      </div>
+      <div style="background:#15131d;color:#f3f1f6;border-radius:24px;padding:22px;font:400 12px/1.7 'Geist Mono',monospace">
+        <div style="font:500 10px/1 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:rgba(243,241,246,.65);margin-bottom:12px">AI shopping agent · MCP</div>
+        <div><span style="color:oklch(0.8 0.13 295)">›</span> buy a navy hoodie under $45</div>
+        <div style="color:rgba(243,241,246,.65)">search_catalog → 2 stores</div>
+        <div>get_store_report(quicktees-outlet) → <span style="color:oklch(0.85 0.13 85)">caution</span> · skip</div>
+        <div>get_store_report(neel-block-prints) → <span style="color:oklch(0.82 0.14 155)">verified</span></div>
+        <div>create_order → waits for the human to approve</div>
+      </div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+</main>
+
+<div data-ff="dock" style="position:fixed;right:16px;bottom:16px;z-index:40;width:360px;max-width:calc(100% - 32px);box-sizing:border-box;border-radius:20px;background:#15131d;color:#f3f1f6;padding:14px 16px;box-shadow:0 30px 60px -24px rgba(21,19,29,.7);font:400 11.5px/1.5 'Geist Mono',monospace">
+  <button sc-camel-on-click="{{ toggleDock }}" style="appearance:none;border:0;background:transparent;cursor:pointer;width:100%;padding:0;display:flex;justify-content:space-between;align-items:center;color:#f3f1f6;font:500 10px/1 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase"><span style="display:flex;align-items:center;gap:8px"><span style="width:7px;height:7px;border-radius:50%;background:oklch(0.82 0.14 155)"></span>PayPal sandbox calls</span><span>{{ dockTag }}</span></button>
+  <sc-if value="{{ dockOpen }}" hint-placeholder-val="{{ true }}">
+    <div style="margin-top:10px;max-height:min(46vh,320px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin">
+      <div style="color:rgba(243,241,246,.6)">{{ logEmpty }}</div>
+      <sc-for list="{{ log }}" as="l" hint-placeholder-count="0">
+        <div style="display:grid;grid-template-columns:58px minmax(0,1fr) auto;gap:8px;padding:6px 0;border-top:1px solid rgba(255,255,255,.1)"><span style="color:rgba(243,241,246,.55)">{{ l.t }}</span><span style="overflow-wrap:anywhere">{{ l.m }} {{ l.p }}</span><span style="color:oklch(0.82 0.14 155)">{{ l.c }}</span></div>
+      </sc-for>
+    </div>
+  </sc-if>
+</div>
+</div>
+</template>
+<script src="assets/dc-lite.js"></script>
+<script src="assets/console.js"></script>
+</body>
+</html>

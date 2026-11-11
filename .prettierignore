@@ -4,3 +4,4 @@ docs/internal
 pnpm-lock.yaml
 coverage
 dist
+standalone

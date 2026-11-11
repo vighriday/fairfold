@@ -2,7 +2,17 @@ import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['node_modules/**', '**/dist/**', 'coverage/**', '.work/**', 'docs/internal/**'] },
+  {
+    ignores: [
+      'node_modules/**',
+      '**/dist/**',
+      'coverage/**',
+      '.work/**',
+      'docs/internal/**',
+      // static browser build of the design (plain browser scripts plus generated design exports)
+      'standalone/**',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
