@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-11 — H4 audit: canonical dispute API contracts
+
+- Restored source GET `/api/disputes/:id` and POST `/api/disputes/:id/packs/:packId/approve`, with the documented detail envelope and direct approval body.
+- Mapped draft `amount` to only its chosen operation, rejected conflicting fields, prevented inspect-first overrides, checked edited notes against the approved privacy boundary and froze the approved parameters.
+- Added HTTP regressions for edited draft amounts, merchant-decides, conflicting amounts, inspection bypass and unclear contact text. Typecheck/lint and the focused PostgreSQL/HTTP suite pass; real actions remain pending.
+
 ## 2026-11-11 — H4 audit: retention and dispute execution
 
 - Corrected approved message normalization, complete URL removal, whitespace-aware known-street redaction, within-snapshot dedupe and the combined historical fingerprint budget.

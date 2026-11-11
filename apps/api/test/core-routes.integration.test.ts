@@ -106,8 +106,8 @@ describe.skipIf(!integrationUrl)('H2 HTTP contracts with real database/client/qu
       '/api/buyer/orders',
       '/api/buyer/orders/{id}',
       '/api/merchant/disputes',
-      '/api/merchant/disputes/{id}',
-      '/api/merchant/disputes/{disputeId}/packs/{packId}/approve',
+      '/api/disputes/{id}',
+      '/api/disputes/{id}/packs/{packId}/approve',
     ])
       expect(spec.paths).toHaveProperty(path);
     expect(spec.paths['/api/merchant/orders'].get.security).toEqual([{ bearerAuth: [] }]);
@@ -448,11 +448,11 @@ describe.skipIf(!integrationUrl)('H2 HTTP contracts with real database/client/qu
       }),
     );
     const detail = await f.app.inject({
-      url: '/api/merchant/disputes/' + disputeId,
+      url: '/api/disputes/' + disputeId,
       headers,
     });
     expect(detail.statusCode).toBe(200);
-    expect(detail.json()).toMatchObject({
+    expect(detail.json().dispute).toMatchObject({
       id: disputeId,
       amount: { currency_code: 'USD', value: '38.00' },
       messages: [{ postedBy: 'BUYER', content: 'Synthetic complaint' }],
@@ -464,7 +464,7 @@ describe.skipIf(!integrationUrl)('H2 HTTP contracts with real database/client/qu
     expect(
       (
         await f.app.inject({
-          url: '/api/merchant/disputes/' + disputeId,
+          url: '/api/disputes/' + disputeId,
           headers: await f.headers('buyer'),
         })
       ).statusCode,
@@ -497,7 +497,7 @@ describe.skipIf(!integrationUrl)('H2 HTTP contracts with real database/client/qu
       .returning();
     const response = await f.app.inject({
       method: 'POST',
-      url: `/api/merchant/disputes/${disputeId}/packs/${pack!.id}/approve`,
+      url: `/api/disputes/${disputeId}/packs/${pack!.id}/approve`,
       headers: await f.headers('merchant'),
       payload: {},
     });
@@ -515,5 +515,92 @@ describe.skipIf(!integrationUrl)('H2 HTTP contracts with real database/client/qu
     expect(saved?.status).toBe('approved');
     const jobsForPack = await jobs.boss.findJobs<{ packId: string }>('evidence.submit');
     expect(jobsForPack.some((job) => job.data.packId === pack!.id)).toBe(true);
+    for (const [recommendation, actionParams, input, expected] of [
+      [
+        'make_offer',
+        {
+          offerType: 'REFUND',
+          amount: { currency_code: 'USD', value: '10.00' },
+          note: 'Draft refund',
+        },
+        { amount: { currency_code: 'USD', value: '12.00' } },
+        200,
+      ],
+      [
+        'inspect_first',
+        null,
+        {
+          recommendation: 'make_offer',
+          offerType: 'REFUND',
+          amount: { currency_code: 'USD', value: '10.00' },
+          note: 'Bypass',
+        },
+        409,
+      ],
+      [
+        'make_offer',
+        {
+          offerType: 'REFUND',
+          amount: { currency_code: 'USD', value: '10.00' },
+          offerAmount: { currency_code: 'USD', value: '11.00' },
+          note: 'Conflict',
+        },
+        {},
+        400,
+      ],
+      [
+        'merchant_decides',
+        null,
+        {
+          recommendation: 'accept_claim',
+          acceptClaimType: 'PARTIAL_REFUND',
+          amount: { currency_code: 'USD', value: '8.00' },
+          note: 'Email: maya@example.invalid',
+        },
+        200,
+      ],
+      [
+        'make_offer',
+        {
+          offerType: 'REFUND',
+          amount: { currency_code: 'USD', value: '10.00' },
+          note: 'Ship to: 11 Unknown Road',
+        },
+        {},
+        409,
+      ],
+    ] as const) {
+      const [draft] = await database.db
+        .insert(evidence_packs)
+        .values({
+          dispute_id: disputeId,
+          recommendation,
+          action_params: actionParams,
+          evidences: [],
+          files: [],
+          narrative: 'Synthetic approval regression',
+          confidence: 1,
+        })
+        .returning();
+      const result = await f.app.inject({
+        method: 'POST',
+        url: `/api/disputes/${disputeId}/packs/${draft!.id}/approve`,
+        headers: await f.headers('merchant'),
+        payload: input,
+      });
+      expect(result.statusCode, result.body).toBe(expected);
+      if (expected === 200) {
+        const [saved] = await database.db
+          .select()
+          .from(evidence_packs)
+          .where(eq(evidence_packs.id, draft!.id));
+        expect(saved?.action_params).not.toHaveProperty('amount');
+        expect(saved?.action_params).toMatchObject(
+          recommendation === 'make_offer'
+            ? { offerAmount: input.amount }
+            : { refundAmount: input.amount, note: 'Email: [CONTACT_REDACTED]' },
+        );
+      }
+    }
   });
 });

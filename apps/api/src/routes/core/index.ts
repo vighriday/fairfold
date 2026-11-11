@@ -78,7 +78,7 @@ export function createCoreRoutes(options: {
         async (request) => disputeReads.list(request.auth, request.query),
       );
       app.get(
-        '/api/merchant/disputes/:id',
+        '/api/disputes/:id',
         {
           preHandler: requireAuth('merchant'),
           schema: {
@@ -86,7 +86,15 @@ export function createCoreRoutes(options: {
             security: bearer,
             summary: 'Read one merchant-owned dispute',
             params: z.object({ id: z.string().min(1).max(255) }),
-            response: { 200: DisputeDetailSchema, ...errors },
+            response: {
+              200: z.object({
+                dispute: DisputeDetailSchema,
+                order: z.unknown().nullable(),
+                packs: z.array(z.unknown()),
+                timeline: z.array(z.unknown()),
+              }),
+              ...errors,
+            },
           },
         },
         async (request) => disputeReads.detail(request.auth, request.params.id),
@@ -124,15 +132,15 @@ export function createCoreRoutes(options: {
     if (options.disputeApproval) {
       const disputeApproval = options.disputeApproval;
       app.post(
-        '/api/merchant/disputes/:disputeId/packs/:packId/approve',
+        '/api/disputes/:id/packs/:packId/approve',
         {
           preHandler: requireAuth('merchant'),
           schema: {
             tags: ['Disputes'],
             security: bearer,
             summary: 'Approve one merchant-owned evidence pack',
-            params: z.object({ disputeId: z.string().min(1).max(255), packId: UuidSchema }),
-            body: CoreRequests.approveAction,
+            params: z.object({ id: z.string().min(1).max(255), packId: UuidSchema }),
+            body: CoreRequests.approvePack,
             response: {
               200: z.object({
                 packId: UuidSchema,
@@ -147,7 +155,7 @@ export function createCoreRoutes(options: {
         async (request) =>
           disputeApproval(
             request.auth,
-            request.params.disputeId,
+            request.params.id,
             request.params.packId,
             request.body,
           ),

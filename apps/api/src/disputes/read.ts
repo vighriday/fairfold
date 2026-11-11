@@ -8,7 +8,9 @@ import {
   type DisputeDetail,
   type DisputeRow,
 } from '@fairfold/contracts';
-import { disputes, evidence_packs, type Database } from '@fairfold/db';
+import { disputes, evidence_packs, orders, type Database } from '@fairfold/db';
+import { createLedger } from '@fairfold/ledger';
+import { redactDisputeText } from '@fairfold/paypal';
 import { type AuthContext } from '../auth.js';
 
 type Dispute = typeof disputes.$inferSelect;
@@ -107,12 +109,12 @@ export function createDisputeReads(database: Database) {
       const latest = await packs(rows.map((item) => item.id));
       return rows.map((item) => row(item, latest.get(item.id)));
     },
-    async detail(authInput: AuthContext | null, id: string): Promise<DisputeDetail> {
+    async detail(authInput: AuthContext | null, id: string) {
       const auth = merchantContext(authInput);
       const dispute = await owned(auth, id);
       const latest = (await packs([id])).get(id);
       const raw = rawDetail(dispute);
-      return DisputeDetailSchema.parse({
+      const detail: DisputeDetail = DisputeDetailSchema.parse({
         ...row(dispute, latest),
         amount:
           dispute.amount_value && dispute.currency
@@ -144,6 +146,43 @@ export function createDisputeReads(database: Database) {
             }
           : null,
       });
+      const packRows = await database
+        .select()
+        .from(evidence_packs)
+        .where(eq(evidence_packs.dispute_id, id))
+        .orderBy(desc(evidence_packs.created_at), desc(evidence_packs.id));
+      const [order] = dispute.order_id
+        ? await database
+            .select({
+              id: orders.id,
+              status: orders.status,
+              paypalOrderId: orders.paypal_order_id,
+              paypalCaptureId: orders.paypal_capture_id,
+              amountValue: orders.amount_value,
+              currency: orders.currency,
+            })
+            .from(orders)
+            .where(and(eq(orders.id, dispute.order_id), eq(orders.merchant_id, auth.subjectId)))
+        : [];
+      return {
+        dispute: detail,
+        order: order ?? null,
+        packs: packRows.map((pack) => ({
+          id: pack.id,
+          status: pack.status,
+          recommendation: pack.recommendation,
+          actionParams: pack.action_params,
+          evidences: pack.evidences,
+          files: pack.files,
+          narrative: redactDisputeText(pack.narrative),
+          confidence: pack.confidence,
+          approvedBy: pack.approved_by,
+          approvedAt: pack.approved_at?.toISOString() ?? null,
+          submittedAt: pack.submitted_at?.toISOString() ?? null,
+          createdAt: pack.created_at.toISOString(),
+        })),
+        timeline: order ? (await createLedger(database).verify(order.id)).entries : [],
+      };
     },
   };
 }

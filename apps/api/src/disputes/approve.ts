@@ -11,6 +11,8 @@ import {
 import { disputes, evidence_packs, schema, type createDatabase } from '@fairfold/db';
 import { type Jobs } from '@fairfold/jobs';
 import { type AuthContext } from '../auth.js';
+import { redactDisputeText } from '@fairfold/paypal';
+import { canonicalJson } from '@fairfold/ledger';
 
 const actionable = new Set(['provide_evidence', 'make_offer', 'accept_claim']);
 const offerTypes = new Set(['REFUND', 'REFUND_WITH_REPLACEMENT', 'REPLACEMENT_WITHOUT_REFUND']);
@@ -37,14 +39,16 @@ function minor(value: string): bigint {
 }
 
 function edits(input: unknown): ApprovalEdits {
-  const parsed = CoreRequests.approveAction.safeParse(input);
+  const parsed = CoreRequests.approvePack.safeParse(input);
   if (!parsed.success)
     throw new AppError('INVALID_DISPUTE_APPROVAL', 'Approval input is invalid', 400);
-  const value = parsed.data.edits ?? {};
+  const value = parsed.data;
   const allowed = ['recommendation', 'offerType', 'acceptClaimType', 'amount', 'note'];
   if (Object.keys(value).some((key) => !allowed.includes(key)))
     throw new AppError('INVALID_DISPUTE_APPROVAL', 'Approval edit is not supported', 400);
   const result = value as ApprovalEdits;
+  if (result.offerType === 'REFUND_WITH_RETURN' || result.acceptClaimType === 'REFUND_WITH_RETURN')
+    throw new AppError('PAYPAL_RETURN_ADDRESS_REVIEW_REQUIRED', 'Return-based action requires Q2 review', 409);
   if (result.recommendation !== undefined && !actionable.has(result.recommendation))
     throw new AppError(
       'INVALID_DISPUTE_APPROVAL',
@@ -112,66 +116,75 @@ export function createDisputeApproval(options: {
             'Only a draft evidence pack may be approved',
             409,
           );
-        const recommendation = override.recommendation ?? pack.recommendation;
-        if (recommendation === 'inspect_first')
+        if (pack.recommendation === 'inspect_first')
           throw new AppError(
             'PACK_NOT_ACTIONABLE',
             'Inspection must complete before approval',
             409,
           );
-        if (recommendation === 'merchant_decides')
+        const recommendation = override.recommendation ?? pack.recommendation;
+        if (!actionable.has(recommendation))
+          throw new AppError('PACK_NOT_ACTIONABLE', 'Choose an actionable recommendation', 409);
+        if (
+          pack.recommendation !== 'merchant_decides' &&
+          override.recommendation !== undefined &&
+          override.recommendation !== pack.recommendation
+        )
           throw new AppError(
             'PACK_NOT_ACTIONABLE',
-            'Merchant must choose an actionable recommendation',
+            'A different recommendation requires a rebuilt pack',
             409,
           );
-        if (!actionable.has(recommendation))
-          throw new AppError('INVALID_DISPUTE_APPROVAL', 'Approval recommendation is invalid', 400);
         const approvedRecommendation = recommendation as ActionRecommendation;
         const current = object(pack.action_params);
-        const offerType =
-          override.offerType ??
-          (typeof current.offerType === 'string' ? current.offerType : undefined);
-        const acceptClaimType =
-          override.acceptClaimType ??
-          (typeof current.acceptClaimType === 'string' ? current.acceptClaimType : undefined);
-        const amount =
-          override.amount ??
-          (MoneySchema.safeParse(current.offerAmount).success
-            ? current.offerAmount
-            : MoneySchema.safeParse(current.refundAmount).success
-              ? current.refundAmount
-              : undefined);
-        if (recommendation === 'make_offer') {
-          if (!actionParamsNote(current, override))
-            throw new AppError('INVALID_DISPUTE_APPROVAL', 'Action note is required', 400);
-          if (!offerType || !offerTypes.has(offerType))
-            throw new AppError('INVALID_DISPUTE_APPROVAL', 'Offer type is required', 400);
-          if (offerType === 'REFUND_WITH_RETURN')
-            throw new AppError(
-              'PAYPAL_RETURN_ADDRESS_REVIEW_REQUIRED',
-              'Return-based action requires Q2 review',
-              409,
-            );
-        }
-        if (recommendation === 'accept_claim' && !actionParamsNote(current, override))
-          throw new AppError('INVALID_DISPUTE_APPROVAL', 'Action note is required', 400);
+        const offerType = override.offerType ?? current.offerType;
+        const acceptClaimType = override.acceptClaimType ?? current.acceptClaimType ?? 'REFUND';
+        if (offerType === 'REFUND_WITH_RETURN' || acceptClaimType === 'REFUND_WITH_RETURN')
+          throw new AppError(
+            'PAYPAL_RETURN_ADDRESS_REVIEW_REQUIRED',
+            'Return-based action requires Q2 review',
+            409,
+          );
+        if (
+          recommendation === 'make_offer' &&
+          (typeof offerType !== 'string' || !offerTypes.has(offerType))
+        )
+          throw new AppError('INVALID_DISPUTE_APPROVAL', 'Offer type is required', 400);
         if (
           recommendation === 'accept_claim' &&
-          acceptClaimType &&
-          !claimTypes.has(acceptClaimType)
+          (typeof acceptClaimType !== 'string' || !claimTypes.has(acceptClaimType))
         )
           throw new AppError('INVALID_DISPUTE_APPROVAL', 'Claim type is invalid', 400);
-        if (recommendation === 'accept_claim' && acceptClaimType === 'PARTIAL_REFUND' && !amount)
-          throw new AppError('INVALID_DISPUTE_APPROVAL', 'Partial claim amount is required', 400);
+        const representations = [current.amount, current.offerAmount, current.refundAmount].filter(
+          (v) => v !== undefined,
+        );
+        if (
+          representations.some((v) => !MoneySchema.safeParse(v).success) ||
+          new Set(representations.map(canonicalJson)).size > 1
+        )
+          throw new AppError(
+            'INVALID_DISPUTE_APPROVAL',
+            'Conflicting or invalid draft amounts',
+            400,
+          );
+        const amount = override.amount ?? representations[0];
+        const needsAmount =
+          (recommendation === 'make_offer' && offerType !== 'REPLACEMENT_WITHOUT_REFUND') ||
+          (recommendation === 'accept_claim' && acceptClaimType === 'PARTIAL_REFUND');
+        if ((needsAmount && !amount) || (!needsAmount && override.amount !== undefined))
+          throw new AppError(
+            'INVALID_DISPUTE_APPROVAL',
+            'Amount does not match the chosen operation',
+            400,
+          );
         if (amount) {
-          const parsedAmount = MoneySchema.safeParse(amount);
+          const parsed = MoneySchema.safeParse(amount);
           if (
-            !parsedAmount.success ||
-            parsedAmount.data.currency_code !== dispute.currency ||
+            !parsed.success ||
+            parsed.data.currency_code !== dispute.currency ||
             !dispute.amount_value ||
-            minor(parsedAmount.data.value) <= 0n ||
-            minor(parsedAmount.data.value) > minor(dispute.amount_value)
+            minor(parsed.data.value) <= 0n ||
+            minor(parsed.data.value) > minor(dispute.amount_value)
           )
             throw new AppError(
               'INVALID_DISPUTE_APPROVAL',
@@ -179,22 +192,29 @@ export function createDisputeApproval(options: {
               400,
             );
         }
-
+        if (recommendation !== 'provide_evidence' && !actionParamsNote(current, override))
+          throw new AppError('INVALID_DISPUTE_APPROVAL', 'Action note is required', 400);
+        if (
+          (recommendation !== 'make_offer' && override.offerType !== undefined) ||
+          (recommendation !== 'accept_claim' && override.acceptClaimType !== undefined)
+        )
+          throw new AppError(
+            'INVALID_DISPUTE_APPROVAL',
+            'Action fields do not match the recommendation',
+            400,
+          );
+        const note = override.note ?? current.note;
+        const actionParams = {
+          ...(typeof note === 'string' ? { note: redactDisputeText(note) } : {}),
+          ...(recommendation === 'make_offer'
+            ? { offerType, ...(needsAmount ? { offerAmount: amount } : {}) }
+            : {}),
+          ...(recommendation === 'accept_claim'
+            ? { acceptClaimType, ...(needsAmount ? { refundAmount: amount } : {}) }
+            : {}),
+        };
         const now = new Date(clock.now());
         if (!Number.isFinite(now.getTime())) throw new Error('Invalid approval clock');
-        const actionParams = {
-          ...current,
-          ...(offerType ? { offerType } : {}),
-          ...(acceptClaimType ? { acceptClaimType } : {}),
-          ...(amount
-            ? {
-                ...(approvedRecommendation === 'make_offer'
-                  ? { offerAmount: amount }
-                  : { refundAmount: amount }),
-              }
-            : {}),
-          ...(override.note !== undefined ? { note: override.note } : {}),
-        };
         await tx
           .update(evidence_packs)
           .set({
