@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-11 — H6 audit: deadline and retention maintenance
+
+- Check all unresolved dispute statuses, serialize open-alert creation and measure no-scan tracking gaps from shipment time. Preserve delivered/refunded state in repeated synthetic courier updates.
+- Retain bytes referenced by current attestations or evidence packs, including unlinked evidence, and register the nightly retention schedule with ownership collision checks.
+- Validation: typecheck PASS; 6 maintenance/lifecycle checks and the expanded 3-case watchdog suite PASS on PostgreSQL.
+
 ## 2026-11-11 — H5 audit: approved actions and tracking
 
 - Validate and freeze approved action payloads, claim external operations durably, reserve refund amounts and reject ambiguous replay. Buyer messages require a fresh seller-response guard; tracking does not invent a carrier scan.

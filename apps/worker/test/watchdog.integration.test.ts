@@ -99,7 +99,7 @@ describe.skipIf(!integrationUrl)('watchdog sweep', () => {
       merchant_id: owner.id,
       order_id: order!.id,
       reason: 'ITEM_NOT_RECEIVED',
-      status: 'OPEN',
+      status: 'WAITING_FOR_SELLER_RESPONSE',
       seller_response_due_date: new Date('2026-11-11T00:00:00.000Z'),
       raw: { synthetic: true },
       updated_at: clock.now(),
@@ -111,5 +111,25 @@ describe.skipIf(!integrationUrl)('watchdog sweep', () => {
       .from(alerts)
       .where(eq(alerts.order_id, order!.id));
     expect(rows.map((row) => row.type).sort()).toEqual(['dispute_due_soon', 'seal_overdue']);
+  });
+
+  it('uses shipment age for no-scan orders and deduplicates concurrent unlinked dispute alerts', async () => {
+    const owner = await merchant();
+    const [order] = await database.db.insert(orders).values({
+      merchant_id: owner.id, paypal_order_id: 'WATCH-' + randomUUID(),
+      invoice_id: 'FF-WATCH-' + randomUUID(), status: 'shipped', amount_value: '20.00',
+      currency: 'USD', shipped_at: clock.now(),
+    }).returning();
+    await database.db.insert(shipments).values({ order_id: order!.id,
+      carrier: 'OTHER', carrier_name_other: 'Synthetic carrier', tracking_number: randomUUID(), events: [] });
+    const disputeId = 'WATCH-' + randomUUID();
+    await database.db.insert(disputes).values({ id: disputeId, merchant_id: owner.id,
+      reason: 'ITEM_NOT_RECEIVED', status: 'WAITING_FOR_BUYER_RESPONSE',
+      seller_response_due_date: clock.now(), raw: { synthetic: true }, updated_at: clock.now() });
+    const sweep = createWatchdogHandler({ database: database.db, clock });
+    await Promise.all([sweep(), sweep()]);
+    const rows = await database.db.select().from(alerts).where(eq(alerts.merchant_id, owner.id));
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ type: 'dispute_due_soon', order_id: null, ref_id: disputeId });
   });
 });

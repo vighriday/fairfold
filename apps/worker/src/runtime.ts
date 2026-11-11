@@ -125,7 +125,15 @@ export function createWorkerRuntime(
       return (starting ??= (async () => {
         try {
           if (closing) throw new AppError('WORKER_CLOSED', 'Worker has already closed');
-          for (const name of ['paypal.event', 'disputes.poll'] as const)
+          for (const name of [
+            'paypal.event',
+            'disputes.poll',
+            'evidence.submit',
+            'tracking.push',
+            'action.approved',
+            'retention.sweep',
+            'watchdog.sweep',
+          ] as const)
             if (intelligenceHandlers[name])
               throw new AppError('WORKER_HANDLER_CONFLICT', 'A job handler has conflicting owners');
           const handlers: HandlerMap = {
@@ -163,6 +171,7 @@ export function createWorkerRuntime(
           if (closing) throw new AppError('WORKER_CLOSED', 'Worker closed during startup');
           await jobs.register(handlers);
           await jobs.schedule('watchdog.sweep', '*/15 * * * *', {});
+          await jobs.schedule('retention.sweep', '0 0 * * *', {}, 'Asia/Kolkata');
           const schedules = await refreshSchedules();
           timer = setInterval(() => {
             void refreshSchedules().catch(() =>
@@ -175,7 +184,7 @@ export function createWorkerRuntime(
           timer.unref();
           options.log.info(
             {
-              phase: 'H3',
+              phase: 'H8',
               handlerCount: Object.keys(handlers).length,
               intelligence: 'stub',
               disputeSync: 'configured',

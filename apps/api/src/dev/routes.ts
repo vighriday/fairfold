@@ -91,7 +91,11 @@ export function createDevRoutes(
             .innerJoin(orders, eq(orders.id, shipments.order_id))
             .where(and(eq(shipments.id, shipmentId), eq(orders.merchant_id, auth.subjectId)))
             .for('update');
-          if (!row) throw new Error('Shipment was not found');
+          if (!row) throw new AppError('SHIPMENT_NOT_FOUND', 'Shipment was not found', 404);
+          if (row.shipment.status === 'delivered' && delivered)
+            return { shipmentId, status: 'delivered', synthetic: true as const };
+          if (row.shipment.status === 'delivered' || !['shipped', 'sealed'].includes(row.order.status))
+            throw new AppError('SHIPMENT_STATE_CONFLICT', 'Demo shipment cannot advance from this state', 409);
           const status = delivered ? 'delivered' : 'in_transit';
           await tx
             .update(shipments)

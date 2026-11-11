@@ -2,6 +2,8 @@
 
 **11 November audit in progress:** reviewing Copilot baseline `762c497` against the originals. H4 retention/execution corrections have 58 focused regression passes; API contracts, H5 transactional/packing/action gaps, H6 deadlines, H7 SDK wiring and the incomplete H8 B17 seed are being repaired. Previous “local ready” labels below are historical and do not certify these gaps. See [current audit evidence](evidence/2026-11-11-audit.md).
 
+H5 packing/action and H6 maintenance audit repairs are locally verified; integration verification follows.
+
 H4 retention/execution repairs are committed as `cf4a12e`. Canonical dispute API and approval mapping repairs are separately verified; H5–H8 audit work continues.
 
 Updated 10 November 2026 IST. Research and H2's ungated local implementation are ready. Formal H1/H2 acceptance remains IN PROGRESS: first Render deployment and real PayPal evidence are pending. Hriday explicitly authorized H3 and approved its [event policy](webhook-persistence-review.md). H3 local implementation and runtime checks are ready; see the [H3 closeout](h3-closeout.md). Real A5/verified capture delivery remains pending. H4 local implementation is complete; real account-backed action evidence remains pending. H5 local Pack Station persistence, blocker checks, sealing, tracking, action and retention work is locally ready; attestation and external evidence remain pending. H6 is locally ready. H7 now has authenticated MCP, shopper transport and PostgreSQL-backed route-boundary coverage; real model/provider execution remains pending. H8 local seeding is ready; hosted and account-backed acceptance remain open.

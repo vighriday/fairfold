@@ -58,7 +58,7 @@ describe.skipIf(!url)('H3 normal worker lifecycle with actual pg-boss', () => {
       await first;
       expect(log.info).toHaveBeenCalledWith(
         expect.objectContaining({
-          phase: 'H3',
+          phase: 'H8',
           handlerCount: 7,
           intelligence: 'stub',
           disputeSync: 'configured',
