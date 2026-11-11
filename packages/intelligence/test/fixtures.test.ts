@@ -32,6 +32,8 @@ type ReviewFx = {
   rating: number;
   text: string;
   merchantReply: string | null;
+  model?: string;
+  extracted?: unknown;
 };
 type BuyerFx = {
   id: string;
@@ -129,6 +131,21 @@ describe('reviews.json', () => {
     const never = quick.filter((r) => /never arrived/i.test(r.text));
     expect(never).toHaveLength(4);
     for (const r of never) expect(r.merchantReply).toBeNull();
+  });
+
+  it('the never-arrived reviews carry a pre-read not_received extraction marked model seed', () => {
+    // The seed stores them as review complaints without a Complaint Reader call (section 19, I-D26).
+    const extracted = fx.reviews.filter((r) => r.extracted !== undefined);
+    expect(extracted.map((r) => r.id).sort()).toEqual(
+      quick
+        .filter((r) => /never arrived/i.test(r.text))
+        .map((r) => r.id)
+        .sort(),
+    );
+    for (const r of extracted) {
+      expect(r.model).toBe('seed');
+      expect(ComplaintExtractionSchema.parse(r.extracted).category).toBe('not_received');
+    }
   });
 
   it('carries exactly one prompt-injection review, and ids are unique', () => {

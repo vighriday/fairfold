@@ -1,5 +1,5 @@
 {
-  "_note": "Synthetic verified-payment reviews for the seed and the Review Themer eval (section 19). One review carries a prompt-injection string on purpose. All people and stores are fictional.",
+  "_note": "Synthetic verified-payment reviews for the seed and the Review Themer eval (section 19). One review carries a prompt-injection string on purpose. All people and stores are fictional. The four never-arrived QuickTees reviews carry a hand-written pre-read ComplaintExtraction marked model 'seed', so the seed stores their complaints without a Complaint Reader call.",
   "reviews": [
     {
       "id": "rv-neel-001",
@@ -487,7 +487,17 @@
       "buyerRef": "buyer-061",
       "rating": 1,
       "text": "Never arrived. Paid a month ago and nothing.",
-      "merchantReply": null
+      "merchantReply": null,
+      "model": "seed",
+      "extracted": {
+        "category": "not_received",
+        "component": null,
+        "failureMode": "never arrived",
+        "locationOnItem": null,
+        "severity": "functional",
+        "summary": "Order paid a month ago never arrived.",
+        "language": "en"
+      }
     },
     {
       "id": "rv-quicktees-062",
@@ -495,7 +505,17 @@
       "buyerRef": "buyer-062",
       "rating": 1,
       "text": "My order never arrived and nobody replied to my emails.",
-      "merchantReply": null
+      "merchantReply": null,
+      "model": "seed",
+      "extracted": {
+        "category": "not_received",
+        "component": null,
+        "failureMode": "never arrived",
+        "locationOnItem": null,
+        "severity": "functional",
+        "summary": "Order never arrived and emails went unanswered.",
+        "language": "en"
+      }
     },
     {
       "id": "rv-quicktees-063",
@@ -503,7 +523,17 @@
       "buyerRef": "buyer-063",
       "rating": 1,
       "text": "Tracking stopped after two days, the parcel never arrived.",
-      "merchantReply": null
+      "merchantReply": null,
+      "model": "seed",
+      "extracted": {
+        "category": "not_received",
+        "component": null,
+        "failureMode": "never arrived",
+        "locationOnItem": null,
+        "severity": "functional",
+        "summary": "Tracking stopped after two days; the parcel never arrived.",
+        "language": "en"
+      }
     },
     {
       "id": "rv-quicktees-064",
@@ -511,7 +541,17 @@
       "buyerRef": "buyer-064",
       "rating": 1,
       "text": "Never arrived, still waiting for a response.",
-      "merchantReply": null
+      "merchantReply": null,
+      "model": "seed",
+      "extracted": {
+        "category": "not_received",
+        "component": null,
+        "failureMode": "never arrived",
+        "locationOnItem": null,
+        "severity": "functional",
+        "summary": "Order never arrived; still waiting for a response.",
+        "language": "en"
+      }
     },
     {
       "id": "rv-quicktees-065",

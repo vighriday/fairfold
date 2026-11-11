@@ -46,7 +46,7 @@ pnpm install --frozen-lockfile
 pnpm setup:local        # creates an ignored .env with fresh local keys; never overwrites an existing one
 docker compose up -d    # PostgreSQL 16 on localhost:5432
 pnpm db:migrate
-pnpm seed               # fictional catalogue merchants only; see "PayPal platform" below
+pnpm seed               # the synthetic demo world (batch B17); see "The demo world" below
 pnpm dev                # API on http://localhost:3000 (Swagger UI at /docs) and the worker
 ```
 
@@ -102,7 +102,9 @@ Evaluation results measured on 10 November 2026 (details and method in [docs/ai-
 
 The PayPal side is built in `packages/paypal` (sandbox-only client, checkout, webhooks, disputes and approved actions), `apps/api` (checkout, orders, Pack Station, disputes, alerts, MCP and the demo-only `/dev` harness) and `apps/worker`. Start with the [platform build guide](docs/hriday/README.md) and the [current status](docs/hriday/status.md); the [sandbox rehearsal guide](docs/hriday/sandbox-rehearsal.md), [H2 closeout](docs/hriday/h2-closeout.md), [H3 closeout](docs/hriday/h3-closeout.md), [checkout guide](docs/hriday/checkout-integration.md) and [H3 acceptance guide](docs/hriday/h3-acceptance.md) cover the local rehearsal and the remaining real-account steps. Real SDK purchases, webhook delivery and hosted readiness are not yet verified.
 
-`pnpm seed` creates only the deterministic fictional catalogue merchants and products (`Neel`, `Indigo`, `QuickTees`). It makes no PayPal request and does not yet create the B17 orders, complaints, reviews or buyers that the acceptance tests need.
+### The demo world
+
+`pnpm seed` builds the same synthetic world every time (architecture section 19): Neel Block Prints (the sandbox merchant `pnpm setup:sandbox` connects), Indigo Loom and QuickTees Outlet; 239 delivered hoodie orders from batches B14–B17 and 4 in transit, 18 hoodie orders waiting to be packed, 80 T-shirt orders and one shipment the watchdog flags; the 12 complaint and 85 review texts from `packages/intelligence/eval/fixtures/`, with pre-read extractions so no model reads them; Alex R., whose history makes his signal yellow; and simulated network data for 10 buyers. Every order has its shipment, packing photo, attestation (`model = 'seed'`) and verifiable ledger. It ends with one shared-cause scan and the three store reports: batch B17 is a strong shared cause (5 of 39 orders, p ≈ 0.0006, q ≈ 0.007) with 18 orders to hold, and the stores are verified, verified and caution. It makes no PayPal request, every seeded PayPal id starts with `SEED-`, and running it again changes nothing.
 
 ## Data and labels
 
