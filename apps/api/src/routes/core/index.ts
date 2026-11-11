@@ -52,6 +52,7 @@ export function createCoreRoutes(options: {
   actionApproval?: ReturnType<typeof createSharedCauseActionApproval>;
   alertReads?: ReturnType<typeof createAlertReads>;
   database?: Database;
+  demoSeed?: () => Promise<unknown>;
   demoMode: boolean;
 }): FastifyPluginAsync {
   return async (server) => {
@@ -60,6 +61,7 @@ export function createCoreRoutes(options: {
     await app.register(
       createDevRoutes(options.demoMode, {
         adjudicate: options.demoAdjudicate,
+        seed: options.demoSeed,
         database: options.database,
       }),
     );
@@ -155,12 +157,7 @@ export function createCoreRoutes(options: {
           },
         },
         async (request) =>
-          disputeApproval(
-            request.auth,
-            request.params.id,
-            request.params.packId,
-            request.body,
-          ),
+          disputeApproval(request.auth, request.params.id, request.params.packId, request.body),
       );
     }
     if (options.packing) {

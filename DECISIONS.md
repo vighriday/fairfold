@@ -176,3 +176,345 @@ Original section 4 says every Fairfold dispute action occurs while PayPal waits 
 ### O30 policy approval received
 
 Hriday explicitly replied “Approve the H4 policy and mapping” on 10 November 2026 IST. Implement the [exact proposal](docs/hriday/dispute-persistence-review.md); its controlled-demo text limitations and review-required failure are part of the approval. This supersedes the pending Q3/Q4 local retention gate, not Q2/joint shared-contract review or real action approval. Read invoice_number transiently for the original exact merchant-scoped invoice fallback without expanding retained raw fields. No real fixture or PayPal action is authorized by this policy review.
+
+## Ishaan (intelligence)
+
+### I-D1 — AI provider is Grok (xAI) — 2026-11-09
+
+- `AI_PROVIDER=xai` through the Vercel AI SDK provider `@ai-sdk/xai`, with key `XAI_API_KEY`. `AI_MODEL_VISION` and `AI_MODEL_TEXT` hold Grok model ids.
+- `packages/ai` still supports `openai | anthropic | google` (D10 is unchanged).
+- Embeddings: `AI_EMBEDDING_PROVIDER` (default = `AI_PROVIDER`). If the chosen provider has no embedding model in the AI SDK, `embed()` throws `EMBEDDING_PROVIDER_UNSUPPORTED` with a clear message instead of failing silently.
+- Contract change: none. `.env.example` (Hriday) should add `XAI_API_KEY` and `xai` to the `AI_PROVIDER` options.
+
+### I-D2 — Buyer Signal points: no double count for lost disputes; refund ratio +10 — 2026-11-09
+
+- The section 10 table made the seeded buyer "Alex R." red (at least 35 points), while sections 17 and 19 require him to be yellow for the video.
+- Change:
+  - OWN_DISPUTES_FILED (+10 each, max +30) counts only disputes the buyer did **not** lose.
+  - OWN_DISPUTES_LOST (+15 each, max +30) counts the lost ones.
+  - OWN_REFUND_RATIO is **+10** (was +15).
+- Alex: OWN_DISPUTES_LOST 15 + OWN_REFUND_RATIO 10 + NEW_ADDRESS 5 + PAYER_VERIFIED −5 = 25 → yellow.
+- Contract change: **yes**, to section 10's points table. Needs Hriday's approval.
+
+### I-D5 — Alex R.'s seeded history must give a refund ratio above one half — 2026-11-09
+
+- OWN_REFUND_RATIO needs at least 2 orders with **more than** half refunded. With "one earlier refund" over 2 orders (exactly half), the rule cannot fire. The eval profile therefore gives Alex 2 earlier orders, both refunded, one of which he later disputed and lost, plus a new ship-to address.
+- Action for Hriday's `scripts/seed.ts`: seed Alex's history to match this profile (`packages/intelligence/eval/fixtures/buyers.json`, id `b15`).
+- Contract change: none (seed data only).
+
+### I-D3 — Dispute messages are appended, not new complaint rows — 2026-11-09
+
+- Section 9 lists a `dispute_message` source, but the `complaints.source` check constraint allows only `buyer_report | dispute | review`, and section 7 says dispute messages are appended to the dispute's complaint text. We follow section 7.
+- Contract change: none.
+
+### I-D4 — Contracts shim replaced by H1's `@fairfold/contracts` — 2026-11-09
+
+- H1 landed on `Hriday`; it is merged into `ishaan` locally. The temporary shim is deleted and every intelligence import uses `@fairfold/contracts`.
+- Ishaan's route schemas live in `packages/contracts/src/intel.ts`, imported as `@fairfold/contracts/intel` (the existing `./*` export), so `contracts/src/index.ts` is unchanged. This file reaches Hriday by pull request as section 14 asks.
+- The worker imports a ready `handlers` map and the API registers the intel plugin without options, so `packages/intelligence/src/runtime.ts` builds the database and a lazily-started pg-boss publisher from `DATABASE_URL` on first use. Tests inject their own runtime.
+- For Hriday: `/healthz` and the worker log reported `intelligence: 'stub'` until I-D13 retired the stubs.
+- Contract change: adds `intel.ts` only.
+
+### I-D6 — Buyer Signal sentence is stored inside `buyer_signals.features` — 2026-11-09
+
+- `BuyerSignal` (section 10) has a `sentence`, but `buyer_signals` (section 7) has no column for it. The stored `features` JSON carries `{ ...features, sentence }`, so endpoint 9 returns the same sentence without a second model call.
+- Endpoint 34 also returns `signalId`, because a buyer needs it to call endpoint 35 (contest). The field is additive.
+- A missing model configuration now degrades to each component's template fallback (logged as `model_not_configured`) instead of failing the job.
+- Contract change: none (additive response field).
+
+### I-D7 — Local embedding when no embedding provider is configured — 2026-11-09
+
+- xAI (our chosen provider, I-D1) has no embedding model, so with Grok alone shared-cause grouping would never run.
+- When `AI_EMBEDDING_PROVIDER` / `AI_MODEL_EMBEDDING` and its key are not set, `readComplaint` embeds the extracted `category | component | failure_mode` string with a deterministic local feature-hashed bag of stemmed words (`localEmbedding`, 256 dimensions), and logs `embedding: local`. A configured OpenAI or Google embedding model always takes precedence.
+- The clustering eval reports which embedding it used; the 0.80 threshold still applies (raise `CLUSTER_SIMILARITY` if precision falls below 0.85).
+- Contract change: none.
+
+### I-D8 — Hypothesis explanation, headline and cluster label are written by code — 2026-11-10
+
+- Section 11 calls `HypothesisDetail.explanation` "model-written, from the stats only", but none of section 10's five model components produces it. Code writes it from `HypothesisStats` alone (`sharedCause/wording.ts`): counts, rate ratio, p, q, tests run, median days since delivery, spread and the listing-change flag. No model call, so no number can be invented.
+- The cluster label is `component: failure_mode` from the first member's extraction (else the category). Model-extracted phrases are reduced to at most 60 plain characters before they reach the Message Drafter prompt or a buyer message.
+- Contract change: none.
+
+### I-D9 — A dispute that joins a live hypothesis gets its pack rebuilt — 2026-11-10
+
+- `dispute.synced` builds the first pack before the Complaint Reader and the debounced scan have placed the dispute's complaint in a cluster, so that first pack cannot see the hypothesis. After a scan, every open dispute whose complaint was newly clustered with an open or confirmed hypothesis (or whose cluster's hypothesis is new) is sent to `evidence.rebuild`, which supersedes the earlier draft with `inspect_first`. Maya's live dispute therefore shows `inspect_first` about a minute after it syncs.
+- Contract change: none.
+
+### I-D10 — Buyer message drafts: one per buyer, level kept in the action payload — 2026-11-10
+
+- `send_buyer_messages` carries `{ messageIds, level }`; `level` (`suspected` | `confirmed`) is additive and lets re-scans skip buyers already drafted at that level, so scans stay idempotent. Orders without a buyer get no draft (an in-app message needs a recipient). Drafts go to the hypothesis's in-transit and delivered-without-complaint orders (section 9 stage 5).
+- Contract change: additive field in an action payload.
+- Amended 2026-11-10 (Phase 2, template-first): the Message Drafter is called at most once per hypothesis and level, not once per buyer. It writes one template with `{order}` and `{product}` placeholders from the approved wording only (no buyer, no order reference, no name reaches the model); code fills each buyer's own order. The template is kept as `template: { subject, body, usedTemplate }` in the `send_buyer_messages` payload, so a re-scan that adds buyers reuses it without a model call. A draft is used only if its body contains `{order}`, it has no other brace, it fits the 120/1200-character limits with 80 characters reserved per placeholder, and it names none of the affected buyers; otherwise the fixed template of section 10 is used. Section 10's "one message per buyer" still holds: each buyer gets their own message. With 38 affected buyers the seeded demo spent 38 free-tier requests per level before this change and spends 1 now.
+- Contract change: additive field (`template`) in the same action payload.
+
+### I-D11 — Confirm, dismiss and trend details — 2026-11-10
+
+- Confirm counts one inspected unit per inspection attestation; a unit is defective when its `inspection.defectVisible` and `inspection.matchesCluster` are both true. With no defective unit, 409 `NO_DEFECTIVE_UNIT` carries `{ inspected, defective, clean, suggestDismiss }`; `suggestDismiss` is true at ten or more clean units. `HypothesisDetail` has no field for the suggestion, so it lives in that error.
+- Dismiss accepts open or confirmed hypotheses. The `{ reason }` has no column, so it is stored in the proposed `release_orders` payload (`{ orderIds, reason }`) and in the result of every still-proposed action, which dismiss withdraws (`status: failed`, `result: { withdrawn: 'hypothesis_dismissed', reason }`) so nothing is approved for a dismissed cause. A re-scan never reopens a dismissed hypothesis.
+- A superseded hypothesis is history: endpoint 22 leaves it out and endpoint 23 answers 409 `HYPOTHESIS_SUPERSEDED` (its status is not in `HypothesisDetail`'s enum).
+- Trend `rate` is complaints per order-day of exposure, exactly as stage 4 counts them; weeks are ISO weeks of delivery (of shipping for transit categories), keyed by their Monday.
+- Contract change: none.
+
+### I-D12 — Shared Cause and report-problem routes — 2026-11-10
+
+- Endpoint 22 takes the merchant from the token. A1 calls it with `?merchantId=`; the parameter is accepted and must equal the token's merchant (403 otherwise).
+- Endpoint 32 accepts files in `photos` or `photos[]` (at most 4, else 400 `TOO_MANY_PHOTOS`) and a required `text`; only the buyer's own paid order (captured or later) can be reported. Photos go through `blobs.put`, so its JPEG/PNG and size checks apply. No ledger entry is written for a report (section 8 names none).
+- Clustering precision on `complaints.json` (task I6 gate) needs the real model's extractions and is measured in I7's eval run; it is NOT RUN as of this entry because no provider key is configured locally.
+- Contract change: none.
+
+### I-D13 — H1 intelligence stubs retired — 2026-11-10
+
+- The worker registers the real intelligence handler map (9 handlers) and the API registers all 18 intelligence endpoints, so the H1 stand-ins were false. At Ishaan's instruction ("no scaffolding throughout the project") they are removed: `packages/contracts/src/stubs.ts` and its test are deleted (nothing else imported them), `/healthz` returns `intelligence: 'ready'`, the worker logs `intelligence: 'ready'`, and the OpenAPI description no longer says the intelligence endpoints are missing. Hriday's H1 deployment checklist, status and handoff lines that expected the stubs are corrected to match.
+- Not changed: Hriday's unbuilt H2–H8 work (checkout, PayPal actions, seed, `test:e2e`) keeps its accurate NOT RUN / not-implemented labels; building it is outside I1–I7.
+- Contract change: **yes** — `/healthz`'s `intelligence` literal changes from `stub` to `ready`, and `@fairfold/contracts/stubs` no longer exists. Needs Hriday's review.
+
+### I-D14 — Model provider switched from Grok (xAI) to Google Gemini's free tier — 2026-11-10
+
+- Ishaan cannot add billing, and xAI's API needs paid credits. The Gemini API's free tier needs only a Google AI Studio key, so `.env` now uses `AI_PROVIDER=google` with `GOOGLE_GENERATIVE_AI_API_KEY`. This replaces I-D1's provider choice; the code is unchanged because `packages/ai` already supported Google (D10).
+- Gemini also offers embedding models, so `AI_EMBEDDING_PROVIDER=google` with an `AI_MODEL_EMBEDDING` id gives real complaint embeddings; left blank, the local embedding (I-D7) still applies.
+- Free-tier rate limits apply. A rate-limited call counts as a failed attempt and then uses the component's fallback, which would lower an eval score without the model being wrong, so eval runs are checked with the call-log summary (`cost`) for failed calls before their numbers are published. Free-tier inputs may be used by Google to improve its products; Fairfold sends only synthetic data, Fairfold ids and no buyer email or street address.
+- Contract change: none (environment only). Hriday's `.env.example` still defaults to `openai` and lacks `XAI_API_KEY`; it should list `google` as the team's free option.
+
+### I-D15 — Free-tier quota: retry only schema failures, cache answers, never score a fallback — 2026-11-10
+
+- The first Gemini eval run hit the free tier's daily cap: 60 calls returned `429 RESOURCE_EXHAUSTED` ("Generate content requests per day … limit: 20"). The gateway also retried every failure, so each refusal cost two requests.
+- `packages/ai` now retries **only schema failures**, as section 10 states ("a schema failure retries once, then the fallback runs"). A timeout or a provider refusal goes straight to the fallback, and the log line carries the HTTP `status`.
+- Model answers can be cached by provider, model, input hash and output schema when `AI_CACHE_DIR` is set (architecture section 21's own fallback: "cache attestation and extraction results by input hash; record the video from cached runs"). Only schema-valid answers are stored, and they are re-validated on read; fallbacks are never cached. The eval runner sets the cache to the ignored `.work/ai-cache`, so a run cut short by the quota resumes without paying twice. The API and worker cache nothing unless the variable is set.
+- The photo and complaint evals report `not measured: k of n model calls fell back …` whenever any call fell back, instead of a score. The 2026-11-10 quota-starved run (photos "5 of 20", grouping "1.00") is therefore not a result and is not published.
+- Contract change: none.
+
+### I-D16 — CLUSTER_SIMILARITY 0.85 with Gemini embeddings; Gemini models chosen — 2026-11-10
+
+- The task I6 gate (clustering precision ≥ 0.85 on `complaints.json`) measured **0.60** at the default 0.80 with `gemini-embedding-2`, because these embeddings rate short `category | component | failure_mode` strings as very similar. As the plan prescribes, the threshold is raised to **0.85** (`CLUSTER_SIMILARITY=0.85` in the environment; the code default stays section 9's 0.80). Measured on the same 24 texts: 0.85 → precision 1.00 with 45 of 53 same-cluster pairs grouped; 0.88 → 24 of 53; 0.90 → 19 of 53. The threshold was chosen on the evaluation set itself, so it is calibrated rather than independently validated.
+- Demo check at 0.85: the five B17 and one B15 seam complaints of the seed plus Maya's live-dispute text form one cluster; size, late and colour complaints stay apart.
+- The local embedding (I-D7) grouped 0–1 pairs at any threshold with real model-written phrasing, so it is only a last-resort fallback; the demo needs `AI_MODEL_EMBEDDING=gemini-embedding-2`.
+- Models (all free tier, probed 2026-11-10): `gemini-3.5-flash` for vision; `gemini-3.5-flash-lite` for text, which has its own daily quota; `gemini-embedding-2`. `gemini-3.8-flash` and `gemini-3.7-flash` gave no valid answer within the 30-second limit, and `gemini-2.5-flash` was refused.
+- For Hriday (Render): set `AI_PROVIDER=google`, the three model ids, `AI_EMBEDDING_PROVIDER=google`, `GOOGLE_GENERATIVE_AI_API_KEY` and `CLUSTER_SIMILARITY=0.85` on both the API and the worker.
+- Contract change: none (environment only).
+
+### I-D17 — One Buyer Signal per order, returned from storage after capture — 2026-11-10
+
+- Section 10 says the signal is "computed per order at capture". `computeBuyerSignal(orderId)` (section 15) now returns the order's stored signal when one exists and computes and stores it only on first use. Hriday's merchant order detail calls this function on every read (his DECISIONS.md: "Ishaan … can supply its caching through that seam"); before this change each read inserted a new `buyer_signals` row, spent one model call and could show a band that drifted from the capture-time value.
+- The `order.captured` handler and endpoint 9 use the same path, so a redelivered job stores nothing new. Concurrent first calls take a transaction-scoped advisory lock on the order (`pg_advisory_xact_lock`) and re-check before inserting, so exactly one row is written without a schema change.
+- An order with no buyer cannot be stored (`buyer_signals.buyer_id` is required) and is scored on each call.
+- Contract change: none (the function keeps its section 15 signature; behaviour now matches section 10).
+
+### I-D18 — Safety complaints alert immediately — 2026-11-10
+
+- Section 12 (owner Ishaan): "A complaint with severity = safety raises an immediate alert and blocks automatic buyer messaging." Before this change the alert was raised only when the complaint's cluster produced a significant hypothesis, so a lone safety complaint alerted nobody.
+- `readComplaint` now raises `safety_complaint` with `ref_id` = the complaint id and the complaint's order, in the same transaction that stores the extraction. The scan still raises its own `safety_complaint` for a safety-flagged hypothesis (`ref_id` = hypothesis id), and a safety flag still means no buyer message drafts.
+- Alerts are raised once per (merchant, type, ref_id). `alerts` has no unique key (Hriday owns the migration), so the check and insert run under a transaction-scoped advisory lock on that triple.
+- Contract change: none.
+
+### I-D19 — Buyer photos are described with step buyer_photo — 2026-11-10
+
+- Task I2: "Photos a buyer attaches to a problem report are described with step buyer_photo." Until now only the prompt knew the step; nothing stored such an attestation. `readComplaint` now runs the Evidence Agent on a complaint's readable photos (after the extraction is saved) and stores one `attestations` row with `step = 'buyer_photo'`, the order id, no hypothesis and no batch code. No ledger entry is written: the ledger is the merchant's packing evidence chain, and section 8 names none for a report.
+- The status answers "do these photos show the item that was ordered?" (idea doc section 8: the agent "compares the buyer's photos with the packing photos and flags differences — it does not decide"). A visible defect is what the buyer is reporting, so it is not a mismatch; an unreadable size label, the number of units photographed and fields a buyer photo is not expected to show (batch tag, shipping label) are not compared. A different colour, or a readable size label that differs, is `mismatch`; an ordered item that is not visible is `could_not_verify`.
+- One attestation per set of photos: a redelivered `complaint.created` job does not call the model again. Photos whose bytes were purged by retention are skipped.
+- Contract change: none (`attestations.step` already allows `buyer_photo`).
+
+### I-D20 — Evidence-integrity flags shown in the pack — 2026-11-10
+
+- Section 12, "Evidence integrity": the duplicate-photo check and the EXIF 15-minute rule are Hriday's (ledger, blobs); showing the flag in the pack is Ishaan's. The pack now flags each attested packing photo that (a) is recorded — by SHA-256 — for another order of the same store, using H1's `blobs.photoUsedByMerchant(hash, merchantId)` over ledger `photo` and `inspection` entries, or (b) carries `exifOutsideWindow` / `exifUnreadable` on its ledger `photo` entry.
+- Each flagged photo adds one code-written line to `EvidencePackDraft.rationale` (e.g. `Packing photo "item": the same photo is recorded for 1 other order of this store.`) and a FLAG note to its PDF caption. The count of other orders is shown, never their ids.
+- Flags inform the merchant and PayPal's reviewer; they do not change the recommendation, because section 10's decision table has no integrity row.
+- For Hriday (H5): the ledger `photo` entry payload is expected to carry `label` and, when the EXIF check fires, `exifOutsideWindow: true` or `exifUnreadable: true` (the fields `inspectImage` already computes).
+- Contract change: none.
+
+### I-D21 — A pack attestation covers all of the order's packing photos so far — 2026-11-10
+
+- F2 publishes `pack.photos_uploaded` per upload, and the seal checks the latest pack attestation. Attesting each upload alone failed whenever photos were taken one at a time: an upload holding only the sealed parcel reads the item as missing (quantity 0), so the latest attestation is `mismatch` and the seal is refused.
+- Each pack attestation now covers this upload plus the photos of the order's latest pack attestation (which already holds every earlier photo). An earlier photo whose label this upload shoots again is a retake and is replaced, so a corrected photo can clear an earlier mismatch. At most 6 photos (the Evidence Agent's limit) are kept, dropping the oldest carried-over photos first. The ledger `attestation` entry lists the photos actually attested.
+- An upload whose `batchCodes` is empty keeps the batch code recorded on the latest pack attestation, so the batch's active inspection rule (and its required photo) still reaches the agent.
+- One model call per upload, as before; each upload still writes one attestation and one ledger entry.
+- Contract change: none (job payload unchanged).
+
+### I-D22 — Section 15 signatures restored, with a compile-time check — 2026-11-10
+
+- Section 15 lists the functions Ishaan provides. Four had drifted to take an `IntelRuntime` (or extra dependencies) first, so code written against the contract — Hriday's H8 seed "ends by running one sharedcause.scan", H7's tools — would not compile: `readComplaint`, `runSharedCauseScan`, `draftBuyerMessages`, `attestPackingPhotos`.
+- They now keep the documented signatures and use the process runtime (`getIntelRuntime()`), like `computeBuyerSignal`, `buildStoreReport`, `buildEvidencePack` and `searchCatalog` already did. The runtime-injected forms used by handlers, routes and tests are `readComplaintWith(rt, id)`, `runSharedCauseScanWith(rt, merchantId)`, `draftBuyerMessagesWith(rt, hypothesisId, level)` and `attestPackingPhotosWith(input, deps)`. `readComplaint` returns `Promise<void>` as documented; `draftBuyerMessages` defaults to the suspected level; `attestPackingPhotos` returns the attestation result plus its `status` and `model` (a superset of `AttestationResult`).
+- `packages/intelligence/test/db/contract.integration.test.ts` assigns the package to a `Section15` interface, so `pnpm typecheck` fails whenever an export stops matching the contract — the guarantee `@fairfold/contracts/stubs` gave before I-D13 retired it — and exercises the four runtime-bound functions against PostgreSQL.
+- Contract change: none (restores section 15).
+
+### I-D23 — Intelligence list endpoints page with ?limit= and ?cursor= — 2026-11-10
+
+- Section 11: "list endpoints accept ?limit= (default 50) and ?cursor=". Endpoints 6, 22, 40 and 42 returned every row and ignored both.
+- The convention is the one Hriday's order lists use (origin/Hriday `apps/api/src/orders/read.ts`): the response stays the bare array of section 11; the cursor is the id of the last item the client received; rows are keyset-ordered `created_at desc, id desc`; a cursor that is not an item of that caller's list is 400 `INVALID_CURSOR`.
+- The catalogue (endpoint 6) is ordered by `name, sku, id` and, because `CatalogItem` has no id, its cursor is the last item's `merchantId:sku` (`catalogCursor()`), unique per store. Reviews (endpoint 42) are weighted over the whole store first (at most three per buyer count, earliest first), then the page is cut. Shared causes accept a cursor naming any of the merchant's hypotheses, so a page still works if that one was superseded meanwhile.
+- `limit` is 1–100 (`IntelListQuerySchema` in `@fairfold/contracts/intel`). Section 11 sets no maximum; one is needed because endpoints 6 and 42 are unauthenticated. Hriday's order lists accept up to 2³¹−1; aligning the two is a review item.
+- `searchCatalog(input)` (section 15, the MCP tool) returns the first page of 50 as before.
+- Contract change: additive (`IntelListQuerySchema`; query parameters section 11 already promised).
+
+### I-D24 — Cluster centroid is the exact normalised mean of its members — 2026-11-10
+
+- Section 9 stage 3: "recompute the centroid as the normalised mean". The previous update `normalise(centroid × memberCount + v)` treated the stored unit centroid as the members' sum; the sum's length is smaller than the member count unless all members coincide, so the existing members were over-weighted and the centroid drifted from the mean.
+- `assignClusters` now keeps each cluster's sum of member unit vectors and sets the centroid to that sum normalised. An existing cluster's sum is rebuilt from its members among the complaints the scan loads (all of the merchant's read complaints), so the result is exact regardless of how the centroid was stored; only a cluster with none of its members passed falls back to its stored centroid weighted by its stored count. Members embedded by a different model (another vector length) are left out of the mean.
+- Effect on published numbers: the clustering precision in README.md and docs/ai-tools.md (1.00 over 45 pairs at threshold 0.85, 2026-11-10) was measured with the old update. Re-run `pnpm --filter @fairfold/intelligence eval` before quoting it again; not re-run here because it spends the free-tier model quota.
+- Contract change: none.
+
+### I-D25 — Review themes are reused while the store's reviews are unchanged — 2026-11-10
+
+- `storereport.refresh` runs after every review, and `buildStoreReport` also runs on demand; each run called the Review Themer although its input rarely changes. The stored report now carries `themesInputHash`, the SHA-256 of exactly what the themer reads (the first 100 counted reviews' ids, ratings and texts, newest first). When the next build would send the same input, the stored themes are reused and no model call is made; any added, re-weighted out, re-rated or re-worded review changes the hash. A merchant reply is not themer input and changes nothing.
+- A fallback (no themes because the model failed) is stored without the hash, so the next refresh asks again instead of keeping an empty theme list.
+- `themesInputHash` lives inside `store_reports.report` next to the StoreReport fields. It is not part of the StoreReport contract: `StoreReportSchema` strips it on read, so endpoint 5 and `get_store_report` never return it. No column was added (section 7 unchanged).
+- Contract change: none.
+
+### I-D26 — Seed complaints are pre-read; the scan embeds read complaints that have no vector — 2026-11-10
+
+- Section 19 has `scripts/seed.ts` (Hriday, H8) read the complaint texts from `packages/intelligence/eval/fixtures/complaints.json`. Reading the 12 seed complaints through the Complaint Reader would spend 12 generative calls, more than half of the free tier's daily text quota, before the demo starts.
+- Each seed complaint in the fixture now carries `extracted`, a hand-written ComplaintExtraction (validated by a test against `ComplaintExtractionSchema`), and `model: "seed"`, the marker section 19 uses for seeded attestations. `complaints` has no model column, so the marker stays in the fixture. The six seam complaints share the fault `sleeve seam | stitching came apart`, so they group together however the embedding model scores paraphrases.
+- For H8: insert each seed complaint with `extracted` set from the fixture (and `order_item_id` / `product_id` from the seeded order) and do not publish `complaint.created`; the final `sharedcause.scan` for Neel does the rest.
+- `runSharedCauseScan` now embeds every read complaint without an embedding (category `other` excepted) in one `embed()` request before grouping, and stores the vectors. Seeding therefore makes no Complaint Reader call and one embedding request (none when the local embedding is used). The seed's vectors come from the same embedding model as the live complaints, so Maya's live dispute is compared in the same space. The same step re-embeds a complaint whose embedding was never stored.
+- The scan's own proposals still cost what they cost: one Message Drafter call for the suspected template (I-D10) and none for the themes when the reviews are unchanged (I-D25).
+- Contract change: additive fields in Ishaan's fixture JSON.
+
+### I-D27 — Embeddings follow the same timeout and no-retry policy as other model calls — 2026-11-10
+
+- `generateStructured` had a 30-second timeout and retried only schema failures (I-D15), but `embed()` called `embedMany` with the AI SDK defaults: no timeout and two automatic retries, so a 429 quota refusal cost three embedding requests and a hung provider could hold a `complaint.created` job indefinitely.
+- `embed()` now makes one attempt with `maxRetries: 0` and a 30-second abort (`MODEL_TIMEOUT_MS`), and logs every call with `ok`, latency, count and, on failure, the error name and HTTP status, like `ai_call` lines. A failure is thrown: an embedding has no meaningful fallback (a local vector lives in another space and would not group with the rest).
+- Callers degrade instead of failing: the Complaint Reader saves the extraction with no embedding and still schedules the scan; the scan leaves complaints whose embedding request failed ungrouped and goes on. The next scan embeds them in its single batched request (I-D26).
+- Contract change: none.
+
+### I-D28 — Length limits on model text are applied by code, not by the schema the model sees — 2026-11-10
+
+- A `.max()` in the schema passed to `generateObject` turns an answer that is one character too long into a schema failure, a retry and then the fallback. On the free tier that is two requests for nothing, and for the Complaint Reader the fallback is category `other`, which never groups: a 141-character summary removed a real seam complaint from Shared Cause Detection.
+- The schemas the models fill now have no length limits; code applies them (`src/text.ts`): the complaint summary is cut to 140 characters at a word with an ellipsis (a language code shorter than 2 becomes `und`) and the result is still validated against the contract's `ComplaintExtractionSchema`; a theme label is cut to 60 characters and at most 8 themes are kept; the Buyer Signal sentence (240) and the dispute narrative (2,000) keep the whole sentences that fit, and the narrative's grounding check runs on the cut text.
+- Buyer messages are not cut: a message body cut mid-sentence would be sent to a buyer, so a template that does not fit falls back to the fixed template (I-D10).
+- Contract change: none (`ComplaintExtractionSchema` still enforces 140 characters on what is stored).
+
+### I-D29 — Wording post-checks on the Buyer Signal sentence and review-theme labels — 2026-11-10
+
+- The submission requires that a Buyer Signal "never" recommends cancelling ("recommended actions never include cancel", "no auto-cancel, no auto-refusal"), and that the Store Report uses "neutral wording ('what we found'), never an AI adjective". Both rules were only in the prompts.
+- The Buyer Signal sentence is now checked by code: wording that tells the merchant to cancel (`cancel`, `cancelling`, `cancellation`), not to ship (`do not ship`, `don't ship`) or to refuse the order is replaced by the template sentence, which is built from the reason labels and never contains such words.
+- A review-theme label must name a topic in neutral words: a label containing praise, disparagement or an accusation (a fixed list such as great, amazing, poor, terrible, scam, fake, fraud, rip-off, avoid, unreliable) is not shown. Dropping the theme is section 10's documented fallback for the themer ("themes omitted; counts and ratings still shown"); its reviews still count. The prompt now also asks for topic-only labels.
+- Contract change: none.
+
+### I-D30 — Emails and phone numbers are removed from buyer text before any model call — 2026-11-10
+
+- Section 10: "Inputs carry no raw email or street address". Stored email and address fields were never sent, but a buyer can type an email address or a phone number into a problem report, a review or a PayPal dispute message, and that text reached the Complaint Reader and the Review Themer verbatim. The README claimed more than the code did.
+- `generateStructured` now passes every untrusted text through `removeContactDetails` (packages/ai) before it is wrapped, hashed and sent: email addresses become `[email removed]` and phone numbers (7–15 digits, optionally with `+` or `00`, spaces, dots, dashes or brackets, not inside a longer word) become `[phone removed]`. Dates, prices, quantities, SKUs, ids such as `FF-<uuid>` and carrier tracking numbers that run into letters are kept. A bare 7–15 digit number is removed even when it is not a phone number; for the Complaint Reader and the Review Themer that loses nothing they need.
+- A street address typed into free text is not detected; README.md and docs/ai-tools.md now say so instead of claiming no street address is ever sent.
+- Contract change: none.
+
+### I-D31 — Catalogue search matches every word against name, SKU, colour and description — 2026-11-10
+
+- `searchCatalog` (endpoint 6, MCP `search_catalog`) matched the whole query as one substring of the name or the SKU. A13's shopping agent asks for "navy hoodie": the seeded hoodie is named "Block-print cotton hoodie", so the phrase never matched and the agent found nothing.
+- The query is now split on whitespace and every word must appear (case-insensitive substring, `%` and `_` escaped) in the product's name, SKU, colour or listing description; `maxPrice` and paging are unchanged. "navy hoodie" finds a hoodie whose colour is navy; "navy" alone finds every navy product.
+- For H8: A13 relies on the seeded HD-IND-01 having `colour = 'navy'` (or "navy" in its description); section 19 does not state the hoodie's colour.
+- Contract change: none.
+
+### I-D32 — Jobs are sent in the transaction that writes their rows; the sweep re-reads unread complaints — 2026-11-10
+
+- Every intelligence job was published after its rows committed. A crash, a deploy or a queue error between the commit and the publish left a stored complaint that was never read (it never reaches Shared Cause Detection), or a hypothesis change whose packs were never rebuilt.
+- The intelligence `Publisher.publish(name, payload, { tx })` now sends the job inside the caller's drizzle transaction: `jobsPublisher(jobs)` adapts Hriday's `createJobs` queue and hands the transaction to pg-boss through pg-boss's own drizzle adapter (`fromDrizzle`, pg-boss 12.38.1, the version `@fairfold/jobs` pins; added as a direct dependency of `@fairfold/intelligence`), the same mechanism as Hriday's `{ db }` publish option. A test against PostgreSQL shows a job sent in a rolled-back transaction does not exist.
+- In the transaction now: `complaint.created` with the complaint (report-problem, low review, new dispute), `storereport.refresh` with the review, `evidence.rebuild` with the Confirm and with each scanned hypothesis (one job per hypothesis instead of one per scan).
+- Not in a transaction: the debounced `sharedcause.scan` after a complaint is read, because Hriday's `publishDebounced` has no transaction option. A lost one is covered by the nightly sweep's scan.
+- The nightly `sharedcause.sweep` first re-sends `complaint.created` for every complaint still unread more than an hour after it was stored (`UNREAD_GRACE_HOURS`), so a job that is merely still queued is not doubled.
+- Contract change: additive optional parameter on the intelligence-internal `Publisher`; new export `jobsPublisher`.
+
+### I-D33 — Concurrency: one scan per merchant, queued sweep scans, atomic upsert, conditional Confirm/Dismiss/resolve — 2026-11-10
+
+- Scan lock. A debounced `sharedcause.scan`, the sweep's scan and a direct `runSharedCauseScan` can overlap; two scans reading the same unassigned complaints each created clusters and a hypothesis (two B17 hypotheses in the new test). `runSharedCauseScan` now holds a session-level advisory lock per merchant (`pg_advisory_lock(hashtextextended('fairfold:scan:<merchant>'))`) on a dedicated pool connection for the whole scan; the scan's own transactions stay short. A second scan waits, then finds the first one's work and changes nothing.
+- The hypothesis update in the scan sets the status from the row's current value (`case when status = 'superseded' then 'open' else status end`) instead of the value read earlier, so a Confirm or Dismiss committed during a scan is never undone.
+- The nightly `sharedcause.sweep` queues one `sharedcause.scan` job per merchant with read complaints instead of running every scan inside the sweep job.
+- `upsertComplaint` is one `insert … on conflict (source, source_ref) do update` that appends the text; concurrent syncs of one dispute store one row with every text, and exactly one call reports `isNew` (Postgres `xmax = 0`). It used to select then insert, so concurrent calls failed on the unique key.
+- Confirm (`status = 'open'`), Dismiss (`status in ('open','confirmed')`) and contest resolution (`status = 'open'`) are conditional updates checked inside their transaction; the losing request of a double click gets 409 (`HYPOTHESIS_NOT_OPEN`, `CONTEST_RESOLVED`) and inserts no second `propose_offers`, `release_orders` or drafts.
+- Contract change: none.
+
+### I-D34 — Hypothesis lifecycle: withdraw on supersede, retire when not significant, release the rule on dismiss — 2026-11-10
+
+- Superseded. When a cluster's primary value changes, the earlier open hypothesis was set to `superseded` but its proposed holds, inspection rule and buyer messages stayed proposed, so the merchant could still approve them. They are now withdrawn (`status: failed`, `result: { withdrawn: 'hypothesis_superseded', reason: 'The shared cause now points to batch B17.' }`).
+- Retired. An open hypothesis that a scan no longer finds — its cluster is no longer eligible or no value passes the thresholds — stayed open for ever. The scan now retires it: status `superseded` (no new status; a retired hypothesis reopens on the same row if it becomes significant again), proposals withdrawn with `hypothesis_retired`. Confirmed hypotheses are never retired by the scan.
+- Whatever a superseded, retired or dismissed hypothesis put in place is proposed for release in one `release_orders` action: the orders it holds and the active inspection rules it created (`inspection_rules.created_by_hypothesis_id`). Section 7 has no action type for switching a rule off and adding one is a shared-contract change, so the rule ids travel in the release payload: `{ orderIds, inspectionRuleIds, reason }`. Dismiss now proposes the release even when no orders are held, if the hypothesis created a rule.
+- Executor (M8, 2026-11-11, in Hriday's `packages/paypal/src/action-execution.ts`, for his review): an approved `release_orders` now also sets `inspection_rules.active = false` for `inspectionRuleIds` (only rules of the hypothesis's merchant, else `ACTION_OWNERSHIP_FAILED` and nothing changes), accepts an empty `orderIds` when it switches off a rule, and records `inspectionRuleIds` in its result. A release with neither is still `ACTION_PAYLOAD_INVALID`. Four PostgreSQL tests in `packages/paypal/test/action-execution.integration.test.ts`, the executor's first. Not changed: section 8's "batch active" (the executor does not set `inventory_batches.status`), which stays with Hriday.
+- A reopened hypothesis withdraws its pending release (`hypothesis_reopened`) and proposes again: holds for orders it does not hold now (held orders and approved-but-not-executed holds count; withdrawn or released holds do not), the inspection rule unless one is proposed, approved or done, and buyer messages for buyers whose drafts were withdrawn (the stored template is reused, so no model call).
+- Contract change: additive field `inspectionRuleIds` in the `release_orders` payload; new `withdrawn` reasons in action results.
+
+### I-D35 — No pack rebuild for a resolved dispute or after a pack was approved or submitted — 2026-11-10
+
+- `dispute.synced`, `evidence.rebuild` (from a scan, a Confirm or a dispute update) and endpoint 19 rebuilt the pack whenever asked: after PayPal resolved the dispute, or after the merchant had approved a pack or it had been submitted, each rebuild superseded nothing useful and added a new draft beside the pack PayPal already has, inviting a second submission.
+- `buildEvidencePack` now refuses with 409 `DISPUTE_RESOLVED` when the dispute has `resolved_at` or status `RESOLVED`, and with 409 `PACK_SUBMITTED` when a pack for the dispute is `approved` or `submitted`. A pack whose submission `failed` can still be rebuilt. The job handlers skip such disputes instead of failing; endpoint 19 returns the 409.
+- `approved` is included although the task names only "submitted": an approved pack is the one Hriday's `evidence.submit` is about to file, and a new draft beside it would have to be approved again.
+- The buyer's later messages still reach the dispute's complaint (Shared Cause Detection uses them); only the pack is frozen.
+- Contract change: two new 409 codes on endpoint 19 and `buildEvidencePack`.
+
+### I-D36 — A dispute complaint carries every place the buyer wrote, not just the first message — 2026-11-10
+
+- Section 9's table takes a dispute's text from "dispute reason, the buyer's notes in the dispute details, and the first buyer message"; the code took only the reason and the first buyer message, and a later sync added only the messages the job listed.
+- `buyerTexts(raw)` reads every field of PayPal's dispute object (customer-disputes v1 OpenAPI schema, checked 2026-11-10) that carries the buyer's words: the customer-provided issue details (`extensions.merchandize_dispute_properties` and `billing_dispute_properties.credit_not_processed`: product and service `description`, service `note`), item-level `notes` and details in `disputed_transactions[].items[]`, `supporting_info[]` and `evidences[]` notes with `source: SUBMITTED_BY_BUYER`, every `messages[]` entry `posted_by: BUYER` (an entry without `posted_by` counts as the buyer's, as before), and `offer.history[]` notes with `actor: BUYER`. Seller and arbiter text is left out; an unexpected shape is skipped, never thrown on.
+- The first sync stores the reason followed by all of it; every later sync appends whatever buyer text from the stored payload or the job's `newBuyerMessages` is not yet in the complaint, so a message is added once even if the job did not list it.
+- Contract change: none.
+
+### I-D37 — The API and the worker pass their database and job queue into the intelligence package — 2026-11-10
+
+- The intelligence services resolve their database and job queue from a process runtime. Nothing set it in the API or the worker, so on first use it built its own: a second `pg` pool (10 connections) beside the host's and, through `lazyPublisher`, a second pg-boss instance with its own pool and maintenance. On Render's small Postgres plan that doubles the connections each process holds.
+- `bindIntelRuntime({ db, jobs, clock?, env? })` sets the process runtime from the host's own drizzle database and `createJobs` queue (adapted by `jobsPublisher`, so `{ tx }` publishes still go in the caller's transaction). Only a process that binds nothing — a script or an eval — still builds a runtime from `DATABASE_URL`.
+- Since the M1 merge (2026-11-11) the binding lives in Hriday's runtime modules: `createRuntime` (apps/api/src/runtime.ts) calls `bindIntelRuntime({ db: database.db, jobs })` right after creating them, and `createWorkerRuntime` (apps/worker/src/runtime.ts) calls it with the worker's clock as well (M5). PostgreSQL tests check both: the API's intelligence runtime resolves with `DATABASE_URL` unset, and a job the intelligence runtime publishes lands in the worker's own queue schema.
+- `bindIntelRuntime` takes any queue with `publish(name, payload, { db })` and `publishDebounced(name, key, seconds)` (`HostJobs`); the queue `createJobs` returns fits it as is.
+- Contract change: additive exports `bindIntelRuntime`, `jobsPublisher`, `HostJobs`, `PublishOptions`.
+
+### I-D38 — Intelligence settings in the Render Blueprint — 2026-11-11
+
+- `render.yaml` had no intelligence settings, so a Render deployment would run every model component on its fallback, and Shared Cause Detection would group at the code default `CLUSTER_SIMILARITY` of 0.8 instead of the measured 0.85 (I-D16).
+- Both `fairfold-api` and `fairfold-worker` now set the same plain values as the local `.env`: `AI_PROVIDER=google`, `AI_MODEL_VISION=gemini-3.5-flash`, `AI_MODEL_TEXT=gemini-3.5-flash-lite`, `AI_EMBEDDING_PROVIDER=google`, `AI_MODEL_EMBEDDING=gemini-embedding-2`, `CLUSTER_SIMILARITY=0.85` and the four `SHARED_CAUSE_*` thresholds (14 days, 3 complaints, rate ratio 3, q 0.05). Both services need them: the API answers Confirm (Message Drafter), store reports (Review Themer) and buyer-signal reads; the worker runs every job.
+- The Gemini key is a secret: `GOOGLE_GENERATIVE_AI_API_KEY` is `sync: false` on the API, and the worker reads it with `fromService` (`envVarKey`), the same pattern as `APP_ENCRYPTION_KEY`. Render prompts for `sync: false` values only when the Blueprint is first created and ignores them on later syncs; no Fairfold Blueprint exists yet, so it will be prompted then.
+- The updated Blueprint and Hriday's original both validate against Render's official JSON Schema (draft 2020-12; schema SHA-256 `8a3fb8da6b4f55fe686fbefa790e011d3dd7895f013f355953c572a21ab6494a`, the digest Hriday recorded).
+- Review item for Hriday: his deployment guide and the conditional handoff say to supply only `APP_ENCRYPTION_KEY` at creation; with this change the dashboard also asks for the Gemini key (a free Google AI Studio key). Without a key every model step uses its fallback and the rest of the app still works.
+- Contract change: none.
+
+### I-D39 — The Pack Station reads the packing attestation and applies section 8's inspection and hold rule — 2026-11-11
+
+- Found while merging (M9), in Hriday's `apps/api/src/packing/service.ts`, changed for his review. Section 8 F2: the seal is refused with `INSPECTION_REQUIRED` when "an active rule covers one of the batch codes and no photo labelled with the rule's required_photo_label has an attestation with inspection.defectVisible = false", and with `ORDER_HELD` when the order is "held, and no passing inspection photo yet".
+- The check accepted only an attestation with step `inspection`. The Evidence Agent attests a packing upload with step `pack` (all of the order's photos so far, with the rule's inspection result inside, I-D21); step `inspection` is for batch inspections, which have no order. So no order under an inspection rule could ever pass, and B17 orders could never be sealed (A11). The check now accepts step `pack` (and `inspection`) with status `match`, the rule's photo label and `defectVisible === false`.
+- `ORDER_HELD` was raised for every held order; it is now raised only while the order has no passing inspection photo, as section 8 says, so a held B17 order whose seam close-up shows no defect can be sealed.
+- The pack state, the override and the seal read the order's latest attestation of any step; a buyer's photo check (step `buyer_photo`, I-D19) written after packing could become the "latest" and block or mislabel the seal. All three now read the latest step `pack` attestation.
+- Three PostgreSQL tests in Hriday's `apps/api/test/packing.integration.test.ts` insert attestations in the Evidence Agent's shape: the rule passes only on the close-up without the defect and the order then seals; a held order is `ORDER_HELD` until a passing photo and then seals; a later buyer-photo check leaves the packing attestation in charge.
+- Contract change: none (section 8 behaviour).
+
+### I-D40 — Review item for Hriday: keep the buyer's written dispute fields in the sanitised dispute — 2026-11-11
+
+- Not changed in code (M10): it decides which buyer data is persisted, which is Hriday's to settle under Q3 and his dispute retention policy.
+- Section 9 stage 1 takes a dispute complaint's text from "dispute reason, the buyer's notes in the dispute details, and the first buyer message". `buyerTexts` (I-D36) reads every buyer-written field of PayPal's dispute object (customer-disputes v1): the customer-provided issue details (`extensions.merchandize_dispute_properties` and `billing_dispute_properties.credit_not_processed`: product and service `description`, service `note`), item `notes` in `disputed_transactions[].items[]`, `supporting_info[].notes` and `evidences[].notes` with `source: SUBMITTED_BY_BUYER`, `messages[]` with `posted_by: BUYER`, and `offer.history[].notes` with `actor: BUYER`.
+- `sanitizeDisputeDetail` (packages/paypal/src/dispute-policy.ts), which writes `disputes.raw`, keeps the messages (content redacted with `redactMessage` for the order's known emails and street lines) but keeps `evidences` without their notes, `disputed_transactions` with only `seller_transaction_id`, and drops `supporting_info`, `offer` and `extensions`. On Hriday's data the dispute complaint therefore gets the reason and every buyer message, but none of the buyer's other notes.
+- Suggested change for his review: keep, in the same PayPal shape, only those buyer-authored fields (not seller or arbiter text), each passed through `redactMessage` like the messages, so `buyerTexts` reads them unchanged and no contract changes. Suggested test: a `dispute-policy` unit test that a buyer `supporting_info` note survives redacted while a seller note does not; I-D36's PostgreSQL test then covers the rest.
+- Alternative if he prefers not to persist them: list them in `dispute.synced` (`newBuyerMessages`) instead; that needs no stored copy but is a job-contract change.
+- Contract change: none proposed.
+
+### I-D41 — The MCP tools use the intelligence package's catalogue search and store reports — 2026-11-11
+
+- Section 16 H7: "search_catalog { query, maxPrice? } → Ishaan's searchCatalog; get_store_report { merchantId } → cached store_reports, else buildStoreReport". Hriday's MCP service (apps/api/src/mcp/service.ts) queried the database itself: the catalogue matched the whole query against product names only (so A13's "navy hoodie" could not find section 19's "Block-print cotton hoodie"), and `get_store_report` returned 404 for a store with no stored report.
+- Changed for his review (M11): `createMcpService(database, intelligence)` takes the intelligence runtime `createRuntime` binds (I-D37). `search_catalog` calls `searchCatalogWith` (every word against name, SKU, colour and description, I-D31; each store's band; first page of 50) and refuses a non-numeric `maxPrice` with 400; `get_store_report` calls `storeReportFor` (the stored report, else one built now) and refuses a non-uuid id with 400; an unknown store stays 404. The other two tools are unchanged.
+- Two PostgreSQL tests in Hriday's `apps/api/test/mcp.integration.test.ts`; his existing MCP and shopper-policy tests pass unchanged.
+- Contract change: none (the tools' inputs and outputs are as before).
+
+### I-D42 — No proactive_refund proposal — 2026-11-11
+
+- Section 9 stage 5 lists an "optional proactive_refund" for delivered orders without a complaint; F5 step 2, which names the scan's proposals, does not include it. Hriday's executor can carry out an approved `proactive_refund` `{ orderIds, amounts }` through PayPal.
+- Decision (Ishaan, 2026-11-11): the intelligence package does not propose it. Seeded orders carry no PayPal capture, so the executor would refuse them (`ACTION_ORDER_INVALID`) in the demo; the confirmed-level buyer message already offers a replacement or refund for the buyer to choose; and refunding before a buyer asks would move money on a statistical hypothesis.
+- Effect: the Store Report's `proactiveFixes90d` counts completed `proactive_refund` actions (none) plus confirmed hypotheses whose buyer messages were sent, as before.
+- Contract change: none.
+
+### I-D43 — `pnpm seed` builds the section 19 world — 2026-11-11
+
+- Architecture section 19 and Hriday's H8 plan give `scripts/seed.ts` to Hriday, reading Ishaan's fixture JSON; his audit lists "the B17 seed-side intelligence world" under Ishaan. On 2026-11-11 Ishaan chose to build it now (M14), for Hriday's review in the pull request. His seed created three placeholder merchants with one "Navy hoodie" each and no orders.
+- `apps/api/src/seed/world.ts` builds the world; `scripts/seed.ts` stays a thin CLI, importing app code by relative path as his other scripts do. Deterministic: ids are derived from fixed keys (`seedId`), choices come from a mulberry32 generator seeded with "fairfold", and every row is inserted only when absent, so a second run adds nothing (tested). Dates are relative to the moment of seeding.
+- Neel Block Prints is exactly the merchant `setup:sandbox` provisions (`DemoSubjects.merchant`, `neel-block-prints`, `is_simulated = false`, HD-IND-01 at 38.00). The seed fills only Neel's missing policy URLs and domain date and the hoodie's missing colour and size, so it never touches the PayPal credentials and running `setup:sandbox` after it does not conflict (tested). Indigo Loom and QuickTees Outlet keep Hriday's seed ids 0102 and 0103.
+- Section 19's numbers: B14–B16 hold 200 delivered hoodie orders, each delivered after its batch arrived; B17 (received 32 days ago, 64 units) has 39 delivered, 4 in transit and 21 in stock; every delivered hoodie order was delivered 15–55 days ago, so all have the full 14-day exposure. 18 hoodie orders were captured in the last 3 days and are not packed, Alex R.'s among them. 80 T-shirt orders, plus one shipped T-shirt whose last scan was 4 days ago (the watchdog). Carriers rotate over DHL, FedEx, UPS and OTHER (India Post); packers over station-1 and station-2.
+- The 12 complaint texts and 85 reviews come from the fixtures. Each batch's complaints are spread evenly over that batch's deliveries; on the first five matching orders the five B17 complaints fell in one ship week, and the scan named that week instead of the batch. Neel's two negative reviews stay reviews with their replies (section 19 counts complaints exactly); QuickTees' four never-arrived reviews are also review complaints, pre-read as `not_received` (fixture `model: "seed"`), which makes them the four unanswered not-received complaints.
+- Alex R. follows I-D5: two earlier T-shirt orders at an old address, both refunded, the first disputed and decided in the store's favour (`SEED-PP-D-ALEX-1`), all outside the 90-day report window; now a hoodie to a new address.
+- Every sealed order has a shipment, one packing photo (a small generated PNG, different for each order, so no reuse flag), a `model = 'seed'` match attestation and the ledger chain captured → photo → attestation → sealed → tracking_pushed → delivered. Indigo's tracking follows the seal within an hour; QuickTees' is pushed 100 hours after capture.
+- The seed ends with one shared-cause scan for Neel and the three store reports. Measured with models off: batch B17 strong, 5 of 39 orders, rate ratio 25.6, p 0.00060, q 0.0072, 18 unshipped orders (section 19 expects k = 5, p ≈ 0.0006, q ≈ 0.007); bands verified, verified, caution (A14). With a model key the scan's buyer-message template and the two review-theme sets cost three text calls and one embedding request.
+- Not seeded: Maya (she buys through real sandbox checkout) and histories for the 30 Buyer Signal eval profiles (they are feature sets the eval scores, A8).
+- Contract change: none.
+
+## Hriday integration review — 11 November 2026 (current authority)
+
+Hriday approved surgical source-preserving integration and the bounded buyer-note extension in docs/hriday/ishaan-integration-review.md. Merge 3f8c436 already contains published Hriday baseline 762c497; the final integration preserves that history and the newer audit repairs.
+
+- I-D2 is superseded: section 10 counts every filed dispute (+10 each, cap 30), including lost ones, and lost disputes additionally (+15 each, cap 30). OWN_REFUND_RATIO is +15. Hand-derived fixture corrections: b16=45 red, b17=65 red, b18=55 red, b19=10 green, b30=45 red.
+- I-D5/I-D43 synthetic Alex history is restored to one earlier refund. Two prior orders, one refund, one filed/lost dispute, a new address and verified payer produce 25 yellow (10+15+5-5). OWN_REFUND_RATIO does not apply. Q9 remains the conflict in the source narrative; no points/history tuning is used to force it.
+- I-D7 automatic local feature-hash embedding fallback is inactive in the normal runtime. Missing/refused embedding requests leave complaints unembedded for later provider-backed retry. Explicit mock vectors remain confined to tests/evals and are labelled synthetic. The model-free seed therefore cannot claim a provider-backed A1 hypothesis.
+- I-D16/I-D38 calibrated 0.85 is not activated: the Blueprint uses the original 0.80 default. Earlier calibration and acceptance records are Ishaan's historical evidence for their recorded settings, not revalidated results for this checkout.
+- I-D40 is approved only for the exact leaves, list/text budgets and redaction failure boundary in the review. Unmarked messages never become buyer-authored. Seller/arbiter notes remain excluded.
+- I-D34 release rule IDs and I-D10 draft metadata are retained within strict action payload allowlists. Releases disable only the owning hypothesis's inspection rules; recorded merchant approval, ownership and durable side-effect claims remain required.
+- The original D18 Render topology remains unchanged. No Vercel deployment, billing entry, account action, outbound message or actual PayPal action was performed.

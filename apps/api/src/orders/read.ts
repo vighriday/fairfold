@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { and, desc, eq, inArray, lt, or, sql, type SQL } from 'drizzle-orm';
+import { and, desc, eq, inArray, or, sql, type SQL } from 'drizzle-orm';
 import {
   AppError,
   BandSchema,
@@ -99,7 +99,7 @@ export function createOrderReads(options: {
   function list(auth: AuthContext & { role: 'buyer' }, query: unknown): Promise<OrderSummary[]>;
   async function list(auth: AuthContext, query: unknown) {
     const parsed = OrderListQuerySchema.safeParse(query);
-    if (!parsed.success || parsed.data.limit > 2_147_483_647)
+    if (!parsed.success || parsed.data.limit > 100)
       throw new AppError('INVALID_ORDER_QUERY', 'Order query is invalid', 400);
     const { limit, status, cursor } = parsed.data;
     return options.database.transaction(
@@ -114,10 +114,7 @@ export function createOrderReads(options: {
             .from(orders)
             .where(and(owner, eq(orders.id, cursor)));
           if (!anchor) throw new AppError('INVALID_CURSOR', 'Order cursor is invalid', 400);
-          after = or(
-            lt(orders.created_at, anchor.createdAt),
-            and(eq(orders.created_at, anchor.createdAt), lt(orders.id, anchor.id)),
-          );
+          after = sql`(${orders.created_at}, ${orders.id}) < (select created_at, id from orders where id = ${anchor.id})`;
         }
         if (auth.role === 'buyer') {
           const rows = await tx

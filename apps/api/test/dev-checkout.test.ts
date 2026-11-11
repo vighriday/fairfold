@@ -159,6 +159,47 @@ function fixture() {
 }
 
 describe('unstyled sandbox checkout harness', () => {
+  it('allows demo seeding only for the admin role and removes the route outside demo mode', async () => {
+    const config = readConfig({
+      DATABASE_URL: 'postgres://synthetic:synthetic@127.0.0.1/fairfold_test',
+      APP_BASE_URL: 'http://localhost:3000',
+      FRONTEND_ORIGIN: 'http://localhost:3000',
+      APP_ENCRYPTION_KEY: Buffer.alloc(32, 8).toString('base64'),
+      DEMO_TOKEN_SECRET: 'synthetic-dev-route-signing-key-not-a-real-secret',
+      DEMO_MODE: 'true',
+    });
+    for (const enabled of [true, false]) {
+      const seed = vi.fn(async () => ({ seed: 'fairfold', paypalRequests: 0 }));
+      const app = await createApi({
+        config,
+        logger: false,
+        checkDatabase: async () => {},
+        routes: createDevRoutes(enabled, { seed }),
+      });
+      try {
+        const login = await app.inject({
+          method: 'POST',
+          url: '/api/auth/demo-login',
+          payload: {
+            role: 'admin',
+            subjectId: '00000000-0000-4000-8000-000000000003',
+          },
+        });
+        const response = await app.inject({
+          method: 'POST',
+          url: '/api/dev/seed',
+          headers: { authorization: 'Bearer ' + login.json().token },
+          payload: {},
+        });
+        expect(response.statusCode).toBe(enabled ? 200 : 404);
+        expect(seed).toHaveBeenCalledTimes(enabled ? 1 : 0);
+        const anonymous = await app.inject({ method: 'POST', url: '/api/dev/seed', payload: {} });
+        expect(anonymous.statusCode).toBe(enabled ? 401 : 404);
+      } finally {
+        await app.close();
+      }
+    }
+  });
   it('gates both HTML and script routes with DEMO_MODE and serves noncached assets', async () => {
     const config = readConfig({
       DATABASE_URL: 'postgres://synthetic:synthetic@127.0.0.1/fairfold_test',

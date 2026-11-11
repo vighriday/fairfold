@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, lt, or, type SQL } from 'drizzle-orm';
+import { and, desc, eq, inArray, sql, type SQL } from 'drizzle-orm';
 import {
   AppError,
   DisputeDetailSchema,
@@ -95,10 +95,7 @@ export function createDisputeReads(database: Database) {
           .from(disputes)
           .where(and(eq(disputes.id, cursor), eq(disputes.merchant_id, auth.subjectId)));
         if (!anchor) throw new AppError('INVALID_CURSOR', 'Dispute cursor is invalid', 400);
-        after = or(
-          lt(disputes.updated_at, anchor.updatedAt),
-          and(eq(disputes.updated_at, anchor.updatedAt), lt(disputes.id, anchor.id)),
-        );
+        after = sql`(${disputes.updated_at}, ${disputes.id}) < (select updated_at, id from disputes where id = ${anchor.id})`;
       }
       const rows = await database
         .select()

@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   fixedClock,
@@ -7,7 +7,7 @@ import {
   OrderRowSchema,
   OrderSummarySchema,
 } from '@fairfold/contracts';
-import { computeBuyerSignal } from '@fairfold/contracts/stubs';
+import { computeBuyerSignal } from './buyer-signal-double.js';
 import {
   alerts,
   buyers,
@@ -137,6 +137,22 @@ describe.skipIf(!integrationUrl)('owner-scoped order reads on PostgreSQL', () =>
       buyerAuth,
     };
   }
+  it('paginates PostgreSQL microseconds without skipping a row within the same millisecond', async () => {
+    const f = await fixture();
+    await database.db
+      .update(orders)
+      .set({ created_at: sql`'2026-11-09T14:00:00.000900Z'::timestamptz` })
+      .where(eq(orders.id, f.a1.id));
+    await database.db
+      .update(orders)
+      .set({ created_at: sql`'2026-11-09T14:00:00.000800Z'::timestamptz` })
+      .where(eq(orders.id, f.a2.id));
+    const first = await f.reads.listMerchant(f.merchantAuth, { limit: 1 });
+    expect(first[0]!.id).toBe(f.a1.id);
+    const second = await f.reads.listMerchant(f.merchantAuth, { limit: 1, cursor: f.a1.id });
+    expect(second[0]!.id).toBe(f.a2.id);
+  });
+
   it('lists only the merchant’s orders and the buyer’s own orders across stores with exact projections', async () => {
     const f = await fixture();
     const merchantRows = await f.reads.listMerchant(f.merchantAuth);

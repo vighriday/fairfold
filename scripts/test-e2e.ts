@@ -2,7 +2,7 @@ import { config as loadEnv } from 'dotenv';
 import { createDatabase, migrateDatabase } from '@fairfold/db';
 import { createRuntime } from '../apps/api/src/runtime.js';
 import { readConfig } from '../apps/api/src/config.js';
-import {connectMcpShopperTools} from '../packages/shopper/src/index.js';
+import { connectMcpShopperTools } from '../packages/shopper/src/index.js';
 
 loadEnv({ path: new URL('../.env', import.meta.url), quiet: true });
 
@@ -71,15 +71,19 @@ if (!databaseUrl) {
     if (!login.ok) throw new Error(`demo login returned ${login.status}`);
     const loginBody = (await login.json()) as { token?: string };
     if (!loginBody.token) throw new Error('demo login did not return a token');
-    const mcp=await connectMcpShopperTools(configuration.appBaseUrl+'/mcp',loginBody.token);
+    const mcp = await connectMcpShopperTools(configuration.appBaseUrl + '/mcp', loginBody.token);
     try {
-      const list=await mcp.client.listTools();
-      const names=list.tools.map(tool=>tool.name);
-      for(const name of ['search_catalog','get_store_report','get_order_proof']) if(!names.includes(name))throw new Error('MCP required tool is missing');
-      if(names.includes('provide_dispute_evidence'))throw new Error('Merchant evidence tool was exposed to an agent');
-      const search=await mcp.tools('search_catalog',{query:'navy hoodie',maxPrice:'45.00'});
-      if(!Array.isArray(search))throw new Error('MCP search result is not an array');
-    }finally{await mcp.close();}
+      const list = await mcp.client.listTools();
+      const names = list.tools.map((tool) => tool.name);
+      for (const name of ['search_catalog', 'get_store_report', 'get_order_proof'])
+        if (!names.includes(name)) throw new Error('MCP required tool is missing');
+      if (names.includes('provide_dispute_evidence'))
+        throw new Error('Merchant evidence tool was exposed to an agent');
+      const search = await mcp.tools('search_catalog', { query: 'navy hoodie', maxPrice: '45.00' });
+      if (!Array.isArray(search)) throw new Error('MCP search result is not an array');
+    } finally {
+      await mcp.close();
+    }
 
     console.log(
       JSON.stringify({

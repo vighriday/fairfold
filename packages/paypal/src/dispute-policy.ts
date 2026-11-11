@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { AppError } from '@fairfold/contracts';
 import { canonicalJson } from '@fairfold/ledger';
+import { sanitizeBuyerNotes } from './buyer-note-policy.js';
 
 const symbolPattern = /^[A-Z][A-Z0-9_]{0,127}$/;
 const datePattern =
@@ -34,7 +35,13 @@ export type SanitizedDispute = {
     outcome_code: string;
     amount_refunded?: { currency_code: string; value: string };
   };
-  disputed_transactions: Array<{ seller_transaction_id: string }>;
+  disputed_transactions: Array<{
+    seller_transaction_id: string;
+    items?: Array<Record<string, unknown>>;
+  }>;
+  extensions?: Record<string, unknown>;
+  supporting_info?: Array<{ source: 'SUBMITTED_BY_BUYER'; notes: string }>;
+  offer?: { history: Array<{ actor: 'BUYER'; notes: string }> };
   allowed_response_options?: {
     make_offer?: { offer_types: string[] };
     accept_claim?: { accept_claim_types: string[] };
@@ -44,6 +51,7 @@ export type SanitizedDispute = {
     source: string;
     date?: string;
     item_id?: string;
+    notes?: string;
   }>;
   messages: SanitizedDisputeMessage[];
   message_fingerprints: string[];
@@ -175,6 +183,7 @@ export function sanitizeDisputeDetail(
   context: { knownEmails?: string[]; knownStreetLines?: string[] } = {},
 ): SanitizedDispute {
   const source = record(input, 'body');
+  const extra = sanitizeBuyerNotes(source, (text) => redactDisputeText(text, context));
   const disputeId = requiredText(source.dispute_id, 'dispute_id');
   if (!/^[A-Za-z0-9-]+$/.test(disputeId))
     throw new AppError('DISPUTE_DETAIL_INVALID', 'Dispute dispute_id is invalid', 502);
@@ -215,15 +224,19 @@ export function sanitizeDisputeDetail(
     evidences: [],
     messages: [],
     message_fingerprints: [],
+    extensions: extra.extensions,
+    supporting_info: extra.supporting_info,
+    offer: extra.offer,
   };
   const transactions = source.disputed_transactions;
   if (transactions !== undefined) {
     if (!Array.isArray(transactions) || transactions.length > 100)
       throw new AppError('DISPUTE_DETAIL_INVALID', 'Dispute transactions are invalid', 502);
-    output.disputed_transactions = transactions.map((item) => {
+    output.disputed_transactions = transactions.map((item, index) => {
       const row = record(item, 'disputed transaction');
       return {
         seller_transaction_id: requiredText(row.seller_transaction_id, 'seller_transaction_id'),
+        ...(extra.transactionItems[index]?.length ? { items: extra.transactionItems[index] } : {}),
       };
     });
   }
@@ -253,11 +266,12 @@ export function sanitizeDisputeDetail(
   if (evidences !== undefined) {
     if (!Array.isArray(evidences) || evidences.length > 1000)
       throw new AppError('DISPUTE_DETAIL_INVALID', 'Dispute evidences are invalid', 502);
-    output.evidences = evidences.map((item) => {
+    output.evidences = evidences.map((item, index) => {
       const row = record(item, 'evidence');
       return {
         evidence_type: symbol(row.evidence_type, 'evidence_type'),
         source: symbol(row.source, 'evidence_source'),
+        ...(extra.evidenceNotes[index] === undefined ? {} : { notes: extra.evidenceNotes[index] }),
         date: optionalDate(row.date, 'evidence_date'),
         item_id:
           row.item_id === undefined ? undefined : requiredText(row.item_id, 'evidence_item_id'),

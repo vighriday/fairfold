@@ -1,97 +1,36 @@
-# Hriday current status and next action
+# Hriday current status — 11 November 2026
 
-**11 November audit in progress:** reviewing Copilot baseline `762c497` against the originals. H4 retention/execution corrections have 58 focused regression passes; API contracts, H5 transactional/packing/action gaps, H6 deadlines, H7 SDK wiring and the incomplete H8 B17 seed are being repaired. Previous “local ready” labels below are historical and do not certify these gaps. See [current audit evidence](evidence/2026-11-11-audit.md).
+**Integrated local implementation; local verification PASS. External acceptance remains pending.** Work stays on exact branch `Hriday`. Read [local completion handoff](local-closeout.md) for the run sequence and every remaining dependency, and [audit evidence](evidence/2026-11-11-audit.md) for observed checks.
 
-H5 packing/action and H6 maintenance audit repairs are locally verified; integration verification follows.
+## What is now present
 
-H4 retention/execution repairs are committed as `cf4a12e`. Canonical dispute API and approval mapping repairs are separately verified; H5–H8 audit work continues.
+Fresh Git ancestry verification confirmed Ishaan already merged published Hriday baseline `762c497` in `3f8c436`. His reviewed tip `d6104af` supplies the intelligence implementation, fixtures, routes, runtime binding and full B17 seed. The newer focused Hriday H4–H7 audit repairs are preserved. This is an integration of existing work, not a second implementation of his packages.
 
-Updated 10 November 2026 IST. Research and H2's ungated local implementation are ready. Formal H1/H2 acceptance remains IN PROGRESS: first Render deployment and real PayPal evidence are pending. Hriday explicitly authorized H3 and approved its [event policy](webhook-persistence-review.md). H3 local implementation and runtime checks are ready; see the [H3 closeout](h3-closeout.md). Real A5/verified capture delivery remains pending. H4 local implementation is complete; real account-backed action evidence remains pending. H5 local Pack Station persistence, blocker checks, sealing, tracking, action and retention work is locally ready; attestation and external evidence remain pending. H6 is locally ready. H7 now has authenticated MCP, shopper transport and PostgreSQL-backed route-boundary coverage; real model/provider execution remains pending. H8 local seeding is ready; hosted and account-backed acceptance remain open.
+Hriday explicitly approved source-preserving surgical integration fixes and the bounded [buyer-note policy extension](ishaan-integration-review.md). Source points, Alex's single earlier refund and the 0.80 threshold are restored. Automatic runtime hash-embedding fallback is inactive. Q9 remains visible; Q2 return-address operations remain blocked before OAuth.
 
-The user authorized the first Render deployment, then asked to wait for capacity/billing while continuing H2. On this pass Render account tools became available; Hriday confirmed My Workspace. Read-only discovery found no Fairfold services and no PostgreSQL instances. No infrastructure/billing action was taken. See the [current discovery record](evidence/2026-11-09-render-workspace.md) and [deployment guide](render-deployment.md); the earlier [preflight](evidence/2026-11-09-render-preflight.md) remains historical local validation.
+| Task | Local implementation                                                                                                                             | Remaining source acceptance                                                                             |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| H1   | Workspace, PostgreSQL 16/schema, auth, OpenAPI, queue, ledger/blob store and Blueprint                                                           | First actual Render deployment and hosted readiness                                                     |
+| H2   | Full sandbox client, guarded checkout/capture, SDK harness, recording/import and scoped reads                                                    | Neel/Maya accounts, real purchase/capture, A4 and the deferred spike                                    |
+| H3   | Raw-body verification, durable event/job transactions, dedupe, reconciliation and one-minute poll                                                | Real signature/delivery/redelivery and hosted observation                                               |
+| H4   | Canonical dispute/detail/approval APIs, bounded retention, exact approved packs, fresh guards and durable execution claims                       | Real dispute fixture, current allowed actions and exact human-approved PayPal outcomes; Q2 remains open |
+| H5   | Integrated photo attestation, current-proof checks, all fixed blockers, inspection, inventory/seal, tracking, approved actions and retention     | Real photo evaluation and account-backed tracking/message/refund effects                                |
+| H6   | 15-minute watchdog, 72h/48h thresholds, concurrent alert dedupe, stable reads/acknowledgement and labelled demo courier updates                  | Hosted schedule/operational observation                                                                 |
+| H7   | Official MCP Streamable HTTP server, AI SDK MCP client, real intelligence tools, sandbox-only Toolkit adapter and executable human-gated shopper | Configured provider and actual sandbox shopper purchase/transcript; A13                                 |
+| H8   | Full source B17 seed, real scan/report composition, demo admin seed route, README/license, tests and deployment/handoff materials                | Provider-backed seed/evals, Figma product frontend, hosted A1–A14 and submission artifacts              |
 
-## Current checkout
+## Observed integration evidence
 
-| Item                      | Observed state                                                                                                              |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Working branch            | `Hriday`, created locally for this work                                                                                     |
-| Remote                    | `https://github.com/vighriday/fairfold.git`; local `Hriday` now tracks published `origin/Hriday`                            |
-| Initial local files       | Internal README and two DOCX source documents; no existing Git checkout/application                                         |
-| Source audit              | Both documents fully read; six embedded diagrams inspected; originals unchanged                                             |
-| Private source protection | `docs/internal/` and `.work/` ignored; no originals included in deliverables                                                |
-| Runtime inventory         | Node 22.16.0, pnpm 12.4.2; isolated PostgreSQL 16.15 under ignored `.work/`; Docker absent                                  |
-| Sandbox app/buyer access  | User confirmed accounts do not exist; real spike deferred by user                                                           |
-| Render/frontend access    | Connected; My Workspace confirmed; no Fairfold services/Postgres observed; billing/capacity unresolved; no Figma UI created |
-| Application               | Local H1 API/worker, 25-table schema, contracts, jobs, ledger/blob storage and demo auth; intelligence stubs only           |
-| Local API                 | http://localhost:3110/docs/ and /healthz verified over HTTP against real PostgreSQL 16                                      |
-| Git publication           | Incremental history on `origin/Hriday`; publication is verified per delivery; no main merge or submission performed         |
+- Typecheck and lint PASS on the integrated source; actual API/MCP runtime smoke PASS with zero PayPal requests.
+- Generated OpenAPI contains **42/42 numbered source contracts**, plus demo/health/MCP support operations (49 registered operations total).
+- Focused repair suites pass, including real PostgreSQL approval/draft concurrency, sub-millisecond pagination, packing/sealing, action claims and retention. The final whole-suite result is **958 PASS, 0 FAIL, 1 SKIPPED**; the skipped case requires an actual recorded sandbox create/capture. A later test-config literal cleanup separately passed its 12-case suite.
+- Model-free eval: **30/30 buyer bands**, **8/8 dispute cases**, strong B17 and no null-seed hypothesis on the unit fixtures. Vision and provider complaint-clustering evaluations report NOT RUN.
+- Render Blueprint PASS against the freshly fetched official JSON Schema. CLI platform validation is unverified because the local CLI has no configured workspace; no infrastructure was created or applied.
 
-The local checkout was initialized for the requested branch; no remote history was overwritten. Sandboxed shell refresh failed after initialization, so read/verification commands used reviewed execution with a per-command safe-directory setting. No global Git trust or author configuration was changed.
+## Still needed from the team
 
-## Work board
+Accounts, secrets and billing details belong in private setup/provider surfaces, never chat or Git. The selected Render workspace remains **My Workspace**; the earlier capacity/billing issue has not been assumed resolved. D18 hosting remains Render, with an API, worker and PostgreSQL. No Vercel architecture change is authorized.
 
-| ID        | Work item                                | State                           | Exit evidence                                                                                                                                                            |
-| --------- | ---------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| P1        | Source and architecture audit            | COMPLETE                        | Source map, original digests, diagram inspection                                                                                                                         |
-| P2        | Primary-source PayPal/hackathon research | COMPLETE FOR DOCUMENTED FACTS   | R01–R23 and explicit limitations                                                                                                                                         |
-| P3        | Hriday execution and handoff documents   | COMPLETE                        | H1–H8 plan, 42 endpoints, 16 jobs, ownership and environment inventory                                                                                                   |
-| P4        | Planning-package verification            | COMPLETE                        | 14 Markdown files, 20 valid local links, source counts/digests and private-file checks; see CHANGELOG                                                                    |
-| RUNTIME-0 | Pre-H1 sandbox dispute discovery         | DEFERRED BY USER; NOT RUN       | Accounts absent; real capture/dispute snapshot still required later                                                                                                      |
-| H1        | Foundation and first deploy, 6 h         | IN PROGRESS                     | Local implementation/checks pass; first Render deployment remains open                                                                                                   |
-| H2        | PayPal client and checkout, 5 h          | IN PROGRESS; LOCAL READY        | Complete 17-method client/runtime, seven routes, /dev and rehearsal/audit; 279 offline and 126 PostgreSQL/HTTP passes; real acceptance and Q2 return branches pending    |
-| H3        | Verified webhooks and poll, 3 h          | IN PROGRESS; LOCAL READY        | 302 offline / 180 PostgreSQL checks; actual API/worker startup; real A5 and H4 sync pending                                                                              |
-| H4        | Disputes and approved actions, 5 h       | LOCAL READY; ACCEPTANCE PENDING | Sync, projections, approval, execution, tool binding and demo route pass local checks; real action evidence and A12 remain pending                                       |
-| H5        | Pack Station and action execution, 5 h   | IN PROGRESS; LOCAL CORE READY   | Pack Station, inspection intake, approved actions and retention boundary pass local checks; I2 attestation, real PayPal tracking/refunds and A6/A7/A11 remain            |
-| H6        | Watchdog and scan simulation, 2 h        | LOCAL READY; ACCEPTANCE PENDING | 15-minute watchdog, 72-hour/48-hour thresholds and deduplicated alerts pass local checks; demo scan/deliver routes and hosted evidence remain                            |
-| H7        | MCP and shopping agent, 5 h              | IN PROGRESS; MCP LOCAL READY    | Authenticated MCP tools, injected shopper transport and PostgreSQL-backed route-boundary policy coverage pass locally; AI SDK/model, real sandbox capture and A13 remain |
-| H8        | Seed, final deploy, README, 2 h          | IN PROGRESS; LOCAL SEED READY   | Deterministic fictional catalogue seed, README command and explicit no-PayPal output pass locally; B17/Ishaan fixtures, Render deployment and A1–A14 remain              |
+The Figma product frontend is absent and needs its approved design/implementation/export. Backend REST/MCP and the unstyled `/dev` harness are available for integration. Real packing photos, model access, Q2 joint review and real sandbox/hosted evidence are also pending. These are listed concretely in the [handoff](local-closeout.md#remaining-work-requiring-accounts-assets-or-human-decisions).
 
-The 33-hour estimates are inherited from the architecture. They exclude the pre-H1 spike, joint reviews/checkpoints, frontend work and video/submission. H1 now has actual local engineering evidence; no revised remaining-hours estimate has been claimed.
-
-## Immediate next action
-
-**H7 route-boundary coverage is now ready:** the shopper's authenticated MCP transport has been exercised against a real PostgreSQL-backed Fastify route, including catalogue/report lookup and the human-approval pause. See [shopper MCP E2E evidence](evidence/2026-11-10-h7-shopper-mcp-e2e.md). **H8 local smoke and seed are ready:** `pnpm test:e2e` now starts the assembled local runtime and checks health, OpenAPI, MCP authentication and demo login; `pnpm seed` creates only three labelled simulated catalogue merchants and one navy-hoodie product per merchant. See [runtime smoke evidence](evidence/2026-11-10-h8-runtime-smoke.md) and [seed evidence](evidence/2026-11-10-h8-seed.md). Real model, B17/Ishaan fixtures, I2 attestation, PayPal tracking/refund evidence, A6/A7/A11 and hosted acceptance remain pending.
-
-**Local H2 implementation is ready.** Use the [H2 closeout](h2-closeout.md) for the final handoff and remaining human work. The API and rehearsal now use the complete type-checked 17-method PayPalClient/ForMerchant, with the existing private capture-recovery helper. That H2 closeout introduced no shared DTO/schema changes; H3 has since added its own route and worker. H2 closeout checks: **279 offline and 126 real PostgreSQL/HTTP passes**, typecheck/lint/formatting and actual normal/rehearsal startup. See [complete-client evidence](evidence/2026-11-09-h2-complete-client.md).
-
-The implemented [rehearsal](sandbox-rehearsal.md) covers setup → human /dev approval → sanitized records → read-only A4 audit → parser replay. Accounts remain absent/deferred, so real OAuth, SDK/Maya purchase, A4 and real fixtures are NOT RUN/NOT RECORDED. These are the remaining H2 acceptance steps requiring account access/approval, not missing local implementation. Maya's verified payer binding still needs review before authenticated private history; roles/email do not establish it. Do not repeat local scaffolding or synthetic checks solely because these external gates remain unchanged.
-
-Both return-based offer/accept-claim branches remain precise pre-OAuth Q2 review failures: the current shared input lacks the return address. All other specified client bindings are implemented. Capture and event retention are approved and Q11 is resolved locally through atomic event/job and event/capture transactions. Dispute/message/action-response retention and H4 approval/stage/dedupe remain review/workflow gates. Raw vendor responses stay transient; only approved capture/event allowlists persist. Runtime intelligence remains explicitly stub and Ishaan-owned sources are unchanged.
-
-H1 remains IN PROGRESS. The latest confirmed My Workspace discovery found no Fairfold services/Postgres; quota recovery and screenshot-established billing readiness remain unverified. No plan/billing changes or new resources occurred. The [Render guide](render-deployment.md) and [conditional Ishaan handoff](ishaan-deployment-handoff.md) use the current H3 branch/runtime. The handoff is prepared and unsent.
-
-The real [sandbox dispute spike](sandbox-spike.md) remains deferred. **H3 is locally ready; H4–H7 local implementations are ready or substantially ready, and H8 local seeding is ready; hosted deployment, B17/Ishaan fixtures and H1–H3 real acceptance remain pending.** The Figma product frontend is outside Hriday's harness work.
-
-## Original checkpoints and present risk
-
-| Checkpoint      | Original IST target          | Required result                                                                    | Status                                   |
-| --------------- | ---------------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------- |
-| CP0             | Sunday 8 November, 22:00     | Reviewed contracts available; spike result recorded; Ishaan's photo sets taken     | PAST TARGET; NOT VERIFIED                |
-| CP1             | Tuesday 10 November, 22:00   | Deployed checkout → capture → attested pack → tracking → real dispute → draft pack | NOT VERIFIED                             |
-| CP2             | Wednesday 11 November, 22:00 | A1–A14 on Render; feature freeze                                                   | NOT VERIFIED                             |
-| Team submit     | Thursday 12 November, 18:00  | Public video, public licensed runnable repo, completed Devpost entry               | NOT VERIFIED                             |
-| External cutoff | Friday 13 November, 01:30    | Submission received before official cutoff                                         | Future; not a substitute for team target |
-
-Do not retroactively mark CP0 done or move the other checkpoints without a team decision. At the original preparation baseline, 33 estimated Hriday hours exceeded three eight-hour workdays by nine hours before overhead. H1 now has local progress, but remaining schedule feasibility has not been re-estimated. The user authorized deferring the absent-account spike, not changing the architecture or removing PayPal from the product.
-
-## Risks and focused responses
-
-| Risk                                                | Evidence or dependency                                                         | Next response within the existing plan                                                      |
-| --------------------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
-| Real sandbox dispute path unknown                   | Q1/Q5/Q6/Q13                                                                   | Perform the pre-H1 spike first; record state, timing and actions                            |
-| Return-based payload cannot be expressed completely | Q2                                                                             | Joint contract review before H4 return actions; no guessed field                            |
-| Personal data retained in raw payloads              | Q3                                                                             | Agree redaction boundary before persistence/fixtures                                        |
-| Lost event after insert-before-enqueue crash        | Q11                                                                            | Prove durable recovery inside Postgres/pg-boss in H3                                        |
-| Duplicate money or submission effect                | Q12                                                                            | Stable IDs, local claiming/dedupe and authoritative re-fetch tests                          |
-| Delayed webhook                                     | Existing D2                                                                    | Verified event processing plus one-minute reconciliation                                    |
-| Missing frontend integration                        | Figma implementation is outside H/I lists                                      | Confirm owner/export and bind only to the existing OpenAPI contract                         |
-| Missing Docker/Render readiness                     | Local PostgreSQL validation works; Render access confirmed but hosting pending | Retain Compose postgres:16; complete first hosted deploy when access exists                 |
-| Statistical or report seed inconsistent             | Q8/Q9                                                                          | Assert dates/populations/complaint and dispute distinctions together                        |
-| Vision/model dependency unready                     | I2/I7 are Ishaan's work                                                        | Use labelled contract stubs during development; final A6/evals require real results         |
-| Missed checkpoints                                  | CP0 past; H1 local checks pass, hosted/integration gates remain open           | Record actual dates and review feasibility; do not invent progress or silently cut features |
-
-## What is needed from the team
-
-Neel/Maya sandbox accounts are confirmed absent. The Render workspace is confirmed as My Workspace; capacity/billing and the Figma frontend owner remain open. No secrets need to be shared in chat. Ishaan should review the shared contracts and the H1 handoff; no outbound message has been sent.
-
-The creation test fixture’s repeatability issue was corrected during the next H2 verification pass; [two consecutive 19-case runs](evidence/2026-11-09-h2-test-repeatability.md) passed against the same isolated database. Application behavior and real sandbox status were unchanged by that test-only fix.
+No outbound message, billing entry, actual PayPal action, Devpost/YouTube submission or judging outcome is claimed. CP0, CP1 and CP2 remain unverified; the original checkpoints have not been moved. Historical closeout/evidence documents retain their original scope and do not override this status.

@@ -69,7 +69,11 @@ export function createInspectionService(options: {
           409,
         );
       if (rules.length !== 1)
-        throw new AppError('BATCH_CODE_REQUIRED', 'Select a batch when multiple inspection rules apply', 400);
+        throw new AppError(
+          'BATCH_CODE_REQUIRED',
+          'Select a batch when multiple inspection rules apply',
+          400,
+        );
       const rule = rules[0]!;
       const stored: string[] = [];
       await withTransaction(options.database, async (tx, queueDb) => {

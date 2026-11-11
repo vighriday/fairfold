@@ -2,7 +2,14 @@ import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { fixedClock } from '@fairfold/contracts';
-import { createDatabase, evidence_blobs, merchants, migrateDatabase, orders } from '@fairfold/db';
+import {
+  attestations,
+  createDatabase,
+  evidence_blobs,
+  merchants,
+  migrateDatabase,
+  orders,
+} from '@fairfold/db';
 import { testDatabaseUrl } from '../../db/test/environment.js';
 import { createLedger, createRetentionHandler, sha256 } from '../src/index.js';
 
@@ -104,5 +111,38 @@ describe.skipIf(!integrationUrl)('evidence retention', () => {
       .where(eq(evidence_blobs.sha256, hash));
     expect(blob?.bytes).toEqual(bytes);
     expect(blob?.purged_at).toBeNull();
+  });
+
+  it('preserves an expired order photo also referenced by an unlinked inspection', async () => {
+    const created = await order('2026-01-01T00:00:00.000Z');
+    const bytes = Buffer.from('unlinked-inspection-' + randomUUID()),
+      hash = sha256(bytes);
+    await database.db.insert(evidence_blobs).values({
+      sha256: hash,
+      mime: 'image/png',
+      bytes,
+      created_at: new Date('2026-01-01T00:00:00Z'),
+    });
+    await createLedger(database.db, clock).append(created.id, {
+      type: 'photo',
+      payload: { synthetic: true },
+      blob_sha256: hash,
+    });
+    await database.db.insert(attestations).values({
+      step: 'inspection',
+      photo_shas: [hash],
+      photo_labels: ['seam_closeup'],
+      model: 'synthetic-retention',
+      status: 'match',
+      confidence: 1,
+      result: { inspection: { defectVisible: false } },
+    });
+    await createRetentionHandler({ database: database.db, clock })();
+    const [blob] = await database.db
+      .select()
+      .from(evidence_blobs)
+      .where(eq(evidence_blobs.sha256, hash));
+    expect(blob!.bytes).toEqual(bytes);
+    expect(blob!.purged_at).toBeNull();
   });
 });

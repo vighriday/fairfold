@@ -9,6 +9,7 @@ import {
   store_reports,
 } from '@fairfold/db';
 import { fixedClock } from '@fairfold/contracts';
+import { createIntelRuntime } from '@fairfold/intelligence';
 import { beginShopperRun, createMcpShopperTools } from '@fairfold/shopper';
 import { testDatabaseUrl } from '../../../packages/db/test/environment.js';
 import { createApi } from '../src/app.js';
@@ -102,7 +103,20 @@ describe.skipIf(!databaseUrl)('authenticated MCP HTTP contract', () => {
         await database.pool.query('select 1');
       },
       routes: async (routes) => {
-        await routes.register(createMcpRoutes(createMcpService(database)));
+        await routes.register(
+          createMcpRoutes(
+            createMcpService(
+              database,
+              // The intelligence package's catalogue search and store reports, with models off.
+              createIntelRuntime({
+                db: database.db,
+                jobs: { publish: async () => null, publishDebounced: async () => null },
+                clock,
+                env: {},
+              }),
+            ),
+          ),
+        );
       },
     });
     apps.push(app);
@@ -212,6 +226,64 @@ describe.skipIf(!databaseUrl)('authenticated MCP HTTP contract', () => {
     expect(response.json().result.isError).toBe(true);
     expect(JSON.parse(response.json().result.content[0].text).error.code).toBe('FORBIDDEN');
     expect(merchantToken).toContain('.');
+  });
+
+  it('search_catalog matches every word against name, SKU, colour and description (A13 "navy hoodie")', async () => {
+    // Section 19's hoodie is named without its colour; the shopper asks for a "navy hoodie".
+    const sku = 'HD-IND-' + merchantId.slice(0, 8);
+    await database.db.insert(products).values({
+      merchant_id: merchantId,
+      sku,
+      name: 'Block-print cotton hoodie',
+      description: 'Indigo block-print cotton hoodie',
+      colour: 'navy',
+      unit_value: '38.00',
+      currency: 'USD',
+      listing_version: 'v1',
+    });
+    const response = await call('tools/call', agentToken, {
+      name: 'search_catalog',
+      arguments: { query: 'navy hoodie', maxPrice: '45' },
+    });
+    expect(response.statusCode).toBe(200);
+    const items = JSON.parse(response.json().result.content[0].text) as Array<{
+      sku: string;
+      storeBand: string;
+    }>;
+    expect(items).toContainEqual(expect.objectContaining({ sku, storeBand: 'verified' }));
+    const invalid = await call('tools/call', agentToken, {
+      name: 'search_catalog',
+      arguments: { query: 'hoodie', maxPrice: 'cheap' },
+    });
+    expect(invalid.statusCode).toBe(200);
+    expect(invalid.json().result.isError).toBe(true);
+  });
+
+  it('get_store_report builds the report for a store that has none stored yet', async () => {
+    const storeId = randomUUID();
+    await database.db.insert(merchants).values({
+      id: storeId,
+      slug: 'mcp-new-' + storeId,
+      name: 'MCP new store',
+      domain: 'mcp-new.example.invalid',
+      country: 'IN',
+      is_simulated: true,
+    });
+    const response = await call('tools/call', agentToken, {
+      name: 'get_store_report',
+      arguments: { merchantId: storeId },
+    });
+    expect(response.statusCode).toBe(200);
+    expect(JSON.parse(response.json().result.content[0].text)).toMatchObject({
+      merchantId: storeId,
+      band: 'new',
+    });
+    const unknown = await call('tools/call', agentToken, {
+      name: 'get_store_report',
+      arguments: { merchantId: randomUUID() },
+    });
+    expect(unknown.statusCode).toBe(200);
+    expect(unknown.json().result.isError).toBe(true);
   });
 
   it('rejects unsupported MCP methods and tools explicitly', async () => {

@@ -29,6 +29,54 @@ const base = {
 };
 
 describe('approved dispute retention boundary', () => {
+  it('retains only approved buyer-note leaves with the same redaction policy', () => {
+    const safe = sanitizeDisputeDetail({
+      ...base,
+      messages: [],
+      extensions: {
+        merchandize_dispute_properties: {
+          product_details: { description: 'Seam split. maya@example.invalid', private: 'drop' },
+          email: 'drop',
+        },
+      },
+      disputed_transactions: [
+        {
+          seller_transaction_id: 'CAPTURE-1',
+          items: [{ notes: 'Photo at https://example.invalid/private', item_name: 'drop' }],
+        },
+      ],
+      supporting_info: [
+        { source: 'SUBMITTED_BY_BUYER', notes: 'Buyer note' },
+        { source: 'SUBMITTED_BY_SELLER', notes: 'Drop seller note' },
+      ],
+      offer: {
+        history: [
+          { actor: 'BUYER', notes: 'Refund requested' },
+          { actor: 'SELLER', notes: 'Drop seller offer' },
+        ],
+      },
+    });
+    expect(safe.extensions).toEqual({
+      merchandize_dispute_properties: {
+        product_details: { description: 'Seam split. [CONTACT_REDACTED]' },
+      },
+    });
+    expect(safe.disputed_transactions[0]?.items).toEqual([{ notes: 'Photo at [LINK_REDACTED]' }]);
+    expect(safe.supporting_info).toEqual([{ source: 'SUBMITTED_BY_BUYER', notes: 'Buyer note' }]);
+    expect(safe.offer?.history).toEqual([{ actor: 'BUYER', notes: 'Refund requested' }]);
+    expect(JSON.stringify(safe)).not.toContain('drop');
+  });
+
+  it('rejects overflowing or unresolved-contact buyer notes as a whole snapshot', () => {
+    for (const supporting_info of [
+      Array.from({ length: 101 }, () => ({ source: 'SUBMITTED_BY_BUYER', notes: 'text' })),
+      Array.from({ length: 11 }, () => ({ source: 'SUBMITTED_BY_BUYER', notes: 'x'.repeat(2000) })),
+      [{ source: 'SUBMITTED_BY_BUYER', notes: 'Address: uncertain private text' }],
+    ])
+      expect(() => sanitizeDisputeDetail({ ...base, messages: [], supporting_info })).toThrowError(
+        expect.objectContaining({ code: 'DISPUTE_TEXT_REVIEW_REQUIRED' }),
+      );
+  });
   it('handles known street whitespace, safe marked clauses and complete URL tokens', () => {
     expect(
       redactDisputeText(

@@ -139,18 +139,16 @@ export function createTrackingPushHandler(options: {
               ),
             })
             .where(eq(shipments.id, shipment.id));
-        await tx
-          .insert(alerts)
-          .values({
-            merchant_id: context.order.merchant_id,
-            order_id: orderId,
-            type: 'tracking_push_failed',
-            ref_id: orderId,
-            message: unknown
-              ? 'Tracking outcome requires reconciliation; do not push again'
-              : 'Tracking push failed after bounded attempts',
-            created_at: clock.now(),
-          });
+        await tx.insert(alerts).values({
+          merchant_id: context.order.merchant_id,
+          order_id: orderId,
+          type: 'tracking_push_failed',
+          ref_id: orderId,
+          message: unknown
+            ? 'Tracking outcome requires reconciliation; do not push again'
+            : 'Tracking push failed after bounded attempts',
+          created_at: clock.now(),
+        });
       });
       throw new AppError(
         unknown ? 'TRACKING_RECONCILIATION_REQUIRED' : 'TRACKING_PUSH_FAILED',

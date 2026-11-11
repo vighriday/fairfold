@@ -1,5 +1,7 @@
 # Hriday research and execution guide
 
+**Current entry point, 11 November 2026:** [integrated local completion handoff](local-closeout.md), [current status](status.md) and [audit evidence](evidence/2026-11-11-audit.md). Ishaan's existing platform merge, intelligence and complete B17 seed are integrated with the focused repairs. Older task guides below are historical execution records; the current handoff names the remaining account, Figma, model and hosted acceptance work.
+
 This guide turns the existing Fairfold documents into an ordered work queue for Hriday. It preserves the idea, the chosen architecture and the PayPal-only payment integration. The user first selected research and documents, then authorized building H1 around the absent sandbox accounts on 9 November 2026.
 
 Read and act in this order:
@@ -23,7 +25,7 @@ The [H2 local closeout](h2-closeout.md) is the current handoff: complete client 
 
 The [H3 execution plan](h3-webhooks.md) is now authorized under the [approved event policy](webhook-persistence-review.md). Use the [H3 closeout](h3-closeout.md): registration, ingress, reconciliation, polling and worker runtime are locally ready. Real H1–H3 acceptance and the H4 sync dependency remain pending.
 
-H4 is in progress: the [source plan](h4-disputes.md), [pending retention/mapping review](dispute-persistence-review.md) and [first guard evidence](evidence/2026-11-10-h4-guards.md) distinguish the implemented pure checks from the persistence/execution work awaiting that review.
+H4 local code and its approved bounded retention policy are integrated: the [source plan](h4-disputes.md), [retention/mapping policy](dispute-persistence-review.md) and [first guard evidence](evidence/2026-11-10-h4-guards.md) distinguish the implemented pure checks from the persistence/execution work awaiting that review.
 
 Use the [evidence record template](evidence/README.md) for real runs. Keep unredacted working files under ignored `docs/hriday/evidence/local/` or `.work/`; publish only sanitized summaries. Maintain the root [changelog](../../CHANGELOG.md).
 

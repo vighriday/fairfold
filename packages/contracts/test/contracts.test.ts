@@ -1,18 +1,13 @@
 import { randomBytes } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import {
-  AttestationResultSchema,
-  BuyerSignalSchema,
-  EvidencePackDraftSchema,
   JobSchemas,
   MoneySchema,
-  StoreReportSchema,
   CaptureResultSchema,
   decodeEncryptionKey,
   decryptSecret,
   encryptSecret,
 } from '../src/index.js';
-import * as stubs from '../src/stubs.js';
 
 describe('shared boundaries', () => {
   it('requires capture identifiers without inventing absent payer data', () => {
@@ -46,26 +41,6 @@ describe('shared boundaries', () => {
         approved: true,
       }).success,
     ).toBe(false);
-  });
-  it('ships valid intelligence stubs that cannot attest or submit evidence', async () => {
-    const id = '00000000-0000-4000-8000-000000000001';
-    const attestation = await stubs.attestPackingPhotos({
-      orderId: id,
-      hypothesisId: null,
-      step: 'pack',
-      items: [],
-      batchCodes: {},
-      photos: [],
-      inspectionRule: null,
-      expectedTrackingNumber: null,
-    });
-    expect(AttestationResultSchema.parse(attestation).couldNotVerify.length).toBeGreaterThan(0);
-    expect(BuyerSignalSchema.parse(await stubs.computeBuyerSignal(id)).band).toBe('grey');
-    expect(StoreReportSchema.parse(await stubs.buildStoreReport(id)).band).toBe('new');
-    const pack = EvidencePackDraftSchema.parse(await stubs.buildEvidencePack('SEED-DISPUTE'));
-    expect(pack.recommendation).toBe('merchant_decides');
-    expect(pack.evidences).toEqual([]);
-    expect(pack.confidence).toBe(0);
   });
 });
 

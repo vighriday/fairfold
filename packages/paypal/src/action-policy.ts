@@ -2,14 +2,21 @@ import { z } from 'zod';
 import { AppError, MoneySchema, UuidSchema } from '@fairfold/contracts';
 import { redactDisputeText } from './dispute-policy.js';
 
-const ids = z
+const uniqueIds = z
   .array(UuidSchema)
-  .min(1)
   .max(500)
   .refine((list) => new Set(list).size === list.length);
+const ids = uniqueIds.min(1);
 const rules = {
   hold_orders: z.object({ orderIds: ids }).strict(),
-  release_orders: z.object({ orderIds: ids }).strict(),
+  release_orders: z
+    .object({
+      orderIds: uniqueIds.default([]),
+      inspectionRuleIds: uniqueIds.optional(),
+      reason: z.string().max(2000).optional(),
+    })
+    .strict()
+    .refine((value) => value.orderIds.length + (value.inspectionRuleIds?.length ?? 0) > 0),
   add_inspection_rule: z
     .object({
       batchCode: z.string().trim().min(1).max(255),
@@ -18,7 +25,20 @@ const rules = {
       productId: UuidSchema.optional(),
     })
     .strict(),
-  send_buyer_messages: z.object({ messageIds: ids }).strict(),
+  send_buyer_messages: z
+    .object({
+      messageIds: ids,
+      level: z.enum(['suspected', 'confirmed']).optional(),
+      template: z
+        .object({
+          subject: z.string().max(120),
+          body: z.string().max(1200),
+          usedTemplate: z.boolean(),
+        })
+        .strict()
+        .optional(),
+    })
+    .strict(),
   propose_offers: z
     .object({
       disputeIds: z
@@ -41,6 +61,12 @@ export function validateActionPayload(type: string, value: unknown): Record<stri
     throw new AppError('ACTION_PAYLOAD_INVALID', 'Approved action payload is invalid', 409);
   const result = parsed.data;
   if ('instruction' in result) result.instruction = redactDisputeText(result.instruction);
+  if ('reason' in result && result.reason !== undefined)
+    result.reason = redactDisputeText(result.reason);
+  if ('template' in result && result.template) {
+    result.template.subject = redactDisputeText(result.template.subject);
+    result.template.body = redactDisputeText(result.template.body);
+  }
   if (type === 'proactive_refund') {
     const refund = rules.proactive_refund.parse(result);
     if (

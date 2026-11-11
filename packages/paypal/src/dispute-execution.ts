@@ -338,18 +338,16 @@ export function createEvidenceSubmitHandler(options: {
             .update(evidence_packs)
             .set({ status: 'failed', paypal_response: summary })
             .where(eq(evidence_packs.id, packId));
-          await tx
-            .insert(alerts)
-            .values({
-              merchant_id: claimed.dispute.merchant_id,
-              order_id: claimed.dispute.order_id,
-              type: 'evidence_submit_failed',
-              ref_id: packId,
-              message: unknown
-                ? 'PayPal action outcome requires reconciliation; do not resubmit'
-                : 'Approved dispute action failed; review before approving a rebuilt pack',
-              created_at: clock.now(),
-            });
+          await tx.insert(alerts).values({
+            merchant_id: claimed.dispute.merchant_id,
+            order_id: claimed.dispute.order_id,
+            type: 'evidence_submit_failed',
+            ref_id: packId,
+            message: unknown
+              ? 'PayPal action outcome requires reconciliation; do not resubmit'
+              : 'Approved dispute action failed; review before approving a rebuilt pack',
+            created_at: clock.now(),
+          });
           if (
             !unknown &&
             !(await options.jobs.publish(

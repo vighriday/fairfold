@@ -1,61 +1,70 @@
 # Fairfold
 
-Fairfold is a neutral AI witness for both sides of a PayPal payment. Packing evidence supports the merchant, a cited Store Report informs the buyer, and Shared Cause Detection links complaints to possible problems before more orders ship. PayPal holds the payment and decides disputes.
+Fairfold is a neutral witness for both sides of a PayPal payment. It records packing proof, shows buyers a fact-linked Store Report, gives merchants a transparent Buyer Signal, detects shared product issues and prepares dispute evidence or fair offers. PayPal holds the funds and decides disputes. Humans approve evidence submissions, holds, messages, offers and refunds.
 
-Hriday and Ishaan are preparing this project for the PayPal AI Hackathon. The documented audience is Indian apparel exporters selling to overseas PayPal buyers.
+Built by Hriday and Ishaan for the PayPal AI Hackathon. The source idea and D1–D18 remain unchanged. All PayPal integration is sandbox only.
 
-**Current state, 10 November 2026:** H1's foundation, H2's complete sandbox client/checkout and H3's verified webhook/reconciliation/polling implementation run locally on `Hriday`. Actual PayPal acceptance and first Render deployment remain pending. Intelligence remains the labelled stub, and the product frontend follows Figma. The original idea and architecture remain authoritative.
+**11 November 2026: integrated local implementation; external acceptance pending.** `Hriday` contains Ishaan's existing merge of the platform and his intelligence/fixture work, plus the focused audit repairs. The full B17 seed exists. Account-backed PayPal checks, provider/photo evaluations, Render deployment and the Figma product frontend are still required. See the [current status](docs/hriday/status.md), [completion handoff](docs/hriday/local-closeout.md) and [audit evidence](docs/hriday/evidence/2026-11-11-audit.md).
 
-The user authorized proceeding around the absent sandbox accounts. The real dispute spike is deferred, and PayPal-dependent checks remain not run. H1's first Render deployment is still pending.
+## Run locally
 
-For H2's complete local setup, opt-in recorded /dev rehearsal, read-only A4 audit and response-parser evidence, follow the [sandbox rehearsal guide](docs/hriday/sandbox-rehearsal.md). Account-backed PayPal approval and actual recorded fixtures remain pending.
-
-H2's local implementation now includes all 17 PayPalClient methods and the complete ForMerchant composition used by the API. The [local closeout](docs/hriday/h2-closeout.md) records 279 offline and 126 PostgreSQL/HTTP passes, the two Q2 return-address review gates and the remaining real-account steps. H3 is locally ready; see the [H3 closeout](docs/hriday/h3-closeout.md) for 302 offline/180 PostgreSQL checks and the remaining real acceptance/H4 sync boundary.
-
-The API exposes the seven source checkout/order routes plus signature-authenticated `/webhooks/paypal/:merchantSlug`. The source unstyled `/dev` harness remains demo-only. The normal worker consumes verified events, reconciles known/unknown captures and schedules dispute polls per configured real merchant; H4 synchronization is explicitly pending. Real SDK purchase, webhook delivery and hosted readiness are unverified. Follow the [checkout guide](docs/hriday/checkout-integration.md) and [H3 acceptance guide](docs/hriday/h3-acceptance.md); the [conditional deployment handoff](docs/hriday/ishaan-deployment-handoff.md) is prepared and unsent.
-
-## Run the local foundation
-
-Prerequisites: Node.js 22.16 or newer, the pinned pnpm 12.4.2, and PostgreSQL 16. Docker Compose supplies PostgreSQL when Docker is available.
+Use Node.js 22.16+, pnpm 12.4.2 and PostgreSQL 16. Docker Compose supplies PostgreSQL; an existing local PostgreSQL 16 installation also works with the same environment variables.
 
 ```sh
 pnpm install --frozen-lockfile
 pnpm setup:local
+# Inspect the generated ignored .env; use private values, never commit it.
 docker compose up -d
 pnpm db:migrate
 pnpm seed
 pnpm dev
 ```
 
-`setup:local` creates an ignored `.env` with fresh encryption/signing keys and leaves PayPal/model credentials blank. It never overwrites an existing `.env`. The default API serves [health](http://localhost:3000/healthz) and [Swagger UI](http://localhost:3000/docs/). The worker starts with an explicitly empty intelligence handler map until Ishaan's implementation arrives.
+The API serves `/docs`, `/healthz` and the unstyled `/dev` sandbox harness. This repository does not contain a Figma product frontend. The API and worker use the same database and pg-boss queue. No account credentials are required for the local catalogue, deterministic logic or fixture tests.
 
-For this workspace's validated native PostgreSQL setup, `.env` uses port 55432 and the API uses port 3110. The running API documentation is [http://localhost:3110/docs/](http://localhost:3110/docs/). See [H1 setup and handoff](docs/hriday/h1-foundation.md) for exact commands and limitations.
+## Configure models
+
+All provider calls pass through `packages/ai`. The integrated candidate configuration uses `AI_PROVIDER=google`, `AI_MODEL_VISION=gemini-3.5-flash`, `AI_MODEL_TEXT=gemini-3.5-flash-lite`, `AI_EMBEDDING_PROVIDER=google` and `AI_MODEL_EMBEDDING=gemini-embedding-2`. Set `GOOGLE_GENERATIVE_AI_API_KEY` privately, or use another documented provider supported by the gateway. Keep the original `CLUSTER_SIMILARITY=0.80` default.
+
+Verify model access and quota for your own project against [Google's model catalogue](https://ai.google.dev/gemini-api/docs/models) and [embedding documentation](https://ai.google.dev/gemini-api/docs/embeddings). This checkout does not guarantee a free quota. Without configuration, descriptive steps use their documented fixed fallbacks; new complaints remain unembedded until a provider is available. No substitute embedding algorithm is activated automatically.
 
 ## Verify
 
 ```sh
-pnpm test
-pnpm test:db
 pnpm typecheck
 pnpm lint
 pnpm format:check
-pnpm test:sandbox
+pnpm test
+pnpm test:db
 pnpm test:e2e
+pnpm --filter @fairfold/intelligence eval
+pnpm --filter shopper-agent start --check
 ```
 
-Offline tests do not contact external services. Database integration checks require an isolated loopback PostgreSQL 16 database named `fairfold_*test` in `TEST_DATABASE_URL`; they are skipped by the default offline run and explicitly executed by `test:db`. Sandbox checks report SKIPPED when credentials are absent. With `TEST_DATABASE_URL` set, `test:e2e` starts the assembled local runtime and performs a credential-free smoke check; without it, the command reports SKIPPED. Neither local smoke nor database tests satisfy A1–A14.
+Database tests require a separate loopback database named `fairfold_*test` in `TEST_DATABASE_URL`. They may truncate its synthetic data. `test:db` includes intelligence and platform tests and removes provider settings from its child process. Model tests use injected doubles. `test:e2e` starts the actual local API and exercises the official AI SDK MCP client, without a PayPal payment. These checks do not establish hosted or real sandbox acceptance. [Evidence and limits](docs/hriday/evidence/2026-11-11-audit.md) distinguish observed results from pending A1–A14 requirements.
 
-The Render blueprint defines the chosen API, worker and PostgreSQL 16 services. It has not been deployed or purchased. Read the [deployment preparation](docs/hriday/h1-foundation.md) before creating services.
+## The demo world
 
-`pnpm seed` creates only the deterministic fictional catalogue merchants/products (`Neel`, `Indigo`, `QuickTees`). It makes no PayPal request and does not claim to create the B17 orders, complaints, attestations or real sandbox identifiers required for final acceptance.
+`pnpm seed` creates the source's labelled synthetic B17 world: the three merchants, hoodie and T-shirt populations, shipments, packing photos, seed attestations, verifiable ledgers, complaints, reviews, Alex and simulated network data. It preserves existing Neel sandbox configuration and uses `SEED-` PayPal identifiers. It runs the normal shared-cause scan and Store Report builders. A missing embedding provider leaves the hypothesis pending; the PostgreSQL seed tests inject explicitly synthetic vectors to verify the complete B17 path. Seeded photos and attestations are not real vision evidence.
 
-Start with the [Hriday work guide](docs/hriday/README.md). It links the sequential build plan, verified PayPal research, sandbox dispute runbook, responsibilities, acceptance tests, and submission preparation.
+Alex retains one earlier refund. Under the original points table his fixture is yellow at 25, with filed/lost-dispute, new-address and verified-payer reasons. The source's conflicting refund-ratio narrative remains Q9 in [DECISIONS.md](DECISIONS.md).
 
-- [Current status and next action](docs/hriday/status.md)
-- [Architecture decisions and open questions](DECISIONS.md)
-- [Change history](CHANGELOG.md)
-- [Contributor instructions](AGENTS.md)
+## Shopper and PayPal
 
-The internal source documents remain local and are excluded from Git. This README describes the working H1 foundation; the full application setup, seed, sandbox demonstration and measured AI results are completed in H8 after their acceptance gates pass.
+[Sandbox rehearsal](docs/hriday/sandbox-rehearsal.md) covers Neel/Maya setup, private configuration and actual acceptance recording. The shopper executable uses Fairfold's official SDK MCP client and the PayPal Agent Toolkit, enabling only sandbox create/capture. It skips caution stores, pauses for non-verified-store confirmation, then pauses separately for PayPal approval. Configure a private short-lived `SHOPPER_AGENT_TOKEN` and model access before running:
 
-Licensed under the [MIT License](LICENSE).
+```sh
+pnpm --filter shopper-agent start -- "navy hoodie under $45"
+```
+
+The resulting sanitized `docs/agent-run.txt` must come from an actual run; none is manufactured. Return-address offer/accept-claim operations remain blocked at Q2 before OAuth. Unknown external outcomes require reconciliation rather than automatic replay.
+
+## Layout and remaining work
+
+`apps/api` hosts REST/OpenAPI/MCP and demo routes; `apps/worker` runs the 16 job handlers. `packages/paypal` owns PayPal access; `packages/ai` owns model access; `packages/intelligence` computes signals, reports, evidence and shared causes. Contracts, database, jobs, ledger and shopper boundaries remain separate packages. `apps/shopper-agent` is the executable shopper.
+
+[Completion handoff](docs/hriday/local-closeout.md) lists every remaining account, deployment, Figma and real-evidence dependency. Render remains the source hosting architecture; the Blueprint explicitly selects `Hriday` and disables automatic deployment. No billing details, deployment, outbound message or submission was performed by this audit.
+
+Earlier provider measurements remain in [Ishaan's acceptance record](docs/evidence/2026-11-11-intelligence-local-acceptance.md) and [AI usage write-up](docs/ai-tools.md). They are historical measurements with their recorded settings, not newly verified results for the restored source defaults.
+
+[MIT license](LICENSE) © 2026 Hriday and Ishaan.

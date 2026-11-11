@@ -194,9 +194,9 @@ export function createDisputeSynchronizer(options: {
             updated_at: now,
           },
         });
-      if (linkedOrder && (isNew || justResolved)) {
+      if (linkedOrder && (isNew || !existing?.order_id || justResolved)) {
         const ledger = createLedger(tx, clock);
-        if (isNew)
+        if (isNew || !existing?.order_id)
           await ledger.append(linkedOrder.id, {
             type: 'dispute_opened',
             actor: 'paypal',

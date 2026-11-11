@@ -1,0 +1,620 @@
+{
+  "_note": "30 synthetic buyer profiles for the Buyer Signal eval (A8). Points are hand-computed from section 10's table with all filed disputes counted including lost ones, and OWN_REFUND_RATIO +15; Alex retains one earlier refund under Q9. Feature meanings: priorOrders/priorDelivered/refundedOrders = this buyer's earlier orders with this merchant; ownDisputesFiled12m counts all disputes filed with this merchant in 12 months, ownDisputesLost12m the subset resolved in the seller's favour; ordersLast24h includes the current order (max of same buyer / same ship-to address); network = LABELLED SIMULATION of a PayPal-run tier, null when no record. Ship-to country is never a feature.",
+  "profiles": [
+    {
+      "id": "b01",
+      "name": "New verified buyer",
+      "features": {
+        "payerAccountStatus": "VERIFIED",
+        "priorOrders": 0,
+        "priorDelivered": 0,
+        "refundedOrders": 0,
+        "ownDisputesFiled12m": 0,
+        "ownDisputesLost12m": 0,
+        "ordersLast24h": 1,
+        "newAddress": false,
+        "amount": "38.00",
+        "merchantMedianAmount": "38.00",
+        "network": null
+      },
+      "expectedBand": "grey",
+      "expectedPoints": -5,
+      "expectedCodes": ["PAYER_VERIFIED"]
+    },
+    {
+      "id": "b02",
+      "name": "New unverified buyer",
+      "features": {
+        "payerAccountStatus": "UNVERIFIED",
+        "priorOrders": 0,
+        "priorDelivered": 0,
+        "refundedOrders": 0,
+        "ownDisputesFiled12m": 0,
+        "ownDisputesLost12m": 0,
+        "ordersLast24h": 1,
+        "newAddress": false,
+        "amount": "38.00",
+        "merchantMedianAmount": "38.00",
+        "network": null
+      },
+      "expectedBand": "grey",
+      "expectedPoints": 15,
+      "expectedCodes": ["PAYER_UNVERIFIED"]
+    },
+    {
+      "id": "b03",
+      "name": "New buyer, high points stays grey",
+      "features": {
+        "payerAccountStatus": "UNVERIFIED",
+        "priorOrders": 0,
+        "priorDelivered": 0,
+        "refundedOrders": 0,
+        "ownDisputesFiled12m": 0,
+        "ownDisputesLost12m": 0,
+        "ordersLast24h": 3,
+        "newAddress": false,
+        "amount": "200.00",
+        "merchantMedianAmount": "38.00",
+        "network": null
+      },
+      "expectedBand": "grey",
+      "expectedPoints": 40,
+      "expectedCodes": ["PAYER_UNVERIFIED", "VELOCITY", "HIGH_VALUE"],
+      "expectedRecommendation": "Capture extra packing evidence and ship tracked"
+    },
+    {
+      "id": "b04",
+      "name": "New buyer, no account status, new-address flag ignored",
+      "features": {
+        "payerAccountStatus": null,
+        "priorOrders": 0,
+        "priorDelivered": 0,
+        "refundedOrders": 0,
+        "ownDisputesFiled12m": 0,
+        "ownDisputesLost12m": 0,
+        "ordersLast24h": 1,
+        "newAddress": true,
+        "amount": "38.00",
+        "merchantMedianAmount": "38.00",
+        "network": null
+      },
+      "expectedBand": "grey",
+      "expectedPoints": 0,
+      "expectedCodes": [],
+      "expectedRecommendation": "Ship normally with standard packing evidence"
+    },
+    {
+      "id": "b05",
+      "name": "New here, clean network record",
+      "features": {
+        "payerAccountStatus": "VERIFIED",
+        "priorOrders": 0,
+        "priorDelivered": 0,
+        "refundedOrders": 0,
+        "ownDisputesFiled12m": 0,
+        "ownDisputesLost12m": 0,
+        "ordersLast24h": 1,
+        "newAddress": false,
+        "amount": "38.00",
+        "merchantMedianAmount": "38.00",
+        "network": {
+          "disputesLost12m": 0
+        }
+      },
+      "expectedBand": "green",
+      "expectedPoints": -5,
+      "expectedCodes": ["PAYER_VERIFIED"]
+    },
+    {
+      "id": "b06",
+      "name": "New here, two network losses",
+      "features": {
+        "payerAccountStatus": "VERIFIED",
+        "priorOrders": 0,
+        "priorDelivered": 0,
+        "refundedOrders": 0,
+        "ownDisputesFiled12m": 0,
+        "ownDisputesLost12m": 0,
+        "ordersLast24h": 1,
+        "newAddress": false,
+        "amount": "38.00",
+        "merchantMedianAmount": "38.00",
+        "network": {
+          "disputesLost12m": 2
+        }
+      },
+      "expectedBand": "yellow",
+      "expectedPoints": 15,
+      "expectedCodes": ["NETWORK_DISPUTES_LOST", "PAYER_VERIFIED"]
+    },
+    {
+      "id": "b07",
+      "name": "New here, unverified, three network losses",
+      "features": {
+        "payerAccountStatus": "UNVERIFIED",
+        "priorOrders": 0,
+        "priorDelivered": 0,
+        "refundedOrders": 0,
+        "ownDisputesFiled12m": 0,
+        "ownDisputesLost12m": 0,
+        "ordersLast24h": 1,
+        "newAddress": false,
+        "amount": "38.00",
+        "merchantMedianAmount": "38.00",
+        "network": {
+          "disputesLost12m": 3
+        }
+      },
+      "expectedBand": "red",
+      "expectedPoints": 35,
+      "expectedCodes": ["PAYER_UNVERIFIED", "NETWORK_DISPUTES_LOST"]
+    },
+    {
+      "id": "b08",
+      "name": "One earlier delivered order",
+      "features": {
+        "payerAccountStatus": "VERIFIED",
+        "priorOrders": 1,
+        "priorDelivered": 1,
+        "refundedOrders": 0,
+        "ownDisputesFiled12m": 0,
+        "ownDisputesLost12m": 0,
+        "ordersLast24h": 1,
+        "newAddress": false,
+        "amount": "38.00",
+        "merchantMedianAmount": "38.00",
+        "network": null
+      },
+      "expectedBand": "green",
+      "expectedPoints": -5,
+      "expectedCodes": ["PAYER_VERIFIED"]
+    },
+    {
+      "id": "b09",
+      "name": "Clean history, verified",
+      "features": {
+        "payerAccountStatus": "VERIFIED",
+        "priorOrders": 3,
+        "priorDelivered": 3,
+        "refundedOrders": 0,
+        "ownDisputesFiled12m": 0,
+        "ownDisputesLost12m": 0,
+        "ordersLast24h": 1,
+        "newAddress": false,
+        "amount": "38.00",
+        "merchantMedianAmount": "38.00",
+        "network": null
+      },
+      "expectedBand": "green",
+      "expectedPoints": -25,
+      "expectedCodes": ["OWN_HISTORY_CLEAN", "PAYER_VERIFIED"]
+    },
+    {
+      "id": "b10",
+      "name": "Clean history, unverified",
+      "features": {
+        "payerAccountStatus": "UNVERIFIED",
+        "priorOrders": 3,
+        "priorDelivered": 3,
+        "refundedOrders": 0,
+        "ownDisputesFiled12m": 0,
+        "ownDisputesLost12m": 0,
+        "ordersLast24h": 1,
+        "newAddress": false,
+        "amount": "38.00",
+        "merchantMedianAmount": "38.00",
+        "network": null
+      },
+      "expectedBand": "green",
+      "expectedPoints": -5,
+      "expectedCodes": ["PAYER_UNVERIFIED", "OWN_HISTORY_CLEAN"]
+    },
+    {
+      "id": "b11",
+      "name": "One dispute not lost, verified",
+      "features": {
+        "payerAccountStatus": "VERIFIED",
+        "priorOrders": 2,
+        "priorDelivered": 2,
+        "refundedOrders": 0,
+        "ownDisputesFiled12m": 1,
+        "ownDisputesLost12m": 0,
+        "ordersLast24h": 1,
+        "newAddress": false,
+        "amount": "38.00",
+        "merchantMedianAmount": "38.00",
+        "network": null
+      },
+      "expectedBand": "green",
+      "expectedPoints": 5,
+      "expectedCodes": ["OWN_DISPUTES_FILED", "PAYER_VERIFIED"]
+    },
+    {
+      "id": "b12",
+      "name": "One dispute not lost, unverified",
+      "features": {
+        "payerAccountStatus": "UNVERIFIED",
+        "priorOrders": 2,
+        "priorDelivered": 2,
+        "refundedOrders": 0,
+        "ownDisputesFiled12m": 1,
+        "ownDisputesLost12m": 0,
+        "ordersLast24h": 1,
+        "newAddress": false,
+        "amount": "38.00",
+        "merchantMedianAmount": "38.00",
+        "network": null
+      },
+      "expectedBand": "yellow",
+      "expectedPoints": 25,
+      "expectedCodes": ["PAYER_UNVERIFIED", "OWN_DISPUTES_FILED"]
+    },
+    {
+      "id": "b13",
+      "name": "Two disputes not lost",
+      "features": {
+        "payerAccountStatus": "VERIFIED",
+        "priorOrders": 3,
+        "priorDelivered": 3,
+        "refundedOrders": 0,
+        "ownDisputesFiled12m": 2,
+        "ownDisputesLost12m": 0,
+        "ordersLast24h": 1,
+        "newAddress": false,
+        "amount": "38.00",
+        "merchantMedianAmount": "38.00",
+        "network": null
+      },
+      "expectedBand": "yellow",
+      "expectedPoints": 15,
+      "expectedCodes": ["OWN_DISPUTES_FILED", "PAYER_VERIFIED"]
+    },
+    {
+      "id": "b14",
+      "name": "Four disputes not lost, capped at 30",
+      "features": {
+        "payerAccountStatus": "VERIFIED",
+        "priorOrders": 5,
+        "priorDelivered": 5,
+        "refundedOrders": 0,
+        "ownDisputesFiled12m": 4,
+        "ownDisputesLost12m": 0,
+        "ordersLast24h": 1,
+        "newAddress": false,
+        "amount": "38.00",
+        "merchantMedianAmount": "38.00",
+        "network": null
+      },
+      "expectedBand": "yellow",
+      "expectedPoints": 25,
+      "expectedCodes": ["OWN_DISPUTES_FILED", "PAYER_VERIFIED"]
+    },
+    {
+      "id": "b15",
+      "name": "Alex R.",
+      "features": {
+        "payerAccountStatus": "VERIFIED",
+        "priorOrders": 2,
+        "priorDelivered": 2,
+        "refundedOrders": 1,
+        "ownDisputesFiled12m": 1,
+        "ownDisputesLost12m": 1,
+        "ordersLast24h": 1,
+        "newAddress": true,
+        "amount": "38.00",
+        "merchantMedianAmount": "38.00",
+        "network": null
+      },
+      "expectedBand": "yellow",
+      "expectedPoints": 25,
+      "expectedCodes": ["OWN_DISPUTES_LOST", "NEW_ADDRESS", "PAYER_VERIFIED", "OWN_DISPUTES_FILED"]
+    },
+    {
+      "id": "b16",
+      "name": "Two lost disputes, verified",
+      "features": {
+        "payerAccountStatus": "VERIFIED",
+        "priorOrders": 3,
+        "priorDelivered": 3,
+        "refundedOrders": 0,
+        "ownDisputesFiled12m": 2,
+        "ownDisputesLost12m": 2,
+        "ordersLast24h": 1,
+        "newAddress": false,
+        "amount": "38.00",
+        "merchantMedianAmount": "38.00",
+        "network": null
+      },
+      "expectedBand": "red",
+      "expectedPoints": 45,
+      "expectedCodes": ["OWN_DISPUTES_LOST", "PAYER_VERIFIED", "OWN_DISPUTES_FILED"]
+    },
+    {
+      "id": "b17",
+      "name": "Two lost disputes, unverified",
+      "features": {
+        "payerAccountStatus": "UNVERIFIED",
+        "priorOrders": 3,
+        "priorDelivered": 3,
+        "refundedOrders": 0,
+        "ownDisputesFiled12m": 2,
+        "ownDisputesLost12m": 2,
+        "ordersLast24h": 1,
+        "newAddress": false,
+        "amount": "38.00",
+        "merchantMedianAmount": "38.00",
+        "network": null
+      },
+      "expectedBand": "red",
+      "expectedPoints": 65,
+      "expectedCodes": ["PAYER_UNVERIFIED", "OWN_DISPUTES_LOST", "OWN_DISPUTES_FILED"]
+    },
+    {
+      "id": "b18",
+      "name": "Three lost and one open dispute",
+      "features": {
+        "payerAccountStatus": "VERIFIED",
+        "priorOrders": 5,
+        "priorDelivered": 5,
+        "refundedOrders": 0,
+        "ownDisputesFiled12m": 4,
+        "ownDisputesLost12m": 3,
+        "ordersLast24h": 1,
+        "newAddress": false,
+        "amount": "38.00",
+        "merchantMedianAmount": "38.00",
+        "network": null
+      },
+      "expectedBand": "red",
+      "expectedPoints": 55,
+      "expectedCodes": ["OWN_DISPUTES_LOST", "OWN_DISPUTES_FILED", "PAYER_VERIFIED"]
+    },
+    {
+      "id": "b19",
+      "name": "Mostly refunded",
+      "features": {
+        "payerAccountStatus": "VERIFIED",
+        "priorOrders": 3,
+        "priorDelivered": 1,
+        "refundedOrders": 2,
+        "ownDisputesFiled12m": 0,
+        "ownDisputesLost12m": 0,
+        "ordersLast24h": 1,
+        "newAddress": false,
+        "amount": "38.00",
+        "merchantMedianAmount": "38.00",
+        "network": null
+      },
+      "expectedBand": "green",
+      "expectedPoints": 10,
+      "expectedCodes": ["OWN_REFUND_RATIO", "PAYER_VERIFIED"]
+    },
+    {
+      "id": "b20",
+      "name": "Exactly half refunded does not trigger",
+      "features": {
+        "payerAccountStatus": "UNVERIFIED",
+        "priorOrders": 2,
+        "priorDelivered": 2,
+        "refundedOrders": 1,
+        "ownDisputesFiled12m": 0,
+        "ownDisputesLost12m": 0,
+        "ordersLast24h": 1,
+        "newAddress": false,
+        "amount": "38.00",
+        "merchantMedianAmount": "38.00",
+        "network": null
+      },
+      "expectedBand": "yellow",
+      "expectedPoints": 15,
+      "expectedCodes": ["PAYER_UNVERIFIED"]
+    },
+    {
+      "id": "b21",
+      "name": "One order refunded is below the 2-order minimum",
+      "features": {
+        "payerAccountStatus": "VERIFIED",
+        "priorOrders": 1,
+        "priorDelivered": 0,
+        "refundedOrders": 1,
+        "ownDisputesFiled12m": 0,
+        "ownDisputesLost12m": 0,
+        "ordersLast24h": 1,
+        "newAddress": false,
+        "amount": "38.00",
+        "merchantMedianAmount": "38.00",
+        "network": null
+      },
+      "expectedBand": "green",
+      "expectedPoints": -5,
+      "expectedCodes": ["PAYER_VERIFIED"]
+    },
+    {
+      "id": "b22",
+      "name": "Velocity, lands on green boundary 10",
+      "features": {
+        "payerAccountStatus": "VERIFIED",
+        "priorOrders": 1,
+        "priorDelivered": 1,
+        "refundedOrders": 0,
+        "ownDisputesFiled12m": 0,
+        "ownDisputesLost12m": 0,
+        "ordersLast24h": 3,
+        "newAddress": false,
+        "amount": "38.00",
+        "merchantMedianAmount": "38.00",
+        "network": null
+      },
+      "expectedBand": "green",
+      "expectedPoints": 10,
+      "expectedCodes": ["VELOCITY", "PAYER_VERIFIED"]
+    },
+    {
+      "id": "b23",
+      "name": "Velocity and new address",
+      "features": {
+        "payerAccountStatus": "VERIFIED",
+        "priorOrders": 1,
+        "priorDelivered": 1,
+        "refundedOrders": 0,
+        "ownDisputesFiled12m": 0,
+        "ownDisputesLost12m": 0,
+        "ordersLast24h": 4,
+        "newAddress": true,
+        "amount": "38.00",
+        "merchantMedianAmount": "38.00",
+        "network": null
+      },
+      "expectedBand": "yellow",
+      "expectedPoints": 15,
+      "expectedCodes": ["VELOCITY", "NEW_ADDRESS", "PAYER_VERIFIED"]
+    },
+    {
+      "id": "b24",
+      "name": "Exactly 3x median is not high value",
+      "features": {
+        "payerAccountStatus": "VERIFIED",
+        "priorOrders": 1,
+        "priorDelivered": 1,
+        "refundedOrders": 0,
+        "ownDisputesFiled12m": 0,
+        "ownDisputesLost12m": 0,
+        "ordersLast24h": 1,
+        "newAddress": false,
+        "amount": "120.00",
+        "merchantMedianAmount": "40.00",
+        "network": null
+      },
+      "expectedBand": "green",
+      "expectedPoints": -5,
+      "expectedCodes": ["PAYER_VERIFIED"]
+    },
+    {
+      "id": "b25",
+      "name": "One cent above 3x median is high value",
+      "features": {
+        "payerAccountStatus": "UNVERIFIED",
+        "priorOrders": 1,
+        "priorDelivered": 1,
+        "refundedOrders": 0,
+        "ownDisputesFiled12m": 0,
+        "ownDisputesLost12m": 0,
+        "ordersLast24h": 1,
+        "newAddress": false,
+        "amount": "120.01",
+        "merchantMedianAmount": "40.00",
+        "network": null
+      },
+      "expectedBand": "yellow",
+      "expectedPoints": 25,
+      "expectedCodes": ["PAYER_UNVERIFIED", "HIGH_VALUE"]
+    },
+    {
+      "id": "b26",
+      "name": "No merchant median, no high-value rule",
+      "features": {
+        "payerAccountStatus": "UNVERIFIED",
+        "priorOrders": 1,
+        "priorDelivered": 1,
+        "refundedOrders": 0,
+        "ownDisputesFiled12m": 0,
+        "ownDisputesLost12m": 0,
+        "ordersLast24h": 1,
+        "newAddress": false,
+        "amount": "500.00",
+        "merchantMedianAmount": null,
+        "network": null
+      },
+      "expectedBand": "yellow",
+      "expectedPoints": 15,
+      "expectedCodes": ["PAYER_UNVERIFIED"]
+    },
+    {
+      "id": "b27",
+      "name": "Long history with one dispute is not clean",
+      "features": {
+        "payerAccountStatus": "VERIFIED",
+        "priorOrders": 4,
+        "priorDelivered": 4,
+        "refundedOrders": 0,
+        "ownDisputesFiled12m": 1,
+        "ownDisputesLost12m": 0,
+        "ordersLast24h": 1,
+        "newAddress": false,
+        "amount": "38.00",
+        "merchantMedianAmount": "38.00",
+        "network": null
+      },
+      "expectedBand": "green",
+      "expectedPoints": 5,
+      "expectedCodes": ["OWN_DISPUTES_FILED", "PAYER_VERIFIED"]
+    },
+    {
+      "id": "b28",
+      "name": "Clean here, two network losses",
+      "features": {
+        "payerAccountStatus": "VERIFIED",
+        "priorOrders": 3,
+        "priorDelivered": 3,
+        "refundedOrders": 0,
+        "ownDisputesFiled12m": 0,
+        "ownDisputesLost12m": 0,
+        "ordersLast24h": 1,
+        "newAddress": false,
+        "amount": "38.00",
+        "merchantMedianAmount": "38.00",
+        "network": {
+          "disputesLost12m": 2
+        }
+      },
+      "expectedBand": "green",
+      "expectedPoints": -5,
+      "expectedCodes": ["OWN_HISTORY_CLEAN", "NETWORK_DISPUTES_LOST", "PAYER_VERIFIED"]
+    },
+    {
+      "id": "b29",
+      "name": "Red boundary 30",
+      "features": {
+        "payerAccountStatus": "UNVERIFIED",
+        "priorOrders": 1,
+        "priorDelivered": 1,
+        "refundedOrders": 0,
+        "ownDisputesFiled12m": 0,
+        "ownDisputesLost12m": 0,
+        "ordersLast24h": 3,
+        "newAddress": false,
+        "amount": "38.00",
+        "merchantMedianAmount": "38.00",
+        "network": null
+      },
+      "expectedBand": "red",
+      "expectedPoints": 30,
+      "expectedCodes": ["PAYER_UNVERIFIED", "VELOCITY"]
+    },
+    {
+      "id": "b30",
+      "name": "Lost dispute, unverified, new address",
+      "features": {
+        "payerAccountStatus": "UNVERIFIED",
+        "priorOrders": 2,
+        "priorDelivered": 2,
+        "refundedOrders": 0,
+        "ownDisputesFiled12m": 1,
+        "ownDisputesLost12m": 1,
+        "ordersLast24h": 1,
+        "newAddress": true,
+        "amount": "38.00",
+        "merchantMedianAmount": "38.00",
+        "network": null
+      },
+      "expectedBand": "red",
+      "expectedPoints": 45,
+      "expectedCodes": [
+        "PAYER_UNVERIFIED",
+        "OWN_DISPUTES_LOST",
+        "NEW_ADDRESS",
+        "OWN_DISPUTES_FILED"
+      ]
+    }
+  ]
+}

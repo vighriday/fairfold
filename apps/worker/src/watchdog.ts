@@ -63,19 +63,17 @@ export function createWatchdogHandler(options: { database: Database; clock?: Clo
           )
           .limit(1);
         if (existing) return;
-        await tx
-          .insert(alerts)
-          .values({
-            merchant_id: order.merchant_id,
-            order_id: order.id,
-            type,
-            ref_id: refId,
-            message:
-              type === 'tracking_gap'
-                ? 'Tracking has been silent for more than 72 hours'
-                : 'Captured order has not been sealed within 72 hours',
-            created_at: now,
-          });
+        await tx.insert(alerts).values({
+          merchant_id: order.merchant_id,
+          order_id: order.id,
+          type,
+          ref_id: refId,
+          message:
+            type === 'tracking_gap'
+              ? 'Tracking has been silent for more than 72 hours'
+              : 'Captured order has not been sealed within 72 hours',
+          created_at: now,
+        });
         if (type === 'tracking_gap')
           await createLedger(tx, clock).append(order.id, {
             type: 'gap_alert',
@@ -116,16 +114,14 @@ export function createWatchdogHandler(options: { database: Database; clock?: Clo
           )
           .limit(1);
         if (!existing)
-          await tx
-            .insert(alerts)
-            .values({
-              merchant_id: dispute.merchant_id,
-              order_id: dispute.order_id,
-              type: 'dispute_due_soon',
-              ref_id: dispute.id,
-              message: 'Dispute response is due within 48 hours or overdue',
-              created_at: now,
-            });
+          await tx.insert(alerts).values({
+            merchant_id: dispute.merchant_id,
+            order_id: dispute.order_id,
+            type: 'dispute_due_soon',
+            ref_id: dispute.id,
+            message: 'Dispute response is due within 48 hours or overdue',
+            created_at: now,
+          });
       });
     }
   };

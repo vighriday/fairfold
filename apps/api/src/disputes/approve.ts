@@ -48,7 +48,11 @@ function edits(input: unknown): ApprovalEdits {
     throw new AppError('INVALID_DISPUTE_APPROVAL', 'Approval edit is not supported', 400);
   const result = value as ApprovalEdits;
   if (result.offerType === 'REFUND_WITH_RETURN' || result.acceptClaimType === 'REFUND_WITH_RETURN')
-    throw new AppError('PAYPAL_RETURN_ADDRESS_REVIEW_REQUIRED', 'Return-based action requires Q2 review', 409);
+    throw new AppError(
+      'PAYPAL_RETURN_ADDRESS_REVIEW_REQUIRED',
+      'Return-based action requires Q2 review',
+      409,
+    );
   if (result.recommendation !== undefined && !actionable.has(result.recommendation))
     throw new AppError(
       'INVALID_DISPUTE_APPROVAL',

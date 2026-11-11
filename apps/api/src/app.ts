@@ -47,7 +47,7 @@ export async function createApi(options: {
   clock?: Clock;
   logger?: FastifyServerOptions['logger'];
   routes?: FastifyPluginAsync;
-  phase?: 'H1' | 'H2' | 'H3' | 'H5' | 'H7';
+  phase?: 'H1' | 'H2' | 'H3' | 'H5' | 'H7' | 'H8';
 }) {
   const { config } = options;
   const app = Fastify({
@@ -130,13 +130,15 @@ export async function createApi(options: {
       info: {
         title: 'Fairfold API',
         description:
-          options.phase === 'H5'
-            ? 'H5 Pack Station photo integrity, blocker checks and sealed tracking workflow; real PayPal and attestation acceptance remains pending.'
-            : options.phase === 'H3'
-              ? 'H3 verified sandbox webhooks and reconciliation; real acceptance remains pending. Intelligence remains the existing labelled stub.'
-              : options.phase === 'H2'
-                ? 'H2 sandbox checkout and owner-scoped orders. Intelligence remains the existing labelled stub.'
-                : 'H1 foundation. PayPal checkout and intelligence endpoints are not implemented yet.',
+          options.phase === 'H8' || options.phase === 'H7'
+            ? 'Integrated Fairfold sandbox API, intelligence, Pack Station and MCP. Account-backed and hosted acceptance remain pending.'
+            : options.phase === 'H5'
+              ? 'H5 Pack Station photo integrity, blocker checks and sealed tracking workflow, with the intelligence endpoints; real PayPal acceptance remains pending.'
+              : options.phase === 'H3'
+                ? 'H3 verified sandbox webhooks and reconciliation, with the intelligence endpoints; real acceptance remains pending.'
+                : options.phase === 'H2'
+                  ? 'H2 sandbox checkout and owner-scoped orders, with the intelligence endpoints.'
+                  : 'H1 foundation with the intelligence endpoints. PayPal checkout endpoints are not implemented yet.',
         version: '0.1.0',
       },
       components: {
@@ -185,8 +187,8 @@ export async function createApi(options: {
           200: z.object({
             status: z.literal('ok'),
             database: z.literal('ready'),
-            phase: z.enum(['H1', 'H2', 'H3', 'H5', 'H7']),
-            intelligence: z.literal('stub'),
+            phase: z.enum(['H1', 'H2', 'H3', 'H5', 'H7', 'H8']),
+            intelligence: z.literal('ready'),
           }),
           503: ErrorEnvelopeSchema,
         },
@@ -208,7 +210,7 @@ export async function createApi(options: {
         status: 'ok' as const,
         database: 'ready' as const,
         phase: options.phase ?? 'H1',
-        intelligence: 'stub' as const,
+        intelligence: 'ready' as const,
       };
     },
   );

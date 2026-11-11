@@ -41,6 +41,12 @@ function asJsonObject(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
+/**
+ * Section 8 F2: a photo labelled with the rule's required_photo_label has an attestation with
+ * inspection.defectVisible = false. The Evidence Agent attests packing uploads with step 'pack' (all of the
+ * order's photos so far, with the rule's inspection result inside); step 'inspection' is for batch
+ * inspections, which have no order.
+ */
 function hasPassingInspection(
   latest: typeof attestations.$inferSelect | undefined,
   rule: typeof inspection_rules.$inferSelect | undefined,
@@ -86,6 +92,7 @@ export function createPackingService(options: {
           sha256: ledger_entries.blob_sha256,
           label: sql<string>`(${ledger_entries.payload}->>'label')`,
           createdAt: ledger_entries.server_time,
+          batchCodes: sql<Record<string, string> | null>`(${ledger_entries.payload}->'batchCodes')`,
         })
         .from(ledger_entries)
         .where(and(eq(ledger_entries.order_id, orderId), eq(ledger_entries.type, 'photo')))
@@ -113,11 +120,15 @@ export function createPackingService(options: {
               and(
                 eq(inventory_batches.merchant_id, merchant),
                 inArray(inventory_batches.product_id, productIds),
-                eq(inventory_batches.status, 'active'),
+                inArray(inventory_batches.status, ['active', 'on_hold']),
               ),
             )
         : [];
-      const batchCodes = batches.map((batch) => batch.batchCode);
+      const entered = photos.at(-1)?.batchCodes;
+      const selectedCodes = items.flatMap((item) => entered?.[item.id] ?? item.batchCode ?? []);
+      const batchCodes = selectedCodes.length
+        ? selectedCodes
+        : batches.map((batch) => batch.batchCode);
       const rules = batchCodes.length
         ? await options.database.db
             .select()
@@ -132,6 +143,11 @@ export function createPackingService(options: {
         : [];
       const rule = rules[0];
       const blockers = await this.blockers(order, latest, rule);
+      if (
+        rules.some((candidate) => !hasPassingInspection(latest, candidate)) &&
+        !blockers.includes('INSPECTION_REQUIRED')
+      )
+        blockers.push('INSPECTION_REQUIRED');
       if (
         latest &&
         photos.at(-1) &&
@@ -204,11 +220,20 @@ export function createPackingService(options: {
           );
       if (!items.length || items.some((item) => !input.batchCodes[item.id]?.trim()))
         throw new AppError('BATCH_CODE_REQUIRED', 'Every order item requires a batch code', 400);
-      const rules = await options.database.db.select().from(inspection_rules).where(and(
-        eq(inspection_rules.merchant_id, merchant), eq(inspection_rules.active, true),
-        inArray(inspection_rules.batch_code, Object.values(input.batchCodes)),
-      ));
-      const allowedLabels = new Set([...PhotoLabels, ...rules.map((rule) => rule.required_photo_label)]);
+      const rules = await options.database.db
+        .select()
+        .from(inspection_rules)
+        .where(
+          and(
+            eq(inspection_rules.merchant_id, merchant),
+            eq(inspection_rules.active, true),
+            inArray(inspection_rules.batch_code, Object.values(input.batchCodes)),
+          ),
+        );
+      const allowedLabels = new Set([
+        ...PhotoLabels,
+        ...rules.map((rule) => rule.required_photo_label),
+      ]);
       const stored: Array<{ hash: string; label: string }> = [];
       await withTransaction(options.database, async (tx, queueDb) => {
         const [current] = await tx

@@ -1,0 +1,140 @@
+{
+  "_note": "8 scripted dispute cases for the Dispute Agent eval (section 10 decision table, first match wins, then stage guards). 'now' is the evaluation clock. Facts follow DisputeFacts in the plan (Task 5.1).",
+  "now": "2026-11-11T12:00:00.000Z",
+  "cases": [
+    {
+      "id": "d1-nad-confirmed-hypothesis",
+      "facts": {
+        "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+        "status": "WAITING_FOR_SELLER_RESPONSE",
+        "lifeCycleStage": "INQUIRY",
+        "dueAt": "2026-11-20T12:00:00.000Z",
+        "attestation": { "status": "match", "defects": 0 },
+        "tracking": { "pushed": true, "delivered": true, "shippedToTxnAddress": true },
+        "linkedHypothesis": {
+          "id": "hyp-b17",
+          "status": "confirmed",
+          "summary": "Stitching fault confirmed in batch B17"
+        },
+        "amount": { "currency_code": "USD", "value": "38.00" }
+      },
+      "expectedRecommendation": "make_offer",
+      "expectedEvidenceType": null,
+      "expectedOfferType": "REFUND_WITH_REPLACEMENT"
+    },
+    {
+      "id": "d2-nad-open-hypothesis-due-later",
+      "facts": {
+        "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+        "status": "WAITING_FOR_SELLER_RESPONSE",
+        "lifeCycleStage": "INQUIRY",
+        "dueAt": "2026-11-16T12:00:00.000Z",
+        "attestation": { "status": "match", "defects": 0 },
+        "tracking": { "pushed": true, "delivered": true, "shippedToTxnAddress": true },
+        "linkedHypothesis": {
+          "id": "hyp-b17",
+          "status": "open",
+          "summary": "Possible stitching fault in batch B17"
+        },
+        "amount": { "currency_code": "USD", "value": "38.00" }
+      },
+      "expectedRecommendation": "inspect_first",
+      "expectedEvidenceType": null
+    },
+    {
+      "id": "d3-nad-open-hypothesis-due-soon",
+      "facts": {
+        "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+        "status": "WAITING_FOR_SELLER_RESPONSE",
+        "lifeCycleStage": "INQUIRY",
+        "dueAt": "2026-11-12T12:00:00.000Z",
+        "attestation": { "status": "match", "defects": 0 },
+        "tracking": { "pushed": true, "delivered": true, "shippedToTxnAddress": true },
+        "linkedHypothesis": {
+          "id": "hyp-b17",
+          "status": "open",
+          "summary": "Possible stitching fault in batch B17"
+        },
+        "amount": { "currency_code": "USD", "value": "38.00" }
+      },
+      "expectedRecommendation": "merchant_decides",
+      "expectedEvidenceType": null
+    },
+    {
+      "id": "d4-nad-clean-packing-evidence",
+      "facts": {
+        "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+        "status": "WAITING_FOR_SELLER_RESPONSE",
+        "lifeCycleStage": "CHARGEBACK",
+        "dueAt": "2026-11-18T12:00:00.000Z",
+        "attestation": { "status": "match", "defects": 0 },
+        "tracking": { "pushed": true, "delivered": true, "shippedToTxnAddress": true },
+        "linkedHypothesis": null,
+        "amount": { "currency_code": "USD", "value": "12.00" }
+      },
+      "expectedRecommendation": "provide_evidence",
+      "expectedEvidenceType": "OTHER"
+    },
+    {
+      "id": "d5-nad-attestation-mismatch",
+      "facts": {
+        "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+        "status": "WAITING_FOR_SELLER_RESPONSE",
+        "lifeCycleStage": "INQUIRY",
+        "dueAt": "2026-11-18T12:00:00.000Z",
+        "attestation": { "status": "mismatch", "defects": 1 },
+        "tracking": { "pushed": true, "delivered": true, "shippedToTxnAddress": true },
+        "linkedHypothesis": null,
+        "amount": { "currency_code": "USD", "value": "38.00" }
+      },
+      "expectedRecommendation": "make_offer",
+      "expectedEvidenceType": null
+    },
+    {
+      "id": "d6-inr-delivered-scan",
+      "facts": {
+        "reason": "MERCHANDISE_OR_SERVICE_NOT_RECEIVED",
+        "status": "WAITING_FOR_SELLER_RESPONSE",
+        "lifeCycleStage": "INQUIRY",
+        "dueAt": "2026-11-18T12:00:00.000Z",
+        "attestation": { "status": "match", "defects": 0 },
+        "tracking": { "pushed": true, "delivered": true, "shippedToTxnAddress": true },
+        "linkedHypothesis": null,
+        "amount": { "currency_code": "USD", "value": "12.00" }
+      },
+      "expectedRecommendation": "provide_evidence",
+      "expectedEvidenceType": "PROOF_OF_FULFILLMENT"
+    },
+    {
+      "id": "d7-inr-no-tracking",
+      "facts": {
+        "reason": "MERCHANDISE_OR_SERVICE_NOT_RECEIVED",
+        "status": "WAITING_FOR_SELLER_RESPONSE",
+        "lifeCycleStage": "CHARGEBACK",
+        "dueAt": "2026-11-18T12:00:00.000Z",
+        "attestation": null,
+        "tracking": { "pushed": false, "delivered": false, "shippedToTxnAddress": false },
+        "linkedHypothesis": null,
+        "amount": { "currency_code": "USD", "value": "12.00" }
+      },
+      "expectedRecommendation": "accept_claim",
+      "expectedEvidenceType": null,
+      "expectedAcceptClaimType": "REFUND"
+    },
+    {
+      "id": "d8-unauthorised-shipped-to-txn-address",
+      "facts": {
+        "reason": "UNAUTHORISED",
+        "status": "WAITING_FOR_SELLER_RESPONSE",
+        "lifeCycleStage": "CHARGEBACK",
+        "dueAt": "2026-11-18T12:00:00.000Z",
+        "attestation": { "status": "match", "defects": 0 },
+        "tracking": { "pushed": true, "delivered": true, "shippedToTxnAddress": true },
+        "linkedHypothesis": null,
+        "amount": { "currency_code": "USD", "value": "38.00" }
+      },
+      "expectedRecommendation": "provide_evidence",
+      "expectedEvidenceType": "PROOF_OF_FULFILLMENT"
+    }
+  ]
+}

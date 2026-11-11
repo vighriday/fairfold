@@ -115,17 +115,35 @@ describe.skipIf(!integrationUrl)('watchdog sweep', () => {
 
   it('uses shipment age for no-scan orders and deduplicates concurrent unlinked dispute alerts', async () => {
     const owner = await merchant();
-    const [order] = await database.db.insert(orders).values({
-      merchant_id: owner.id, paypal_order_id: 'WATCH-' + randomUUID(),
-      invoice_id: 'FF-WATCH-' + randomUUID(), status: 'shipped', amount_value: '20.00',
-      currency: 'USD', shipped_at: clock.now(),
-    }).returning();
-    await database.db.insert(shipments).values({ order_id: order!.id,
-      carrier: 'OTHER', carrier_name_other: 'Synthetic carrier', tracking_number: randomUUID(), events: [] });
+    const [order] = await database.db
+      .insert(orders)
+      .values({
+        merchant_id: owner.id,
+        paypal_order_id: 'WATCH-' + randomUUID(),
+        invoice_id: 'FF-WATCH-' + randomUUID(),
+        status: 'shipped',
+        amount_value: '20.00',
+        currency: 'USD',
+        shipped_at: clock.now(),
+      })
+      .returning();
+    await database.db.insert(shipments).values({
+      order_id: order!.id,
+      carrier: 'OTHER',
+      carrier_name_other: 'Synthetic carrier',
+      tracking_number: randomUUID(),
+      events: [],
+    });
     const disputeId = 'WATCH-' + randomUUID();
-    await database.db.insert(disputes).values({ id: disputeId, merchant_id: owner.id,
-      reason: 'ITEM_NOT_RECEIVED', status: 'WAITING_FOR_BUYER_RESPONSE',
-      seller_response_due_date: clock.now(), raw: { synthetic: true }, updated_at: clock.now() });
+    await database.db.insert(disputes).values({
+      id: disputeId,
+      merchant_id: owner.id,
+      reason: 'ITEM_NOT_RECEIVED',
+      status: 'WAITING_FOR_BUYER_RESPONSE',
+      seller_response_due_date: clock.now(),
+      raw: { synthetic: true },
+      updated_at: clock.now(),
+    });
     const sweep = createWatchdogHandler({ database: database.db, clock });
     await Promise.all([sweep(), sweep()]);
     const rows = await database.db.select().from(alerts).where(eq(alerts.merchant_id, owner.id));

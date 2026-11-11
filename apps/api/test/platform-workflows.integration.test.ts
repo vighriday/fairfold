@@ -4,7 +4,6 @@ import { and, eq } from 'drizzle-orm';
 import { fixedClock, type PayPalClient } from '@fairfold/contracts';
 import {
   actions,
-  alerts,
   buyers,
   complaint_clusters,
   createDatabase,
@@ -52,15 +51,13 @@ describe.skipIf(!url)('H5 audited platform workflows', () => {
     const merchantId = randomUUID(),
       buyerId = randomUUID(),
       orderId = randomUUID();
-    await database.db
-      .insert((await import('@fairfold/db')).merchants)
-      .values({
-        id: merchantId,
-        slug: 'audit-' + merchantId,
-        name: 'Synthetic audit merchant',
-        domain: 'audit.invalid',
-        country: 'US',
-      });
+    await database.db.insert((await import('@fairfold/db')).merchants).values({
+      id: merchantId,
+      slug: 'audit-' + merchantId,
+      name: 'Synthetic audit merchant',
+      domain: 'audit.invalid',
+      country: 'US',
+    });
     await database.db.insert(buyers).values({ id: buyerId, display_name: 'Synthetic audit buyer' });
     const [product] = await database.db
       .insert(products)
@@ -83,19 +80,17 @@ describe.skipIf(!url)('H5 audited platform workflows', () => {
         qty_remaining: 20,
       })
       .returning();
-    await database.db
-      .insert(orders)
-      .values({
-        id: orderId,
-        merchant_id: merchantId,
-        buyer_id: buyerId,
-        paypal_order_id: 'SEED-ORDER-' + orderId,
-        paypal_capture_id: 'SEED-CAPTURE-' + orderId,
-        invoice_id: 'FF-' + orderId,
-        status: 'captured',
-        amount_value: '38.00',
-        currency: 'USD',
-      });
+    await database.db.insert(orders).values({
+      id: orderId,
+      merchant_id: merchantId,
+      buyer_id: buyerId,
+      paypal_order_id: 'SEED-ORDER-' + orderId,
+      paypal_capture_id: 'SEED-CAPTURE-' + orderId,
+      invoice_id: 'FF-' + orderId,
+      status: 'captured',
+      amount_value: '38.00',
+      currency: 'USD',
+    });
     const [cluster] = await database.db
       .insert(complaint_clusters)
       .values({
@@ -288,16 +283,14 @@ describe.skipIf(!url)('H5 audited platform workflows', () => {
   it('actually sends approved inquiry messages and never sends safety/unapproved messages', async () => {
     const f = await fixture();
     const disputeId = 'PP-D-AUDIT-' + randomUUID();
-    await database.db
-      .insert(disputes)
-      .values({
-        id: disputeId,
-        merchant_id: f.merchantId,
-        order_id: f.orderId,
-        reason: 'MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED',
-        status: 'WAITING_FOR_SELLER_RESPONSE',
-        raw: {},
-      });
+    await database.db.insert(disputes).values({
+      id: disputeId,
+      merchant_id: f.merchantId,
+      order_id: f.orderId,
+      reason: 'MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED',
+      status: 'WAITING_FOR_SELLER_RESPONSE',
+      raw: {},
+    });
     const [action] = await database.db
       .insert(actions)
       .values({ hypothesis_id: f.hypothesis.id, type: 'send_buyer_messages', payload: {} })

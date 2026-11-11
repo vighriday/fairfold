@@ -41,8 +41,19 @@ const result = spawnSync(
     'sandbox-setup.integration.test.ts',
     'sandbox-verify.integration.test.ts',
     'mcp.integration.test.ts',
+    'action-execution.integration.test.ts',
+    'seed.integration.test.ts',
+    'packages/intelligence',
   ],
-  { stdio: 'inherit', env: { ...process.env, FAIRFOLD_RUN_DB_TESTS: 'true' } },
+  {
+    stdio: 'inherit',
+    env: {
+      ...Object.fromEntries(
+        Object.entries(process.env).filter(([key]) => !/^AI_/.test(key) && !/_API_KEY$/.test(key)),
+      ),
+      FAIRFOLD_RUN_DB_TESTS: 'true',
+    },
+  },
 );
 if (result.error) throw result.error;
 process.exitCode = result.status ?? 1;

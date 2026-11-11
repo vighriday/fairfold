@@ -1,6 +1,6 @@
 import { createDatabase } from '@fairfold/db';
 import { decodeEncryptionKey } from '@fairfold/contracts';
-import { computeBuyerSignal, searchCatalog, buildStoreReport } from '@fairfold/intelligence';
+import { bindIntelRuntime, computeBuyerSignal } from '@fairfold/intelligence';
 import { createJobs } from '@fairfold/jobs';
 import {
   createPayPalClientFactory,
@@ -23,11 +23,14 @@ import { createCoreRoutes } from './routes/core/index.js';
 import { createWebhookRoutes } from './routes/core/webhooks.js';
 import { createMcpService } from './mcp/service.js';
 import { createMcpRoutes } from './mcp/routes.js';
+import { seedWorld } from './seed/world.js';
 
 /** The normal server and local recorded rehearsal use the same application composition. */
 export async function createRuntime(config: Config, options: { recording?: OrderRecording } = {}) {
   const database = createDatabase(config.databaseUrl);
   const jobs = createJobs(config.databaseUrl);
+  // The intelligence routes and services use this API's database and queue (DECISIONS.md I-D37).
+  const intelligence = bindIntelRuntime({ db: database.db, jobs });
   try {
     const forMerchant = createPayPalClientFactory({
       credentials: databaseCredentials(database.db),
@@ -45,10 +48,10 @@ export async function createRuntime(config: Config, options: { recording?: Order
     const inspection = createInspectionService({ database, jobs });
     const actionApproval = createSharedCauseActionApproval({ database, jobs });
     const alertReads = createAlertReads(database.db);
-    const mcpService = createMcpService(database, { jobs, searchCatalog, buildStoreReport });
+    const mcpService = createMcpService(database, intelligence, { jobs });
     const app = await createApi({
       config,
-      phase: 'H5',
+      phase: 'H8',
       routes: async (routes) => {
         await routes.register(
           createCoreRoutes({
@@ -57,6 +60,8 @@ export async function createRuntime(config: Config, options: { recording?: Order
             disputeReads,
             disputeApproval,
             demoAdjudicate,
+            demoSeed: () =>
+              seedWorld({ db: database.db, now: intelligence.clock.now(), intelligence }),
             packing,
             inspection,
             actionApproval,

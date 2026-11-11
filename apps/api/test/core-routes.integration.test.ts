@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { computeBuyerSignal } from '@fairfold/contracts/stubs';
+import { computeBuyerSignal } from './buyer-signal-double.js';
 import {
   buyers,
   createDatabase,
@@ -119,7 +119,7 @@ describe.skipIf(!integrationUrl)('H2 HTTP contracts with real database/client/qu
       status: 'ok',
       database: 'ready',
       phase: 'H2',
-      intelligence: 'stub',
+      intelligence: 'ready',
     });
     expect(spec.paths['/api/dev/disputes/{id}/adjudicate'].post.security).toEqual([
       { bearerAuth: [] },

@@ -33,6 +33,28 @@ services:
         value: 'true'
       - key: PAYPAL_API_BASE
         value: https://api-m.sandbox.paypal.com
+      - key: GOOGLE_GENERATIVE_AI_API_KEY
+        sync: false
+      - key: AI_PROVIDER
+        value: google
+      - key: AI_MODEL_VISION
+        value: gemini-3.5-flash
+      - key: AI_MODEL_TEXT
+        value: gemini-3.5-flash-lite
+      - key: AI_EMBEDDING_PROVIDER
+        value: google
+      - key: AI_MODEL_EMBEDDING
+        value: gemini-embedding-2
+      - key: CLUSTER_SIMILARITY
+        value: '0.80'
+      - key: SHARED_CAUSE_HORIZON_DAYS
+        value: '14'
+      - key: SHARED_CAUSE_MIN_COMPLAINTS
+        value: '3'
+      - key: SHARED_CAUSE_MIN_RATE_RATIO
+        value: '3'
+      - key: SHARED_CAUSE_MAX_Q
+        value: '0.05'
   - type: worker
     name: fairfold-worker
     runtime: node
@@ -56,3 +78,28 @@ services:
           property: connectionString
       - key: PAYPAL_API_BASE
         value: https://api-m.sandbox.paypal.com
+      - key: GOOGLE_GENERATIVE_AI_API_KEY
+        fromService:
+          type: web
+          name: fairfold-api
+          envVarKey: GOOGLE_GENERATIVE_AI_API_KEY
+      - key: AI_PROVIDER
+        value: google
+      - key: AI_MODEL_VISION
+        value: gemini-3.5-flash
+      - key: AI_MODEL_TEXT
+        value: gemini-3.5-flash-lite
+      - key: AI_EMBEDDING_PROVIDER
+        value: google
+      - key: AI_MODEL_EMBEDDING
+        value: gemini-embedding-2
+      - key: CLUSTER_SIMILARITY
+        value: '0.80'
+      - key: SHARED_CAUSE_HORIZON_DAYS
+        value: '14'
+      - key: SHARED_CAUSE_MIN_COMPLAINTS
+        value: '3'
+      - key: SHARED_CAUSE_MIN_RATE_RATIO
+        value: '3'
+      - key: SHARED_CAUSE_MAX_Q
+        value: '0.05'

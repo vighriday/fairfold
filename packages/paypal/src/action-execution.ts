@@ -71,6 +71,7 @@ export function createActionHandler(options: {
           .set({ status: 'done', result: { ...result, completedAt: clock.now().toISOString() } })
           .where(eq(actions.id, actionId));
       const ownedOrders = async (ids: string[]) => {
+        if (!ids.length) return [];
         const owned = await tx
           .select()
           .from(orders)
@@ -157,7 +158,30 @@ export function createActionHandler(options: {
             .set({ status: release ? 'active' : 'on_hold' })
             .where(eq(inventory_batches.id, batch.id));
         }
-        await done({ orderIds: payload.orderIds });
+        const ruleIds = (payload.inspectionRuleIds ?? []) as string[];
+        if (release && ruleIds.length) {
+          const disabled = await tx
+            .update(inspection_rules)
+            .set({ active: false })
+            .where(
+              and(
+                eq(inspection_rules.merchant_id, merchantId),
+                eq(inspection_rules.created_by_hypothesis_id, row.hypothesis.id),
+                inArray(inspection_rules.id, ruleIds),
+              ),
+            )
+            .returning({ id: inspection_rules.id });
+          if (disabled.length !== ruleIds.length)
+            throw new AppError(
+              'ACTION_OWNERSHIP_FAILED',
+              'Inspection rule belongs to another hypothesis',
+              409,
+            );
+        }
+        await done({
+          orderIds: payload.orderIds,
+          ...(release ? { inspectionRuleIds: ruleIds } : {}),
+        });
         return null;
       }
       if (row.action.type === 'add_inspection_rule') {

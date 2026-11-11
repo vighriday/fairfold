@@ -1,0 +1,123 @@
+// Confirm (endpoint 26) and dismiss (27), section 9 "Confirmation and the fix" and F5 step 6. Confirmation counts
+// come only from the inspection attestations; the merchant presses the button, code checks the evidence.
+import { and, eq, inArray, isNull, ne } from 'drizzle-orm';
+import { AppError, AttestationResultSchema, type HypothesisDetail } from '@fairfold/contracts';
+import { actions, attestations, complaints, disputes, hypotheses } from '@fairfold/db';
+import type { IntelRuntime } from '../runtime.js';
+import { draftBuyerMessagesWith } from './actions.js';
+import { withdrawAndProposeRelease } from './lifecycle.js';
+import { hypothesisDetail, ownedHypothesis } from './views.js';
+
+const notOpen = () =>
+  new AppError('HYPOTHESIS_NOT_OPEN', 'This shared cause was changed by another request', 409);
+
+/** Ten or more clean units with no defective one suggest Dismiss. */
+export const CLEAN_UNITS_SUGGEST_DISMISS = 10;
+
+/** Inspected and defective units from the hypothesis's inspection attestations (one attestation per unit). */
+export async function inspectionCounts(rt: IntelRuntime, hypothesisId: string) {
+  const rows = await rt.db
+    .select({ result: attestations.result })
+    .from(attestations)
+    .where(and(eq(attestations.hypothesis_id, hypothesisId), eq(attestations.step, 'inspection')));
+  const defective = rows.filter((r) => {
+    const inspection = AttestationResultSchema.safeParse(r.result).data?.inspection;
+    return Boolean(inspection?.defectVisible && inspection.matchesCluster);
+  }).length;
+  return { inspected: rows.length, defective, clean: rows.length - defective };
+}
+
+/** Open disputes on the orders of the hypothesis's cluster. */
+async function openClusterDisputes(rt: IntelRuntime, clusterId: string): Promise<string[]> {
+  const members = await rt.db
+    .select({ orderId: complaints.order_id })
+    .from(complaints)
+    .where(eq(complaints.cluster_id, clusterId));
+  const orderIds = [...new Set(members.flatMap((m) => (m.orderId ? [m.orderId] : [])))];
+  if (!orderIds.length) return [];
+  const rows = await rt.db
+    .select({ id: disputes.id })
+    .from(disputes)
+    .where(
+      and(
+        inArray(disputes.order_id, orderIds),
+        isNull(disputes.resolved_at),
+        ne(disputes.status, 'RESOLVED'),
+      ),
+    );
+  return rows.map((r) => r.id).sort();
+}
+
+/**
+ * Endpoint 26: needs at least one inspected unit showing the cluster's fault. Sets confirmed, proposes offers for
+ * the cluster's open disputes, drafts confirmed-level buyer messages and asks the Dispute Agent to rebuild packs.
+ */
+export async function confirmHypothesis(
+  rt: IntelRuntime,
+  merchantId: string,
+  hypothesisId: string,
+): Promise<HypothesisDetail> {
+  const h = await ownedHypothesis(rt, merchantId, hypothesisId);
+  if (h.status !== 'open')
+    throw new AppError('HYPOTHESIS_NOT_OPEN', `This shared cause is ${h.status}`, 409);
+  const counts = await inspectionCounts(rt, h.id);
+  if (counts.defective === 0)
+    throw new AppError(
+      'NO_DEFECTIVE_UNIT',
+      counts.inspected
+        ? 'No inspected unit shows the reported fault'
+        : 'Upload inspection photos before confirming',
+      409,
+      { ...counts, suggestDismiss: counts.clean >= CLEAN_UNITS_SUGGEST_DISMISS },
+    );
+
+  const disputeIds = await openClusterDisputes(rt, h.cluster_id);
+  const now = rt.clock.now();
+  await rt.db.transaction(async (tx) => {
+    // Conditional on the status, so a double click (two requests that both read "open") confirms once.
+    const [confirmed] = await tx
+      .update(hypotheses)
+      .set({ status: 'confirmed', confirmed_at: now })
+      .where(and(eq(hypotheses.id, h.id), eq(hypotheses.status, 'open')))
+      .returning({ id: hypotheses.id });
+    if (!confirmed) throw notOpen();
+    if (disputeIds.length) {
+      await tx.insert(actions).values({
+        hypothesis_id: h.id,
+        type: 'propose_offers',
+        payload: { disputeIds },
+        created_at: now,
+      });
+      await rt.jobs.publish('evidence.rebuild', { disputeIds }, { tx });
+    }
+  });
+  await draftBuyerMessagesWith(rt, h.id, 'confirmed');
+  return hypothesisDetail(rt, merchantId, h.id);
+}
+
+/**
+ * Endpoint 27: sets dismissed, withdraws its still-proposed actions (status failed, result { withdrawn:
+ * 'hypothesis_dismissed', reason }) and proposes release_orders { orderIds, inspectionRuleIds, reason } for the orders
+ * it holds and for switching off the inspection rule it created.
+ */
+export async function dismissHypothesis(
+  rt: IntelRuntime,
+  merchantId: string,
+  hypothesisId: string,
+  reason: string,
+): Promise<HypothesisDetail> {
+  const h = await ownedHypothesis(rt, merchantId, hypothesisId);
+  if (h.status !== 'open' && h.status !== 'confirmed')
+    throw new AppError('HYPOTHESIS_NOT_OPEN', `This shared cause is ${h.status}`, 409);
+  const now = rt.clock.now();
+  await rt.db.transaction(async (tx) => {
+    const [dismissed] = await tx
+      .update(hypotheses)
+      .set({ status: 'dismissed' })
+      .where(and(eq(hypotheses.id, h.id), inArray(hypotheses.status, ['open', 'confirmed'])))
+      .returning({ id: hypotheses.id });
+    if (!dismissed) throw notOpen();
+    await withdrawAndProposeRelease(tx, h.id, 'hypothesis_dismissed', reason, now);
+  });
+  return hypothesisDetail(rt, merchantId, h.id);
+}

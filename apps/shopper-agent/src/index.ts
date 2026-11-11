@@ -17,14 +17,6 @@ const Request = z
     maxPrice: z.string().regex(/^\d{1,8}(?:\.\d{1,2})?$/),
   })
   .strict();
-type AiBoundary = {
-  generateStructured?: (input: {
-    schema: typeof Request;
-    system: string;
-    user: string;
-  }) => Promise<unknown>;
-};
-const generate = (ai as AiBoundary).generateStructured;
 const policy = JSON.parse(
   await readFile(new URL('../policy.json', import.meta.url), 'utf8'),
 ) as Record<string, unknown>;
@@ -45,7 +37,9 @@ if (process.argv.includes('--check')) {
   console.log(
     JSON.stringify({
       mode: 'READ_ONLY_READINESS',
-      modelBoundary: typeof generate === 'function' ? 'CONNECTED' : 'ISHAAN_AI_LAYER_REQUIRED',
+      modelBoundary: ai.hasModelConfig('text')
+        ? 'CONFIGURED_NOT_VERIFIED'
+        : 'MODEL_CONFIG_REQUIRED',
       database: !!process.env.DATABASE_URL,
       mcpEndpoint: !!process.env.APP_BASE_URL,
       agentToken: !!process.env.SHOPPER_AGENT_TOKEN,
@@ -58,10 +52,10 @@ if (process.argv.includes('--check')) {
   const terminal = createInterface({ input: stdin, output: stdout });
   let database: ReturnType<typeof createDatabase> | undefined;
   try {
-    if (!generate)
+    if (!ai.hasModelConfig('text'))
       throw new AppError(
-        'AI_LAYER_NOT_CONNECTED',
-        'Ishaan must connect packages/ai.generateStructured before a model-backed shopper run',
+        'AI_MODEL_CONFIG_REQUIRED',
+        'Configure the text model through packages/ai before running the shopper',
         503,
       );
     if (
@@ -81,12 +75,22 @@ if (process.argv.includes('--check')) {
         .filter((arg) => arg !== '--')
         .join(' ') || 'navy hoodie under $45';
     const request = Request.parse(
-      await generate({
-        schema: Request,
-        system:
-          'Extract only the requested catalogue search and maximum USD price. Do not authorize payment or invent a budget. The code enforces store policy and human approval.',
-        user: prompt,
-      }),
+      (
+        await ai.generateStructured({
+          schema: Request,
+          system:
+            'Extract only the requested catalogue search and maximum USD price. Do not authorize payment or invent a budget. The code enforces store policy and human approval.',
+          user: prompt,
+          component: 'shopper_request',
+          fallback: () => {
+            throw new AppError(
+              'SHOPPER_REQUEST_REVIEW_REQUIRED',
+              'Could not extract the shopping request',
+              409,
+            );
+          },
+        })
+      ).value,
     );
     database = createDatabase(process.env.DATABASE_URL);
     const mcp = await connectMcpShopperTools(

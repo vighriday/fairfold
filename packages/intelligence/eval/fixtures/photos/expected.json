@@ -1,0 +1,488 @@
+{
+  "_note": "Ground truth for the packing-photo eval (I2). Each set lives in photos/<id>/ as the four files in 'files', taken in-app style as JPEG. See README.md for the shot list. A 'caught' wrong set is one whose attestation is not 'match' OR whose batchLabelText differs from enteredBatchCode. When synthetic is true the photos were drawn by eval/synthetic-photos.ts (pnpm photos:synthetic), not taken with a camera; replace them with real photos and set synthetic to false before publishing eval numbers.",
+  "garments": {
+    "G1": {
+      "sku": "HD-IND-01",
+      "name": "Block-print cotton hoodie",
+      "colour": "navy",
+      "size": "M"
+    },
+    "G2": {
+      "sku": "TS-IND-02",
+      "name": "Hand-block T-shirt",
+      "colour": "ochre",
+      "size": "L"
+    },
+    "G3": {
+      "sku": "HD-IND-03",
+      "name": "Block-print cotton hoodie",
+      "colour": "indigo",
+      "size": "S"
+    },
+    "G4": {
+      "sku": "TS-IND-04",
+      "name": "Hand-block T-shirt",
+      "colour": "white",
+      "size": "XL"
+    }
+  },
+  "files": ["item.jpg", "size_label.jpg", "batch_label.jpg", "sealed_parcel.jpg"],
+  "labels": ["item", "size_label", "batch_label", "sealed_parcel"],
+  "sets": [
+    {
+      "id": "set-01",
+      "deliberatelyWrong": null,
+      "order": [
+        {
+          "garment": "G1",
+          "colour": "navy",
+          "size": "M",
+          "quantity": 1
+        }
+      ],
+      "shows": "G1 (navy, size M), batch tag B14",
+      "enteredBatchCode": "B14",
+      "trackingNumber": "FF100000001",
+      "expectedStatus": "match",
+      "expectedBatchLabel": "B14",
+      "shown": {
+        "garment": "G1",
+        "batchTag": "B14",
+        "defect": null
+      }
+    },
+    {
+      "id": "set-02",
+      "deliberatelyWrong": null,
+      "order": [
+        {
+          "garment": "G2",
+          "colour": "ochre",
+          "size": "L",
+          "quantity": 1
+        }
+      ],
+      "shows": "G2 (ochre, size L), batch tag B15",
+      "enteredBatchCode": "B15",
+      "trackingNumber": "FF100000002",
+      "expectedStatus": "match",
+      "expectedBatchLabel": "B15",
+      "shown": {
+        "garment": "G2",
+        "batchTag": "B15",
+        "defect": null
+      }
+    },
+    {
+      "id": "set-03",
+      "deliberatelyWrong": null,
+      "order": [
+        {
+          "garment": "G3",
+          "colour": "indigo",
+          "size": "S",
+          "quantity": 1
+        }
+      ],
+      "shows": "G3 (indigo, size S), batch tag B16",
+      "enteredBatchCode": "B16",
+      "trackingNumber": "FF100000003",
+      "expectedStatus": "match",
+      "expectedBatchLabel": "B16",
+      "shown": {
+        "garment": "G3",
+        "batchTag": "B16",
+        "defect": null
+      }
+    },
+    {
+      "id": "set-04",
+      "deliberatelyWrong": null,
+      "order": [
+        {
+          "garment": "G4",
+          "colour": "white",
+          "size": "XL",
+          "quantity": 1
+        }
+      ],
+      "shows": "G4 (white, size XL), batch tag B17",
+      "enteredBatchCode": "B17",
+      "trackingNumber": "FF100000004",
+      "expectedStatus": "match",
+      "expectedBatchLabel": "B17",
+      "shown": {
+        "garment": "G4",
+        "batchTag": "B17",
+        "defect": null
+      }
+    },
+    {
+      "id": "set-05",
+      "deliberatelyWrong": null,
+      "order": [
+        {
+          "garment": "G1",
+          "colour": "navy",
+          "size": "M",
+          "quantity": 1
+        }
+      ],
+      "shows": "G1 (navy, size M), batch tag B14",
+      "enteredBatchCode": "B14",
+      "trackingNumber": "FF100000005",
+      "expectedStatus": "match",
+      "expectedBatchLabel": "B14",
+      "shown": {
+        "garment": "G1",
+        "batchTag": "B14",
+        "defect": null
+      }
+    },
+    {
+      "id": "set-06",
+      "deliberatelyWrong": null,
+      "order": [
+        {
+          "garment": "G2",
+          "colour": "ochre",
+          "size": "L",
+          "quantity": 1
+        }
+      ],
+      "shows": "G2 (ochre, size L), batch tag B15",
+      "enteredBatchCode": "B15",
+      "trackingNumber": "FF100000006",
+      "expectedStatus": "match",
+      "expectedBatchLabel": "B15",
+      "shown": {
+        "garment": "G2",
+        "batchTag": "B15",
+        "defect": null
+      }
+    },
+    {
+      "id": "set-07",
+      "deliberatelyWrong": null,
+      "order": [
+        {
+          "garment": "G3",
+          "colour": "indigo",
+          "size": "S",
+          "quantity": 1
+        }
+      ],
+      "shows": "G3 (indigo, size S), batch tag B16",
+      "enteredBatchCode": "B16",
+      "trackingNumber": "FF100000007",
+      "expectedStatus": "match",
+      "expectedBatchLabel": "B16",
+      "shown": {
+        "garment": "G3",
+        "batchTag": "B16",
+        "defect": null
+      }
+    },
+    {
+      "id": "set-08",
+      "deliberatelyWrong": null,
+      "order": [
+        {
+          "garment": "G4",
+          "colour": "white",
+          "size": "XL",
+          "quantity": 1
+        }
+      ],
+      "shows": "G4 (white, size XL), batch tag B17",
+      "enteredBatchCode": "B17",
+      "trackingNumber": "FF100000008",
+      "expectedStatus": "match",
+      "expectedBatchLabel": "B17",
+      "shown": {
+        "garment": "G4",
+        "batchTag": "B17",
+        "defect": null
+      }
+    },
+    {
+      "id": "set-09",
+      "deliberatelyWrong": null,
+      "order": [
+        {
+          "garment": "G1",
+          "colour": "navy",
+          "size": "M",
+          "quantity": 1
+        }
+      ],
+      "shows": "G1 (navy, size M), batch tag B14",
+      "enteredBatchCode": "B14",
+      "trackingNumber": "FF100000009",
+      "expectedStatus": "match",
+      "expectedBatchLabel": "B14",
+      "shown": {
+        "garment": "G1",
+        "batchTag": "B14",
+        "defect": null
+      }
+    },
+    {
+      "id": "set-10",
+      "deliberatelyWrong": null,
+      "order": [
+        {
+          "garment": "G2",
+          "colour": "ochre",
+          "size": "L",
+          "quantity": 1
+        }
+      ],
+      "shows": "G2 (ochre, size L), batch tag B15",
+      "enteredBatchCode": "B15",
+      "trackingNumber": "FF100000010",
+      "expectedStatus": "match",
+      "expectedBatchLabel": "B15",
+      "shown": {
+        "garment": "G2",
+        "batchTag": "B15",
+        "defect": null
+      }
+    },
+    {
+      "id": "set-11",
+      "deliberatelyWrong": null,
+      "order": [
+        {
+          "garment": "G3",
+          "colour": "indigo",
+          "size": "S",
+          "quantity": 1
+        }
+      ],
+      "shows": "G3 (indigo, size S), batch tag B16",
+      "enteredBatchCode": "B16",
+      "trackingNumber": "FF100000011",
+      "expectedStatus": "match",
+      "expectedBatchLabel": "B16",
+      "shown": {
+        "garment": "G3",
+        "batchTag": "B16",
+        "defect": null
+      }
+    },
+    {
+      "id": "set-12",
+      "deliberatelyWrong": null,
+      "order": [
+        {
+          "garment": "G4",
+          "colour": "white",
+          "size": "XL",
+          "quantity": 1
+        }
+      ],
+      "shows": "G4 (white, size XL), batch tag B17",
+      "enteredBatchCode": "B17",
+      "trackingNumber": "FF100000012",
+      "expectedStatus": "match",
+      "expectedBatchLabel": "B17",
+      "shown": {
+        "garment": "G4",
+        "batchTag": "B17",
+        "defect": null
+      }
+    },
+    {
+      "id": "set-13",
+      "deliberatelyWrong": null,
+      "order": [
+        {
+          "garment": "G1",
+          "colour": "navy",
+          "size": "M",
+          "quantity": 1
+        }
+      ],
+      "shows": "G1 (navy, size M), batch tag B14",
+      "enteredBatchCode": "B14",
+      "trackingNumber": "FF100000013",
+      "expectedStatus": "match",
+      "expectedBatchLabel": "B14",
+      "shown": {
+        "garment": "G1",
+        "batchTag": "B14",
+        "defect": null
+      }
+    },
+    {
+      "id": "set-14",
+      "deliberatelyWrong": null,
+      "order": [
+        {
+          "garment": "G2",
+          "colour": "ochre",
+          "size": "L",
+          "quantity": 1
+        }
+      ],
+      "shows": "G2 (ochre, size L), batch tag B15",
+      "enteredBatchCode": "B15",
+      "trackingNumber": "FF100000014",
+      "expectedStatus": "match",
+      "expectedBatchLabel": "B15",
+      "shown": {
+        "garment": "G2",
+        "batchTag": "B15",
+        "defect": null
+      }
+    },
+    {
+      "id": "set-15",
+      "deliberatelyWrong": null,
+      "order": [
+        {
+          "garment": "G3",
+          "colour": "indigo",
+          "size": "S",
+          "quantity": 1
+        }
+      ],
+      "shows": "G3 (indigo, size S), batch tag B16",
+      "enteredBatchCode": "B16",
+      "trackingNumber": "FF100000015",
+      "expectedStatus": "match",
+      "expectedBatchLabel": "B16",
+      "shown": {
+        "garment": "G3",
+        "batchTag": "B16",
+        "defect": null
+      }
+    },
+    {
+      "id": "set-16",
+      "deliberatelyWrong": "wrong_colour",
+      "order": [
+        {
+          "garment": "G2",
+          "colour": "ochre",
+          "size": "L",
+          "quantity": 1
+        }
+      ],
+      "shows": "G4 (white T-shirt) instead of the ochre one ordered",
+      "enteredBatchCode": "B16",
+      "trackingNumber": "FF100000016",
+      "expectedStatus": "mismatch",
+      "expectedBatchLabel": "B16",
+      "shown": {
+        "garment": "G4",
+        "batchTag": "B16",
+        "defect": null
+      }
+    },
+    {
+      "id": "set-17",
+      "deliberatelyWrong": "wrong_size",
+      "order": [
+        {
+          "garment": "G1",
+          "colour": "navy",
+          "size": "L",
+          "quantity": 1
+        }
+      ],
+      "shows": "G1 navy hoodie whose label says M (order says L)",
+      "enteredBatchCode": "B17",
+      "trackingNumber": "FF100000017",
+      "expectedStatus": "mismatch",
+      "expectedBatchLabel": "B17",
+      "shown": {
+        "garment": "G1",
+        "batchTag": "B17",
+        "defect": null
+      }
+    },
+    {
+      "id": "set-18",
+      "deliberatelyWrong": "missing_item",
+      "order": [
+        {
+          "garment": "G1",
+          "colour": "navy",
+          "size": "M",
+          "quantity": 1
+        },
+        {
+          "garment": "G2",
+          "colour": "ochre",
+          "size": "L",
+          "quantity": 1
+        }
+      ],
+      "shows": "only G1; the ordered G2 T-shirt is missing",
+      "enteredBatchCode": "B15",
+      "trackingNumber": "FF100000018",
+      "expectedStatus": "mismatch",
+      "expectedBatchLabel": "B15",
+      "shown": {
+        "garment": "G1",
+        "batchTag": "B15",
+        "defect": null
+      }
+    },
+    {
+      "id": "set-19",
+      "deliberatelyWrong": "wrong_batch_tag",
+      "order": [
+        {
+          "garment": "G2",
+          "colour": "ochre",
+          "size": "L",
+          "quantity": 1
+        }
+      ],
+      "shows": "G2 correctly, but the tag reads B18 while the packer enters B17",
+      "enteredBatchCode": "B17",
+      "trackingNumber": "FF100000019",
+      "expectedStatus": "match",
+      "expectedBatchLabel": "B18",
+      "shown": {
+        "garment": "G2",
+        "batchTag": "B18",
+        "defect": null
+      }
+    },
+    {
+      "id": "set-20",
+      "deliberatelyWrong": "visible_defect",
+      "order": [
+        {
+          "garment": "G1",
+          "colour": "navy",
+          "size": "M",
+          "quantity": 1
+        }
+      ],
+      "shows": "G1 with a visible hole or open seam on the front",
+      "enteredBatchCode": "B14",
+      "trackingNumber": "FF100000020",
+      "expectedStatus": "mismatch",
+      "expectedBatchLabel": "B14",
+      "shown": {
+        "garment": "G1",
+        "batchTag": "B14",
+        "defect": "hole_front"
+      }
+    }
+  ],
+  "inspection": {
+    "id": "inspection-open-stitch",
+    "file": "inspection/seam_closeup.jpg",
+    "label": "seam_closeup",
+    "instruction": "Photograph the left sleeve seam close up and check for open or broken stitching.",
+    "clusterLabel": "sleeve seam opening",
+    "expectedDefectVisible": true
+  },
+  "synthetic": true
+}

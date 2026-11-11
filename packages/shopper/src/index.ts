@@ -79,6 +79,8 @@ export function createMcpShopperTools(options: {
     if (!isRecord(result) || !Array.isArray(result.content)) {
       throw new McpToolError('MCP response was malformed', response.status, 'MCP_RESPONSE_INVALID');
     }
+    if (result.isError === true)
+      throw new McpToolError('MCP tool failed', response.status, 'MCP_TOOL_FAILED');
     const text = result.content.find(
       (entry): entry is { type: 'text'; text: string } =>
         isRecord(entry) && entry.type === 'text' && typeof entry.text === 'string',

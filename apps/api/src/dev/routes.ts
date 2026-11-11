@@ -20,6 +20,7 @@ export function createDevRoutes(
   options: {
     database?: Database;
     clock?: Clock;
+    seed?: () => Promise<unknown>;
     adjudicate?: ReturnType<
       typeof import('../disputes/demo-adjudicate.js').createDemoDisputeAdjudication
     >;
@@ -28,6 +29,24 @@ export function createDevRoutes(
   return async (app) => {
     if (!enabled) return;
     const typed = app.withTypeProvider<ZodTypeProvider>();
+    if (options.seed) {
+      typed.post(
+        '/api/dev/seed',
+        {
+          preHandler: requireAuth('admin'),
+          schema: {
+            tags: ['Demo'],
+            security: [{ bearerAuth: [] }],
+            body: z
+              .object({ seedName: z.literal('fairfold').optional() })
+              .strict()
+              .optional(),
+            response: { 200: z.unknown(), 401: ErrorEnvelopeSchema, 403: ErrorEnvelopeSchema },
+          },
+        },
+        async () => options.seed!(),
+      );
+    }
     const headers = {
       'cache-control': 'no-store',
       'x-content-type-options': 'nosniff',
@@ -94,8 +113,15 @@ export function createDevRoutes(
           if (!row) throw new AppError('SHIPMENT_NOT_FOUND', 'Shipment was not found', 404);
           if (row.shipment.status === 'delivered' && delivered)
             return { shipmentId, status: 'delivered', synthetic: true as const };
-          if (row.shipment.status === 'delivered' || !['shipped', 'sealed'].includes(row.order.status))
-            throw new AppError('SHIPMENT_STATE_CONFLICT', 'Demo shipment cannot advance from this state', 409);
+          if (
+            row.shipment.status === 'delivered' ||
+            !['shipped', 'sealed'].includes(row.order.status)
+          )
+            throw new AppError(
+              'SHIPMENT_STATE_CONFLICT',
+              'Demo shipment cannot advance from this state',
+              409,
+            );
           const status = delivered ? 'delivered' : 'in_transit';
           await tx
             .update(shipments)

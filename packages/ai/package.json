@@ -4,10 +4,15 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./handlers": "./src/handlers.ts"
+    ".": "./src/index.ts"
   },
   "dependencies": {
-    "@fairfold/contracts": "workspace:*"
+    "@ai-sdk/anthropic": "4.0.99",
+    "@ai-sdk/google": "4.0.114",
+    "@ai-sdk/openai": "4.0.111",
+    "@ai-sdk/provider": "4.0.37",
+    "@ai-sdk/xai": "5.0.40",
+    "ai": "7.0.165",
+    "zod": "4.6.7"
   }
 }

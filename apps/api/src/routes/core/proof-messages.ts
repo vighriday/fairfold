@@ -101,7 +101,9 @@ export function createProofMessageRoutes(database: Database): FastifyPluginAsync
               and(
                 owner,
                 visibleStatus,
-              anchor ? sql`(${messages.created_at}, ${messages.id}) > (select created_at, id from messages where id = ${anchor.id})` : undefined,
+                anchor
+                  ? sql`(${messages.created_at}, ${messages.id}) > (select created_at, id from messages where id = ${anchor.id})`
+                  : undefined,
               ),
             )
             .orderBy(messages.created_at, messages.id)

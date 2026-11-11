@@ -5,9 +5,29 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./handlers": "./src/handlers.ts"
+    "./handlers": "./src/handlers.ts",
+    "./runtime": "./src/runtime.ts"
+  },
+  "scripts": {
+    "eval": "tsx --env-file-if-exists=../../.env eval/run.ts",
+    "cost": "tsx eval/cost.ts",
+    "photos:synthetic": "tsx eval/synthetic-photos.ts",
+    "test:db": "tsx scripts/test-db.ts"
   },
   "dependencies": {
-    "@fairfold/contracts": "workspace:*"
+    "@fairfold/ai": "workspace:*",
+    "@fairfold/contracts": "workspace:*",
+    "@fairfold/db": "workspace:*",
+    "@fairfold/jobs": "workspace:*",
+    "@fairfold/ledger": "workspace:*",
+    "drizzle-orm": "0.45.4",
+    "pdf-lib": "1.17.1",
+    "pg-boss": "12.38.1",
+    "sharp": "0.35.5",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@ai-sdk/provider": "4.0.37",
+    "ai": "7.0.165"
   }
 }
