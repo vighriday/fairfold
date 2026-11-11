@@ -486,3 +486,10 @@ Hriday explicitly replied “Approve the H4 policy and mapping” on 10 November
 - Changed for his review (M11): `createMcpService(database, intelligence)` takes the intelligence runtime `createRuntime` binds (I-D37). `search_catalog` calls `searchCatalogWith` (every word against name, SKU, colour and description, I-D31; each store's band; first page of 50) and refuses a non-numeric `maxPrice` with 400; `get_store_report` calls `storeReportFor` (the stored report, else one built now) and refuses a non-uuid id with 400; an unknown store stays 404. The other two tools are unchanged.
 - Two PostgreSQL tests in Hriday's `apps/api/test/mcp.integration.test.ts`; his existing MCP and shopper-policy tests pass unchanged.
 - Contract change: none (the tools' inputs and outputs are as before).
+
+### I-D42 — No proactive_refund proposal — 2026-11-11
+
+- Section 9 stage 5 lists an "optional proactive_refund" for delivered orders without a complaint; F5 step 2, which names the scan's proposals, does not include it. Hriday's executor can carry out an approved `proactive_refund` `{ orderIds, amounts }` through PayPal.
+- Decision (Ishaan, 2026-11-11): the intelligence package does not propose it. Seeded orders carry no PayPal capture, so the executor would refuse them (`ACTION_ORDER_INVALID`) in the demo; the confirmed-level buyer message already offers a replacement or refund for the buyer to choose; and refunding before a buyer asks would move money on a statistical hypothesis.
+- Effect: the Store Report's `proactiveFixes90d` counts completed `proactive_refund` actions (none) plus confirmed hypotheses whose buyer messages were sent, as before.
+- Contract change: none.
