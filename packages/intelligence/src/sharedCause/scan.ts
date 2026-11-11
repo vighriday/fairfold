@@ -602,6 +602,8 @@ async function scanMerchant(rt: IntelRuntime, merchantId: string): Promise<Hypot
                 batchCode: loc.primary.value,
                 instruction: inspectionInstruction(loc.primary.value, fault),
                 requiredPhotoLabel: inspectionPhotoLabel(fault),
+                // Stored by the executor in inspection_rules.product_id (batch codes are per merchant, not product).
+                ...(cluster.product_id ? { productId: cluster.product_id } : {}),
               },
               now,
             );

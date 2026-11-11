@@ -39,6 +39,7 @@ const result = spawnSync(
     'sandbox-setup.integration.test.ts',
     'sandbox-verify.integration.test.ts',
     'mcp.integration.test.ts',
+    'action-execution.integration.test.ts',
   ],
   { stdio: 'inherit', env: { ...process.env, FAIRFOLD_RUN_DB_TESTS: 'true' } },
 );
