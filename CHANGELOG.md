@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-11 — Integration authority and ancestry
+
+- Verified Ishaan already merged Hriday baseline 762c497 in 3f8c436. Preserve that existing integration and the newer focused audit repair commits.
+- Recorded Hriday approval for source-preserving surgical integration fixes and the bounded H4 buyer-note retention extension; no actual PayPal action authorized.
+
 ## 2026-11-11 — H7 audit: official SDK transport and shopper executable
 
 - Replaced handwritten MCP handling with the official stateless Streamable HTTP SDK, and connected the AI SDK MCP client. Merchant evidence submission still requires an existing approved pack.
