@@ -39,11 +39,23 @@ function asJsonObject(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
+/**
+ * Section 8 F2: a photo labelled with the rule's required_photo_label has an attestation with
+ * inspection.defectVisible = false. The Evidence Agent attests packing uploads with step 'pack' (all of the
+ * order's photos so far, with the rule's inspection result inside); step 'inspection' is for batch
+ * inspections, which have no order.
+ */
 function hasPassingInspection(
   latest: typeof attestations.$inferSelect | undefined,
   rule: typeof inspection_rules.$inferSelect | undefined,
 ): boolean {
-  if (!latest || !rule || latest.step !== 'inspection' || latest.status !== 'match') return false;
+  if (
+    !latest ||
+    !rule ||
+    !['pack', 'inspection'].includes(latest.step) ||
+    latest.status !== 'match'
+  )
+    return false;
   const result = asJsonObject(latest.result);
   const inspection = result.inspection;
   if (!inspection || typeof inspection !== 'object' || Array.isArray(inspection)) return false;
@@ -94,7 +106,7 @@ export function createPackingService(options: {
       const [latest] = await options.database.db
         .select()
         .from(attestations)
-        .where(eq(attestations.order_id, orderId))
+        .where(and(eq(attestations.order_id, orderId), eq(attestations.step, 'pack')))
         .orderBy(desc(attestations.created_at))
         .limit(1);
       const productIds = items.map((item) => item.productId);
@@ -258,7 +270,7 @@ export function createPackingService(options: {
       const [latest] = await options.database.db
         .select()
         .from(attestations)
-        .where(eq(attestations.order_id, orderId))
+        .where(and(eq(attestations.order_id, orderId), eq(attestations.step, 'pack')))
         .orderBy(desc(attestations.created_at))
         .limit(1);
       if (!latest || latest.status === 'match')
@@ -345,7 +357,7 @@ export function createPackingService(options: {
         const [latest] = await tx
           .select()
           .from(attestations)
-          .where(eq(attestations.order_id, orderId))
+          .where(and(eq(attestations.order_id, orderId), eq(attestations.step, 'pack')))
           .orderBy(desc(attestations.created_at))
           .limit(1);
         const rules = await tx
@@ -416,7 +428,8 @@ export function createPackingService(options: {
         .db,
     ) {
       const blockers: string[] = [];
-      if (order.hold_reason) blockers.push('ORDER_HELD');
+      // Section 8 F2: ORDER_HELD while held and no passing inspection photo yet.
+      if (order.hold_reason && !hasPassingInspection(latest, rule)) blockers.push('ORDER_HELD');
       if (rule && !hasPassingInspection(latest, rule)) blockers.push('INSPECTION_REQUIRED');
       if (includeAttestation && latest && latest.status !== 'match')
         blockers.push('ATTESTATION_MISMATCH');

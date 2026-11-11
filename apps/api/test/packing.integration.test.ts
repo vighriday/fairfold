@@ -220,6 +220,124 @@ describe.skipIf(!integrationUrl)('H5 Pack Station persistence', () => {
     ).toHaveLength(1);
   });
 
+  /** A packing attestation as the Evidence Agent writes it (step pack, all photos so far, rule-mode inspection). */
+  async function packAttestation(
+    orderId: string,
+    over: {
+      labels: string[];
+      defectVisible: boolean | null;
+      status?: string;
+      step?: string;
+      at?: Date;
+    },
+  ) {
+    await database.db.insert(attestations).values({
+      order_id: orderId,
+      step: over.step ?? 'pack',
+      photo_shas: over.labels.map((_, i) => String(i).repeat(64)),
+      photo_labels: over.labels,
+      model: 'synthetic-i2',
+      result: {
+        inspection:
+          over.defectVisible === null
+            ? null
+            : {
+                instruction: 'Inspect the seam',
+                defectVisible: over.defectVisible,
+                matchesCluster: over.defectVisible,
+              },
+      },
+      status: over.status ?? 'match',
+      confidence: 0.9,
+      created_at: over.at ?? clock.now(),
+    });
+  }
+  const seal = (merchantId: string, f: Awaited<ReturnType<typeof fixture>>, tracking: string) =>
+    createPackingService({ database, jobs, clock }).seal(
+      { role: 'merchant', subjectId: merchantId },
+      f.order.id,
+      {
+        batchCodes: { [f.item.id]: f.batch.batch_code },
+        carrier: 'UPS',
+        trackingNumber: tracking,
+        packer: 'station-1',
+      },
+    );
+
+  it("a packing attestation showing the rule's close-up without the defect satisfies the inspection rule", async () => {
+    const f = await fixture();
+    const service = createPackingService({ database, jobs, clock });
+    const auth = { role: 'merchant' as const, subjectId: f.merchant.id };
+    await packAttestation(f.order.id, { labels: ['item'], defectVisible: null });
+    expect((await service.get(auth, f.order.id)).blockers).toEqual(['INSPECTION_REQUIRED']);
+    await packAttestation(f.order.id, {
+      labels: ['item', 'seam_closeup'],
+      defectVisible: true,
+      status: 'mismatch',
+      at: new Date(clock.now().getTime() + 1_000),
+    });
+    expect((await service.get(auth, f.order.id)).blockers).toEqual(['INSPECTION_REQUIRED']);
+    await packAttestation(f.order.id, {
+      labels: ['item', 'seam_closeup'],
+      defectVisible: false,
+      at: new Date(clock.now().getTime() + 2_000),
+    });
+    const state = await service.get(auth, f.order.id);
+    expect(state.blockers).toEqual([]);
+    expect(state.canSeal).toBe(true);
+    await expect(seal(f.merchant.id, f, '1Z-I2-' + f.order.id.slice(0, 8))).resolves.toMatchObject({
+      status: 'sealed',
+    });
+  });
+
+  it('a held order stays ORDER_HELD until a passing inspection photo, then it can be sealed', async () => {
+    const f = await fixture();
+    await database.db
+      .update(orders)
+      .set({ hold_reason: 'Synthetic H5 hypothesis', held_by_hypothesis_id: f.hypothesis.id })
+      .where(eq(orders.id, f.order.id));
+    const service = createPackingService({ database, jobs, clock });
+    const auth = { role: 'merchant' as const, subjectId: f.merchant.id };
+    await packAttestation(f.order.id, { labels: ['item'], defectVisible: null });
+    expect((await service.get(auth, f.order.id)).blockers).toEqual([
+      'ORDER_HELD',
+      'INSPECTION_REQUIRED',
+    ]);
+    await expect(seal(f.merchant.id, f, '1Z-HELD-' + f.order.id.slice(0, 8))).rejects.toMatchObject(
+      {
+        statusCode: 409,
+      },
+    );
+    await packAttestation(f.order.id, {
+      labels: ['item', 'seam_closeup'],
+      defectVisible: false,
+      at: new Date(clock.now().getTime() + 1_000),
+    });
+    expect((await service.get(auth, f.order.id)).blockers).toEqual([]);
+    await expect(
+      seal(f.merchant.id, f, '1Z-HELD-' + f.order.id.slice(0, 8)),
+    ).resolves.toMatchObject({
+      status: 'sealed',
+    });
+  });
+
+  it("a buyer's photo check after packing does not replace the packing attestation", async () => {
+    const f = await fixture();
+    const service = createPackingService({ database, jobs, clock });
+    const auth = { role: 'merchant' as const, subjectId: f.merchant.id };
+    await packAttestation(f.order.id, { labels: ['item', 'seam_closeup'], defectVisible: false });
+    await packAttestation(f.order.id, {
+      labels: ['buyer_photo'],
+      defectVisible: null,
+      status: 'mismatch',
+      step: 'buyer_photo',
+      at: new Date(clock.now().getTime() + 1_000),
+    });
+    const state = await service.get(auth, f.order.id);
+    expect(state.attestation?.status).toBe('match');
+    expect(state.blockers).toEqual([]);
+  });
+
   it('stores shared-cause inspection photos and queues Ishaan attestation', async () => {
     const f = await fixture();
     const service = createInspectionService({ database, jobs });

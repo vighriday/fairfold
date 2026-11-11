@@ -461,3 +461,12 @@ Hriday explicitly replied “Approve the H4 policy and mapping” on 10 November
 - The updated Blueprint and Hriday's original both validate against Render's official JSON Schema (draft 2020-12; schema SHA-256 `8a3fb8da6b4f55fe686fbefa790e011d3dd7895f013f355953c572a21ab6494a`, the digest Hriday recorded).
 - Review item for Hriday: his deployment guide and the conditional handoff say to supply only `APP_ENCRYPTION_KEY` at creation; with this change the dashboard also asks for the Gemini key (a free Google AI Studio key). Without a key every model step uses its fallback and the rest of the app still works.
 - Contract change: none.
+
+### I-D39 — The Pack Station reads the packing attestation and applies section 8's inspection and hold rule — 2026-11-11
+
+- Found while merging (M9), in Hriday's `apps/api/src/packing/service.ts`, changed for his review. Section 8 F2: the seal is refused with `INSPECTION_REQUIRED` when "an active rule covers one of the batch codes and no photo labelled with the rule's required_photo_label has an attestation with inspection.defectVisible = false", and with `ORDER_HELD` when the order is "held, and no passing inspection photo yet".
+- The check accepted only an attestation with step `inspection`. The Evidence Agent attests a packing upload with step `pack` (all of the order's photos so far, with the rule's inspection result inside, I-D21); step `inspection` is for batch inspections, which have no order. So no order under an inspection rule could ever pass, and B17 orders could never be sealed (A11). The check now accepts step `pack` (and `inspection`) with status `match`, the rule's photo label and `defectVisible === false`.
+- `ORDER_HELD` was raised for every held order; it is now raised only while the order has no passing inspection photo, as section 8 says, so a held B17 order whose seam close-up shows no defect can be sealed.
+- The pack state, the override and the seal read the order's latest attestation of any step; a buyer's photo check (step `buyer_photo`, I-D19) written after packing could become the "latest" and block or mislabel the seal. All three now read the latest step `pack` attestation.
+- Three PostgreSQL tests in Hriday's `apps/api/test/packing.integration.test.ts` insert attestations in the Evidence Agent's shape: the rule passes only on the close-up without the defect and the order then seals; a held order is `ORDER_HELD` until a passing photo and then seals; a later buyer-photo check leaves the packing attestation in charge.
+- Contract change: none (section 8 behaviour).
