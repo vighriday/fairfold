@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-11 — H5 audit: approved actions and tracking
+
+- Validate and freeze approved action payloads, claim external operations durably, reserve refund amounts and reject ambiguous replay. Buyer messages require a fresh seller-response guard; tracking does not invent a carrier scan.
+- Added real PostgreSQL regressions for concurrent holds, approval edits, inspections, refunds, messages, tracking and private proof.
+- Validation: typecheck PASS and 56 focused action/tracking/workflow checks PASS; actual PayPal actions remain NOT RUN.
+
 ## 2026-11-11 — H5 audit: packing transactions and read surfaces
 
 - Bound packing/inspection jobs to the same checked-out PostgreSQL transaction as their writes. Sealing checks current pack evidence, actual product stock and all fixed blockers; clean inspection can clear a held batch under the source rules.

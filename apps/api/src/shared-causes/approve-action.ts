@@ -3,6 +3,7 @@ import { AppError, UuidSchema, systemClock, type Clock } from '@fairfold/contrac
 import { actions, hypotheses, schema, type createDatabase } from '@fairfold/db';
 import { type Jobs } from '@fairfold/jobs';
 import type { AuthContext } from '../auth.js';
+import { validateActionPayload } from '@fairfold/paypal';
 
 function merchant(auth: AuthContext | null): AuthContext & { role: 'merchant' } {
   if (!auth) throw new AppError('UNAUTHENTICATED', 'A valid bearer token is required', 401);
@@ -52,13 +53,20 @@ export function createSharedCauseActionApproval(options: {
               'Only proposed actions may be approved',
               409,
             );
-          const payload =
+          const edited =
             edits && typeof edits === 'object' && !Array.isArray(edits)
               ? {
                   ...(row.action.payload as Record<string, unknown>),
                   ...(edits as Record<string, unknown>),
                 }
               : row.action.payload;
+          const payload = validateActionPayload(row.action.type, edited);
+          if (row.hypothesis.safety_flag && row.action.type === 'send_buyer_messages')
+            throw new AppError(
+              'SAFETY_REVIEW_REQUIRED',
+              'Safety complaints require manual review before messaging',
+              409,
+            );
           const approvedAt = clock.now();
           await tx
             .update(actions)

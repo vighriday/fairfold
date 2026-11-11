@@ -37,6 +37,7 @@ const result = spawnSync(
     'checkout-service.integration.test.ts',
     'core-routes.integration.test.ts',
     'packing.integration.test.ts',
+    'platform-workflows.integration.test.ts',
     'sandbox-setup.integration.test.ts',
     'sandbox-verify.integration.test.ts',
     'mcp.integration.test.ts',

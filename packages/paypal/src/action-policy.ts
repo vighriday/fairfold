@@ -1,0 +1,57 @@
+import { z } from 'zod';
+import { AppError, MoneySchema, UuidSchema } from '@fairfold/contracts';
+import { redactDisputeText } from './dispute-policy.js';
+
+const ids = z
+  .array(UuidSchema)
+  .min(1)
+  .max(500)
+  .refine((list) => new Set(list).size === list.length);
+const rules = {
+  hold_orders: z.object({ orderIds: ids }).strict(),
+  release_orders: z.object({ orderIds: ids }).strict(),
+  add_inspection_rule: z
+    .object({
+      batchCode: z.string().trim().min(1).max(255),
+      instruction: z.string().min(1).max(2000),
+      requiredPhotoLabel: z.string().trim().min(1).max(255),
+      productId: UuidSchema.optional(),
+    })
+    .strict(),
+  send_buyer_messages: z.object({ messageIds: ids }).strict(),
+  propose_offers: z
+    .object({
+      disputeIds: z
+        .array(z.string().regex(/^[A-Za-z0-9-]{1,255}$/))
+        .min(1)
+        .max(500)
+        .refine((list) => new Set(list).size === list.length),
+    })
+    .strict(),
+  proactive_refund: z
+    .object({ orderIds: ids, amounts: z.record(UuidSchema, MoneySchema) })
+    .strict(),
+} as const;
+
+export function validateActionPayload(type: string, value: unknown): Record<string, unknown> {
+  const rule = rules[type as keyof typeof rules];
+  if (!rule) throw new AppError('ACTION_INVALID', 'Action type is invalid', 409);
+  const parsed = rule.safeParse(value);
+  if (!parsed.success)
+    throw new AppError('ACTION_PAYLOAD_INVALID', 'Approved action payload is invalid', 409);
+  const result = parsed.data;
+  if ('instruction' in result) result.instruction = redactDisputeText(result.instruction);
+  if (type === 'proactive_refund') {
+    const refund = rules.proactive_refund.parse(result);
+    if (
+      Object.keys(refund.amounts).length !== refund.orderIds.length ||
+      refund.orderIds.some((id) => !refund.amounts[id])
+    )
+      throw new AppError(
+        'ACTION_PAYLOAD_INVALID',
+        'Each refund requires an explicit approved amount',
+        409,
+      );
+  }
+  return result;
+}

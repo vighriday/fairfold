@@ -30,6 +30,7 @@ export { createDisputeSynchronizer } from './dispute-sync.js';
 export { createEvidenceSubmitHandler } from './dispute-execution.js';
 export { createTrackingPushHandler } from './tracking-execution.js';
 export { createActionHandler } from './action-execution.js';
+export { validateActionPayload } from './action-policy.js';
 export { createProvideDisputeEvidenceTool } from './dispute-tool.js';
 export { provideDisputeEvidenceTool } from './agentTools.js';
 export { createWebhookOperations } from './webhooks.js';
