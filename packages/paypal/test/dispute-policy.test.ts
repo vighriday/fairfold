@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { AppError } from '@fairfold/contracts';
-import { newBuyerMessages, sanitizeDisputeDetail } from '../src/dispute-policy.js';
+import {
+  newBuyerMessages,
+  sanitizeDisputeDetail,
+  redactDisputeText,
+} from '../src/dispute-policy.js';
 
 const base = {
   dispute_id: 'PP-D-SYNTHETIC',
@@ -25,6 +29,25 @@ const base = {
 };
 
 describe('approved dispute retention boundary', () => {
+  it('handles known street whitespace, safe marked clauses and complete URL tokens', () => {
+    expect(
+      redactDisputeText(
+        'Ship to: 10  SYNTHETIC\nStreet. https://example.invalid/?buyer=maya@example.invalid',
+        { knownStreetLines: ['10 Synthetic Street'] },
+      ),
+    ).toBe('Ship to: [CONTACT_REDACTED]. [LINK_REDACTED]');
+    expect(() => redactDisputeText('Address: [CONTACT_REDACTED] apartment 12')).toThrowError(
+      expect.objectContaining({ code: 'DISPUTE_TEXT_REVIEW_REQUIRED' }),
+    );
+  });
+
+  it('emits an identical buyer tuple only once within a provider snapshot', () => {
+    const value = sanitizeDisputeDetail(
+      { ...base, messages: [base.messages[0], base.messages[0]] },
+      { knownStreetLines: ['10 Synthetic Street'] },
+    );
+    expect(newBuyerMessages(value)).toHaveLength(1);
+  });
   it('keeps only approved fields and redacts known and embedded contacts', () => {
     const value = sanitizeDisputeDetail(base, {
       knownEmails: ['maya@example.invalid'],
@@ -48,7 +71,13 @@ describe('approved dispute retention boundary', () => {
     expect(() =>
       sanitizeDisputeDetail({
         ...base,
-        messages: [{ posted_by: 'BUYER', time_posted: '2026-11-10T10:00:00Z', content: 'Ship to: 4 Main Road' }],
+        messages: [
+          {
+            posted_by: 'BUYER',
+            time_posted: '2026-11-10T10:00:00Z',
+            content: 'Ship to: 4 Main Road',
+          },
+        ],
       }),
     ).toThrowError(expect.objectContaining({ code: 'DISPUTE_TEXT_REVIEW_REQUIRED' }));
   });
@@ -69,7 +98,12 @@ describe('approved dispute retention boundary', () => {
   it('rejects unsafe shape, control characters, and retention budget overflow', () => {
     for (const value of [
       { ...base, reason: 'lowercase' },
-      { ...base, messages: [{ posted_by: 'BUYER', time_posted: '2026-11-10T10:00:00Z', content: 'bad\u0000' }] },
+      {
+        ...base,
+        messages: [
+          { posted_by: 'BUYER', time_posted: '2026-11-10T10:00:00Z', content: 'bad\u0000' },
+        ],
+      },
       { ...base, messages: Array.from({ length: 1001 }, () => base.messages[0]) },
     ])
       expect(() => sanitizeDisputeDetail(value)).toThrowError(AppError);

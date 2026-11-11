@@ -18,6 +18,7 @@ import { testDatabaseUrl } from '../../db/test/environment.js';
 import { createEvidenceSubmitHandler } from '../src/dispute-execution.js';
 import { createProvideDisputeEvidenceTool } from '../src/dispute-tool.js';
 import { PayPalError } from '../src/errors.js';
+import { provideDisputeEvidenceTool } from '../src/agentTools.js';
 
 const url = testDatabaseUrl();
 const clock = fixedClock('2026-11-10T02:03:04.005Z');
@@ -86,6 +87,8 @@ describe.skipIf(!url)('H4 approved dispute action execution', () => {
         narrative: 'Synthetic approved pack',
         confidence: 0.9,
         status: 'approved',
+        approved_by: merchantId,
+        approved_at: clock.now(),
       })
       .returning();
     const detail: Record<string, unknown> = {
@@ -149,7 +152,7 @@ describe.skipIf(!url)('H4 approved dispute action execution', () => {
       .from(evidence_packs)
       .where(eq(evidence_packs.id, f.pack.id));
     expect(pack?.status).toBe('submitted');
-    expect(pack?.paypal_response).toEqual({
+    expect(pack?.paypal_response).toMatchObject({
       operation: 'provide_evidence',
       disputeId: f.disputeId,
       outcome: 'submitted',
@@ -169,12 +172,16 @@ describe.skipIf(!url)('H4 approved dispute action execution', () => {
     f.detail.status = 'RESOLVED';
     await expect(f.handler({ packId: f.pack.id })).rejects.toMatchObject({ code: 'STAGE_CHANGED' });
     expect(f.provideEvidence).not.toHaveBeenCalled();
-    expect(f.publish).toHaveBeenCalledWith('evidence.rebuild', { disputeId: f.disputeId });
+    expect(f.publish).toHaveBeenCalledWith(
+      'evidence.rebuild',
+      { disputeId: f.disputeId },
+      expect.anything(),
+    );
     const [pack] = await database.db
       .select({ status: evidence_packs.status })
       .from(evidence_packs)
       .where(eq(evidence_packs.id, f.pack.id));
-    expect(pack?.status).toBe('approved');
+    expect(pack?.status).toBe('failed');
   });
 
   it('records an uncertain outcome and never repeats the vendor POST on retry', async () => {
@@ -183,13 +190,15 @@ describe.skipIf(!url)('H4 approved dispute action execution', () => {
       new PayPalError('PAYPAL_NETWORK_ERROR', null, null, null, [], true),
     );
     await f.handler({ packId: f.pack.id });
-    await f.handler({ packId: f.pack.id });
+    await expect(f.handler({ packId: f.pack.id })).rejects.toMatchObject({
+      code: 'PACK_NOT_ACTIONABLE',
+    });
     expect(f.provideEvidence).toHaveBeenCalledTimes(1);
     const [pack] = await database.db
       .select()
       .from(evidence_packs)
       .where(eq(evidence_packs.id, f.pack.id));
-    expect(pack?.status).toBe('submitted');
+    expect(pack?.status).toBe('failed');
     expect(pack?.paypal_response).toMatchObject({
       operation: 'provide_evidence',
       outcome: 'outcome_unknown',
@@ -222,7 +231,11 @@ describe.skipIf(!url)('H4 approved dispute action execution', () => {
       paypalName: 'VALIDATION_ERROR',
       issues: ['BAD_INPUT'],
     });
-    expect(f.publish).toHaveBeenCalledWith('evidence.rebuild', { disputeId: f.disputeId });
+    expect(f.publish).toHaveBeenCalledWith(
+      'evidence.rebuild',
+      { disputeId: f.disputeId },
+      expect.anything(),
+    );
   });
 
   it('lets only the owning merchant queue the exact approved evidence pack', async () => {
@@ -236,6 +249,25 @@ describe.skipIf(!url)('H4 approved dispute action execution', () => {
       evidences: f.pack.evidences,
       files: f.pack.files,
     });
+    const descriptor = provideDisputeEvidenceTool(f.merchantId, {
+      database: database.db,
+      jobs: { publish: f.publish },
+    });
+    expect(descriptor.name).toBe('provide_dispute_evidence');
+    await descriptor.execute({
+      dispute_id: f.disputeId,
+      evidences: f.pack.evidences as Record<string, unknown>[],
+      files: [
+        { filename: 'proof.pdf', mime: 'application/pdf', base64: f.bytes.toString('base64') },
+      ],
+    });
+    await expect(
+      descriptor.execute({
+        dispute_id: f.disputeId,
+        evidences: f.pack.evidences as Record<string, unknown>[],
+        files: [{ filename: 'proof.pdf', mime: 'application/pdf', base64: 'not base64!' }],
+      }),
+    ).rejects.toMatchObject({ code: 'INVALID_DISPUTE_TOOL_INPUT' });
     expect(result).toEqual({
       status: 'queued',
       dispute_id: f.disputeId,

@@ -1,5 +1,6 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { and, eq } from 'drizzle-orm';
+import { createHash } from 'node:crypto';
 import {
   AppError,
   systemClock,
@@ -7,7 +8,7 @@ import {
   type ForMerchant,
   type Money,
 } from '@fairfold/contracts';
-import { disputes, evidence_packs, schema, type createDatabase } from '@fairfold/db';
+import { alerts, disputes, evidence_packs, schema, type createDatabase } from '@fairfold/db';
 import { type Jobs } from '@fairfold/jobs';
 import { createBlobStore, createLedger } from '@fairfold/ledger';
 import { assertDisputeActionAvailable } from './dispute-guards.js';
@@ -159,28 +160,6 @@ export function createEvidenceSubmitHandler(options: {
     if (initial.pack.status !== 'approved')
       throw new AppError('PACK_NOT_ACTIONABLE', 'Only an approved pack may execute', 409);
 
-    const action = actionFor(initial.pack, initial.dispute.id);
-    const paypal = await options.forMerchant(initial.dispute.merchant_id);
-    const fresh = await paypal.disputes.get(initial.dispute.id);
-    let vendorCompleted = false;
-    try {
-      assertDisputeActionAvailable(fresh, {
-        disputeId: initial.dispute.id,
-        operation: action.operation,
-        variant:
-          action.operation === 'make_offer'
-            ? action.actionParams.offerType
-            : action.operation === 'accept_claim'
-              ? action.actionParams.acceptClaimType
-              : undefined,
-      });
-    } catch (error) {
-      if (error instanceof AppError && error.code === 'STAGE_CHANGED') {
-        await options.jobs.publish('evidence.rebuild', { disputeId: initial.dispute.id });
-      }
-      throw error;
-    }
-
     const client = await options.database.pool.connect();
     let claimed: { pack: Pack; dispute: typeof disputes.$inferSelect };
     try {
@@ -196,6 +175,14 @@ export function createEvidenceSubmitHandler(options: {
           throw new AppError('PACK_ALREADY_SUBMITTED', 'Evidence pack is already submitted', 409);
         if (row.pack.status !== 'approved')
           throw new AppError('PACK_NOT_ACTIONABLE', 'Only an approved pack may execute', 409);
+        if (!row.pack.approved_by || !row.pack.approved_at)
+          throw new AppError('PACK_NOT_APPROVED', 'A recorded human approval is required', 409);
+        if (row.pack.paypal_response !== null)
+          throw new AppError(
+            'EVIDENCE_RECONCILIATION_REQUIRED',
+            'A claimed action requires reconciliation before retry',
+            409,
+          );
         const now = new Date(clock.now());
         if (!Number.isFinite(now.getTime())) throw new Error('Invalid execution clock');
         const blobStore = createBlobStore(tx, clock);
@@ -203,7 +190,11 @@ export function createEvidenceSubmitHandler(options: {
         if (approvedAction.operation === 'provide_evidence') {
           for (const file of approvedAction.files) {
             const blob = await blobStore.get(file.sha256);
-            if (blob.mime !== file.mime)
+            if (
+              !blob.bytes ||
+              createHash('sha256').update(blob.bytes).digest('hex') !== file.sha256 ||
+              blob.mime !== file.mime
+            )
               throw new AppError(
                 'EVIDENCE_BLOB_MISMATCH',
                 'Approved evidence MIME differs from stored evidence',
@@ -214,8 +205,7 @@ export function createEvidenceSubmitHandler(options: {
         const [updated] = await tx
           .update(evidence_packs)
           .set({
-            status: 'submitted',
-            submitted_at: now,
+            status: 'approved',
             paypal_response: {
               operation: approvedAction.operation,
               disputeId: row.dispute.id,
@@ -234,7 +224,22 @@ export function createEvidenceSubmitHandler(options: {
       client.release();
     }
 
+    const action = actionFor(claimed.pack, claimed.dispute.id);
+    let vendorCompleted = false;
+    let attempted = false;
     try {
+      const paypal = await options.forMerchant(claimed.dispute.merchant_id);
+      const fresh = await paypal.disputes.get(claimed.dispute.id);
+      assertDisputeActionAvailable(fresh, {
+        disputeId: claimed.dispute.id,
+        operation: action.operation,
+        variant:
+          action.operation === 'make_offer'
+            ? action.actionParams.offerType
+            : action.operation === 'accept_claim'
+              ? action.actionParams.acceptClaimType
+              : undefined,
+      });
       let response: unknown;
       if (action.operation === 'provide_evidence') {
         const blobs = files(claimed.pack.files);
@@ -245,6 +250,7 @@ export function createEvidenceSubmitHandler(options: {
             return { filename: file.filename, mime: file.mime, bytes: blob.bytes };
           }),
         );
+        attempted = true;
         response = await paypal.disputes.provideEvidence(
           claimed.dispute.id,
           evidence(claimed.pack.evidences),
@@ -274,13 +280,18 @@ export function createEvidenceSubmitHandler(options: {
         );
       }
       vendorCompleted = true;
-      const summary = safeResponse(response, claimed.dispute.id, action.operation);
+      const summary = {
+        ...safeResponse(response, claimed.dispute.id, action.operation),
+        packId,
+        requestId: requestId(packId),
+        observedAt: clock.now().toISOString(),
+      };
       const client = await options.database.pool.connect();
       try {
         await drizzle(client, { schema }).transaction(async (tx) => {
           await tx
             .update(evidence_packs)
-            .set({ paypal_response: summary })
+            .set({ status: 'submitted', submitted_at: clock.now(), paypal_response: summary })
             .where(eq(evidence_packs.id, packId));
           if (claimed.dispute.order_id) {
             const type =
@@ -305,23 +316,58 @@ export function createEvidenceSubmitHandler(options: {
         client.release();
       }
     } catch (error) {
-      const unknown = vendorCompleted || (error instanceof PayPalError && error.outcomeUnknown);
-      const summary = failureSummary(
-        claimed.dispute.id,
-        action.operation,
-        unknown ? 'outcome_unknown' : 'failed',
-        error,
-      );
-      await options.database.db
-        .update(evidence_packs)
-        .set({
-          status: unknown ? 'submitted' : 'failed',
-          paypal_response: summary,
-        })
-        .where(eq(evidence_packs.id, packId));
-      if (!unknown) {
-        await options.jobs.publish('evidence.rebuild', { disputeId: claimed.dispute.id });
+      const unknown =
+        vendorCompleted ||
+        (attempted &&
+          (!(error instanceof AppError) || (error instanceof PayPalError && error.outcomeUnknown)));
+      const summary = {
+        ...failureSummary(
+          claimed.dispute.id,
+          action.operation,
+          unknown ? 'outcome_unknown' : 'failed',
+          error,
+        ),
+        packId,
+        requestId: requestId(packId),
+        observedAt: clock.now().toISOString(),
+      };
+      const client = await options.database.pool.connect();
+      try {
+        await drizzle(client, { schema }).transaction(async (tx) => {
+          await tx
+            .update(evidence_packs)
+            .set({ status: 'failed', paypal_response: summary })
+            .where(eq(evidence_packs.id, packId));
+          await tx
+            .insert(alerts)
+            .values({
+              merchant_id: claimed.dispute.merchant_id,
+              order_id: claimed.dispute.order_id,
+              type: 'evidence_submit_failed',
+              ref_id: packId,
+              message: unknown
+                ? 'PayPal action outcome requires reconciliation; do not resubmit'
+                : 'Approved dispute action failed; review before approving a rebuilt pack',
+              created_at: clock.now(),
+            });
+          if (
+            !unknown &&
+            !(await options.jobs.publish(
+              'evidence.rebuild',
+              { disputeId: claimed.dispute.id },
+              { db: { executeSql: (query, values) => client.query(query, values) } },
+            ))
+          )
+            throw new AppError(
+              'EVIDENCE_REBUILD_QUEUE_FAILED',
+              'Evidence rebuild could not be queued',
+              503,
+            );
+        });
+      } finally {
+        client.release();
       }
+      if (error instanceof AppError && error.code === 'STAGE_CHANGED') throw error;
     }
   };
 }

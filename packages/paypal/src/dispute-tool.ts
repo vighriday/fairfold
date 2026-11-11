@@ -64,6 +64,10 @@ export function createProvideDisputeEvidenceTool(options: {
     const pack = packs.find(
       (candidate) =>
         candidate.status === 'approved' &&
+        candidate.recommendation === 'provide_evidence' &&
+        candidate.approved_by !== null &&
+        candidate.approved_at !== null &&
+        candidate.paypal_response === null &&
         canonicalJson(candidate.evidences) === canonicalJson(value.evidences) &&
         canonicalJson(candidate.files) === canonicalJson(value.files),
     );

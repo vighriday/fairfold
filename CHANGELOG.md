@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-11-11 — H4 audit: retention and dispute execution
+
+- Corrected approved message normalization, complete URL removal, whitespace-aware known-street redaction, within-snapshot dedupe and the combined historical fingerprint budget.
+- Reused the webhook transaction for dispute synchronization, loaded transient authoritative contacts, preserved established order linkage and queued report refresh on resolution.
+- Required recorded human approval before claiming an evidence action; fresh guards now fail durably, 422/uncertain results raise alerts, and claimed/uncertain operations cannot repeat vendor POSTs. Added the source Zod/base64 Agent Toolkit style descriptor.
+- Validation: 58 focused offline/PostgreSQL/HTTP regression checks passed across H4 and packing; typecheck is recorded with the audit evidence. Real PayPal acceptance remains NOT RUN.
+
 - Audit: completed the source-to-implementation audit against the protected architecture, endpoint/job inventories, schema and A1-A14 acceptance plan; corrected startup registration of H5 inspection and shared-cause approval routes and recorded remaining ownership/external gaps in `docs/hriday/source-implementation-audit.md`.
 
 All authored work in this checkout is on `Hriday`. Entries distinguish documentation preparation from working application delivery. Dates use IST.

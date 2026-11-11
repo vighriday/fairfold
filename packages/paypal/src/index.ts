@@ -22,6 +22,7 @@ export { createDisputeActionOperations } from './dispute-actions.js';
 export {
   newBuyerMessages,
   sanitizeDisputeDetail,
+  redactDisputeText,
   type SanitizedDispute,
   type SanitizedDisputeMessage,
 } from './dispute-policy.js';
@@ -30,6 +31,7 @@ export { createEvidenceSubmitHandler } from './dispute-execution.js';
 export { createTrackingPushHandler } from './tracking-execution.js';
 export { createActionHandler } from './action-execution.js';
 export { createProvideDisputeEvidenceTool } from './dispute-tool.js';
+export { provideDisputeEvidenceTool } from './agentTools.js';
 export { createWebhookOperations } from './webhooks.js';
 export { createCheckoutClientFactory, type CheckoutClient } from './checkout.js';
 export {

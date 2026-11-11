@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { AppError } from '@fairfold/contracts';
+import { canonicalJson } from '@fairfold/ledger';
 
 const symbolPattern = /^[A-Z][A-Z0-9_]{0,127}$/;
 const datePattern =
@@ -29,7 +30,10 @@ export type SanitizedDispute = {
   dispute_amount?: { currency_code: string; value: string };
   seller_response_due_date?: string;
   buyer_response_due_date?: string;
-  dispute_outcome?: { outcome_code: string; amount_refunded?: { currency_code: string; value: string } };
+  dispute_outcome?: {
+    outcome_code: string;
+    amount_refunded?: { currency_code: string; value: string };
+  };
   disputed_transactions: Array<{ seller_transaction_id: string }>;
   allowed_response_options?: {
     make_offer?: { offer_types: string[] };
@@ -102,26 +106,50 @@ function escaped(value: string): string {
 function hasControlCharacters(value: string): boolean {
   for (const character of value) {
     const code = character.codePointAt(0)!;
-    if ((code >= 0 && code <= 8) || code === 11 || code === 12 || (code >= 14 && code <= 31) || code === 127)
+    if (
+      (code >= 0 && code <= 8) ||
+      code === 11 ||
+      code === 12 ||
+      (code >= 14 && code <= 31) ||
+      code === 127
+    )
       return true;
   }
   return false;
 }
 
-function redactMessage(value: unknown, emails: string[], streets: string[]): string {
+export function redactDisputeText(
+  value: unknown,
+  context: { knownEmails?: string[]; knownStreetLines?: string[] } = {},
+): string {
   if (typeof value !== 'string' || value.length > 2000 || hasControlCharacters(value))
-    throw new AppError('DISPUTE_TEXT_REVIEW_REQUIRED', 'Dispute message requires privacy review', 409);
+    throw new AppError(
+      'DISPUTE_TEXT_REVIEW_REQUIRED',
+      'Dispute message requires privacy review',
+      409,
+    );
   let text = value.normalize('NFC').replace(/\r\n?/gu, '\n');
+  const emails = (context.knownEmails ?? []).map(normalizeContact);
+  const streets = (context.knownStreetLines ?? []).map(normalizeContact);
+  // Remove whole URL tokens before matching emails inside their query strings.
+  text = text.replace(linkPattern, '[LINK_REDACTED]');
   for (const email of emails) {
-    if (email.length >= 4) text = text.replace(new RegExp(escaped(email), 'giu'), '[CONTACT_REDACTED]');
+    if (email.length >= 4)
+      text = text.replace(new RegExp(escaped(email), 'giu'), '[CONTACT_REDACTED]');
   }
   for (const street of streets) {
     if (street.length >= 4 && /[A-Za-z]/u.test(street))
-      text = text.replace(new RegExp(escaped(street), 'giu'), '[CONTACT_REDACTED]');
+      text = text.replace(
+        new RegExp(
+          `(?<![\\p{L}\\p{N}])${street.split(/\s+/u).map(escaped).join('\\s+')}(?![\\p{L}\\p{N}])`,
+          'giu',
+        ),
+        '[CONTACT_REDACTED]',
+      );
   }
   text = text.replace(emailPattern, '[CONTACT_REDACTED]').replace(linkPattern, '[LINK_REDACTED]');
   const withoutRedactedClauses = text.replace(
-    /\b(?:e-?mail|address|ship\s+to|deliver\s+to)\s*:\s*(?:\[CONTACT_REDACTED\]|\[LINK_REDACTED\])\b/giu,
+    /\b(?:e-?mail|address|ship\s+to|deliver\s+to)\s*:\s*(?:\[CONTACT_REDACTED\]|\[LINK_REDACTED\])(?=\s*(?:$|[.;,!?\n]))/gimu,
     '',
   );
   if (
@@ -130,14 +158,16 @@ function redactMessage(value: unknown, emails: string[], streets: string[]): str
     contactClausePattern.test(withoutRedactedClauses) ||
     addressPattern.test(withoutRedactedClauses)
   )
-    throw new AppError('DISPUTE_TEXT_REVIEW_REQUIRED', 'Dispute message requires privacy review', 409);
+    throw new AppError(
+      'DISPUTE_TEXT_REVIEW_REQUIRED',
+      'Dispute message requires privacy review',
+      409,
+    );
   return text;
 }
 
 function fingerprint(message: Omit<SanitizedDisputeMessage, 'fingerprint'>): string {
-  return createHash('sha256')
-    .update(JSON.stringify([message.posted_by, message.time_posted, message.content]))
-    .digest('hex');
+  return createHash('sha256').update(canonicalJson(message)).digest('hex');
 }
 
 export function sanitizeDisputeDetail(
@@ -159,10 +189,18 @@ export function sanitizeDisputeDetail(
         ? undefined
         : symbol(source.dispute_life_cycle_stage, 'dispute_life_cycle_stage'),
     dispute_channel:
-      source.dispute_channel === undefined ? undefined : symbol(source.dispute_channel, 'dispute_channel'),
+      source.dispute_channel === undefined
+        ? undefined
+        : symbol(source.dispute_channel, 'dispute_channel'),
     dispute_amount: optionalMoney(source.dispute_amount, 'dispute_amount'),
-    seller_response_due_date: optionalDate(source.seller_response_due_date, 'seller_response_due_date'),
-    buyer_response_due_date: optionalDate(source.buyer_response_due_date, 'buyer_response_due_date'),
+    seller_response_due_date: optionalDate(
+      source.seller_response_due_date,
+      'seller_response_due_date',
+    ),
+    buyer_response_due_date: optionalDate(
+      source.buyer_response_due_date,
+      'buyer_response_due_date',
+    ),
     dispute_outcome:
       source.dispute_outcome === undefined || source.dispute_outcome === null
         ? undefined
@@ -184,15 +222,20 @@ export function sanitizeDisputeDetail(
       throw new AppError('DISPUTE_DETAIL_INVALID', 'Dispute transactions are invalid', 502);
     output.disputed_transactions = transactions.map((item) => {
       const row = record(item, 'disputed transaction');
-      return { seller_transaction_id: requiredText(row.seller_transaction_id, 'seller_transaction_id') };
+      return {
+        seller_transaction_id: requiredText(row.seller_transaction_id, 'seller_transaction_id'),
+      };
     });
   }
   const options = source.allowed_response_options;
   if (options !== undefined) {
     const available = record(options, 'allowed_response_options');
-    const makeOffer = available.make_offer === undefined ? undefined : record(available.make_offer, 'make_offer');
+    const makeOffer =
+      available.make_offer === undefined ? undefined : record(available.make_offer, 'make_offer');
     const acceptClaim =
-      available.accept_claim === undefined ? undefined : record(available.accept_claim, 'accept_claim');
+      available.accept_claim === undefined
+        ? undefined
+        : record(available.accept_claim, 'accept_claim');
     output.allowed_response_options = {
       make_offer:
         makeOffer === undefined
@@ -216,12 +259,11 @@ export function sanitizeDisputeDetail(
         evidence_type: symbol(row.evidence_type, 'evidence_type'),
         source: symbol(row.source, 'evidence_source'),
         date: optionalDate(row.date, 'evidence_date'),
-        item_id: row.item_id === undefined ? undefined : requiredText(row.item_id, 'evidence_item_id'),
+        item_id:
+          row.item_id === undefined ? undefined : requiredText(row.item_id, 'evidence_item_id'),
       };
     });
   }
-  const emails = (context.knownEmails ?? []).map(normalizeContact);
-  const streets = (context.knownStreetLines ?? []).map(normalizeContact);
   const messages = source.messages;
   if (messages !== undefined) {
     if (!Array.isArray(messages) || messages.length > 1000)
@@ -232,11 +274,12 @@ export function sanitizeDisputeDetail(
       if (!['BUYER', 'SELLER', 'ARBITER'].includes(postedBy))
         throw new AppError('DISPUTE_DETAIL_INVALID', 'Dispute message role is invalid', 502);
       const timePosted = optionalDate(row.time_posted, 'message time_posted');
-      if (!timePosted) throw new AppError('DISPUTE_DETAIL_INVALID', 'Dispute message time is invalid', 502);
+      if (!timePosted)
+        throw new AppError('DISPUTE_DETAIL_INVALID', 'Dispute message time is invalid', 502);
       const message = {
         posted_by: postedBy as SanitizedDisputeMessage['posted_by'],
         time_posted: timePosted,
-        content: redactMessage(row.content, emails, streets),
+        content: redactDisputeText(row.content, context),
       };
       return { ...message, fingerprint: fingerprint(message) };
     });
@@ -253,10 +296,50 @@ export function sanitizeDisputeDetail(
       throw new AppError('DISPUTE_DETAIL_INVALID', 'Dispute message fingerprints are invalid', 502);
     output.message_fingerprints = [...new Set(fingerprints)];
   }
+  if (
+    new Set([
+      ...output.message_fingerprints,
+      ...output.messages.map((message) => message.fingerprint),
+    ]).size > 10_000
+  )
+    throw new AppError(
+      'DISPUTE_DETAIL_INVALID',
+      'Dispute message fingerprint budget exceeded',
+      502,
+    );
   return output;
 }
 
 export function newBuyerMessages(detail: SanitizedDispute): SanitizedDisputeMessage[] {
   const known = new Set(detail.message_fingerprints);
-  return detail.messages.filter((message) => message.posted_by === 'BUYER' && !known.has(message.fingerprint));
+  return detail.messages.filter((message) => {
+    if (known.has(message.fingerprint)) return false;
+    known.add(message.fingerprint);
+    return message.posted_by === 'BUYER';
+  });
+}
+
+/** Contacts are read transiently; neither the dictionary nor its source is returned for storage. */
+export function disputeContacts(...sources: unknown[]): {
+  knownEmails: string[];
+  knownStreetLines: string[];
+} {
+  const knownEmails: string[] = [];
+  const knownStreetLines: string[] = [];
+  function visit(value: unknown, depth: number) {
+    if (depth > 12 || !value || typeof value !== 'object') return;
+    if (Array.isArray(value)) {
+      for (const entry of value.slice(0, 1000)) visit(entry, depth + 1);
+      return;
+    }
+    for (const [key, entry] of Object.entries(value)) {
+      if (typeof entry === 'string') {
+        if (key === 'email' || key === 'email_address') knownEmails.push(entry);
+        if (['address_line_1', 'address_line_2', 'line1', 'line2'].includes(key))
+          knownStreetLines.push(entry);
+      } else visit(entry, depth + 1);
+    }
+  }
+  for (const source of sources) visit(source, 0);
+  return { knownEmails, knownStreetLines };
 }

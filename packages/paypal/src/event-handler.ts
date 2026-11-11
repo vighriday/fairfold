@@ -8,10 +8,13 @@ import { createCaptureStore, type CaptureContext } from './capture-store.js';
 import { minimizeEvent, type VerifiedEvent } from './event-policy.js';
 import { parseCaptured } from './orders.js';
 
-export type DisputeSynchronizer = (input: {
-  merchantId: string;
-  disputeId: string;
-}) => Promise<void>;
+export type DisputeSynchronizer = (
+  input: {
+    merchantId: string;
+    disputeId: string;
+  },
+  context?: CaptureContext,
+) => Promise<void>;
 export const pendingDisputeSync: DisputeSynchronizer = async () => {
   throw new AppError(
     'H4_DISPUTE_SYNC_PENDING',
@@ -132,7 +135,10 @@ export function createPayPalEventHandler(options: {
           const disputeId = event.resource.dispute_id ?? event.resource.id;
           if (!disputeId)
             throw new AppError('PAYPAL_EVENT_REFERENCE_MISSING', 'Dispute ID is missing', 409);
-          await (options.syncDispute ?? pendingDisputeSync)({ merchantId: merchant.id, disputeId });
+          await (options.syncDispute ?? pendingDisputeSync)(
+            { merchantId: merchant.id, disputeId },
+            { tx, client },
+          );
         } else if (event.event_type === 'PAYMENT.CAPTURE.REVERSED') {
           diagnostic = 'REVERSAL_REQUIRES_REVIEW';
         } else if (event.event_type !== 'CHECKOUT.ORDER.APPROVED') {

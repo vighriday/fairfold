@@ -373,11 +373,17 @@ describe.skipIf(!url)('H3 transactional reconciliation (synthetic authoritative 
     expect((await f.readEvent(dispute)).processed_at).toBeNull();
     const sync = vi.fn(async () => {});
     await f.makeHandler(sync)({ eventId: dispute });
-    expect(sync).toHaveBeenCalledWith({ merchantId: f.merchantId, disputeId: 'PP-D-SYNTHETIC' });
+    expect(sync).toHaveBeenCalledWith(
+      { merchantId: f.merchantId, disputeId: 'PP-D-SYNTHETIC' },
+      expect.objectContaining({ tx: expect.anything(), client: expect.anything() }),
+    );
     await f.makeHandler(sync)({
       eventId: await f.event('CUSTOMER.DISPUTE.CREATED', { id: 'PP-D-FALLBACK' }),
     });
-    expect(sync).toHaveBeenLastCalledWith({ merchantId: f.merchantId, disputeId: 'PP-D-FALLBACK' });
+    expect((sync.mock.calls as unknown[][]).at(-1)?.[0]).toEqual({
+      merchantId: f.merchantId,
+      disputeId: 'PP-D-FALLBACK',
+    });
   });
   it('acknowledges approvals without capturing and flags reversals without guessing a financial transition', async () => {
     const f = await fixture(),
