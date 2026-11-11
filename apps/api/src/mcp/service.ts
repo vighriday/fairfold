@@ -1,19 +1,7 @@
-import { and, eq, ilike } from 'drizzle-orm';
-import {
-  AppError,
-  CatalogItemSchema,
-  StoreReportSchema,
-  type CatalogItem,
-} from '@fairfold/contracts';
-import {
-  evidence_packs,
-  merchants,
-  orders,
-  products,
-  store_reports,
-  disputes,
-  type Database,
-} from '@fairfold/db';
+import { and, eq } from 'drizzle-orm';
+import { AppError, UuidSchema } from '@fairfold/contracts';
+import { evidence_packs, orders, disputes, type Database } from '@fairfold/db';
+import { searchCatalogWith, storeReportFor, type IntelRuntime } from '@fairfold/intelligence';
 import { createLedger } from '@fairfold/ledger';
 import type { AuthContext } from '../auth.js';
 
@@ -23,43 +11,24 @@ function allowed(auth: AuthContext | null) {
   return auth;
 }
 
-export function createMcpService(database: { db: Database }) {
+/**
+ * Section 16 H7: search_catalog → Ishaan's searchCatalog; get_store_report → the stored report, else
+ * buildStoreReport. `intelligence` is the runtime the API bound at startup (DECISIONS.md I-D37).
+ */
+export function createMcpService(database: { db: Database }, intelligence: IntelRuntime) {
   return {
     async searchCatalog(authInput: AuthContext | null, query: string, maxPrice?: string) {
       allowed(authInput);
-      const rows = await database.db
-        .select({ product: products, merchant: merchants, report: store_reports })
-        .from(products)
-        .innerJoin(merchants, eq(merchants.id, products.merchant_id))
-        .leftJoin(store_reports, eq(store_reports.merchant_id, merchants.id))
-        .where(ilike(products.name, `%${query}%`))
-        .limit(50);
-      const upper = maxPrice ? Number(maxPrice) : Number.POSITIVE_INFINITY;
-      return rows
-        .filter((row) => Number(row.product.unit_value) <= upper)
-        .map((row): CatalogItem => {
-          const report = row.report?.report;
-          const storeBand =
-            report && typeof report === 'object' && 'band' in report
-              ? CatalogItemSchema.shape.storeBand.parse(report.band)
-              : 'new';
-          return CatalogItemSchema.parse({
-            merchantId: row.merchant.id,
-            sku: row.product.sku,
-            name: row.product.name,
-            price: { currency_code: row.product.currency, value: row.product.unit_value },
-            storeBand,
-          });
-        });
+      const price = maxPrice === undefined ? undefined : Number(maxPrice);
+      if (price !== undefined && !Number.isFinite(price))
+        throw new AppError('VALIDATION_ERROR', 'maxPrice must be a number', 400);
+      return searchCatalogWith(intelligence, { query, maxPrice: price });
     },
     async getStoreReport(authInput: AuthContext | null, merchantId: string) {
       allowed(authInput);
-      const [row] = await database.db
-        .select({ report: store_reports.report })
-        .from(store_reports)
-        .where(eq(store_reports.merchant_id, merchantId));
-      if (!row) throw new AppError('STORE_REPORT_NOT_FOUND', 'Store report was not found', 404);
-      return StoreReportSchema.parse(row.report);
+      if (!UuidSchema.safeParse(merchantId).success)
+        throw new AppError('VALIDATION_ERROR', 'merchantId must be a store id', 400);
+      return storeReportFor(intelligence, merchantId);
     },
     async getOrderProof(authInput: AuthContext | null, orderId: string) {
       const auth = allowed(authInput);
