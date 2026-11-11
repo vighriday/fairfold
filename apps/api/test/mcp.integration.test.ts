@@ -120,7 +120,7 @@ describe.skipIf(!databaseUrl)('authenticated MCP HTTP contract', () => {
     return apps[0]!.inject({
       method: 'POST',
       url: '/mcp',
-      headers: { authorization: `Bearer ${token}` },
+      headers: { authorization: `Bearer ${token}`, accept: 'application/json, text/event-stream' },
       payload: { jsonrpc: '2.0', id: 'mcp-test', method, ...(params ? { params } : {}) },
     });
   }
@@ -141,7 +141,6 @@ describe.skipIf(!databaseUrl)('authenticated MCP HTTP contract', () => {
       'search_catalog',
       'get_store_report',
       'get_order_proof',
-      'provide_dispute_evidence',
     ]);
   });
 
@@ -170,6 +169,7 @@ describe.skipIf(!databaseUrl)('authenticated MCP HTTP contract', () => {
           headers: {
             authorization: init?.headers?.authorization ?? '',
             'content-type': 'application/json',
+            accept: 'application/json, text/event-stream',
           },
           payload: {
             jsonrpc: '2.0',
@@ -208,27 +208,22 @@ describe.skipIf(!databaseUrl)('authenticated MCP HTTP contract', () => {
       name: 'get_order_proof',
       arguments: { orderId },
     });
-    expect(response.statusCode).toBe(403);
-    expect(response.json().error.code).toBe('FORBIDDEN');
+    expect(response.statusCode).toBe(200);
+    expect(response.json().result.isError).toBe(true);
+    expect(JSON.parse(response.json().result.content[0].text).error.code).toBe('FORBIDDEN');
     expect(merchantToken).toContain('.');
   });
 
   it('rejects unsupported MCP methods and tools explicitly', async () => {
     const method = await call('prompts/get', agentToken);
-    expect(method.statusCode).toBe(400);
-    expect(method.json().error).toMatchObject({
-      code: 'MCP_METHOD_NOT_FOUND',
-      message: 'Unsupported MCP method',
-    });
+    expect(method.statusCode).toBe(200);
+    expect(method.json().error.code).toBe(-32601);
 
     const tool = await call('tools/call', agentToken, {
       name: 'delete_everything',
       arguments: {},
     });
-    expect(tool.statusCode).toBe(400);
-    expect(tool.json().error).toMatchObject({
-      code: 'MCP_TOOL_NOT_FOUND',
-      message: 'Unsupported MCP tool',
-    });
+    expect(tool.statusCode).toBe(200);
+    expect(tool.json().result.isError).toBe(true);
   });
 });

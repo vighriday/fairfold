@@ -9,3 +9,5 @@ allowBuilds:
 minimumReleaseAgeExclude:
   - dotenv@18.0.10
   - jose@6.2.16
+  - '@ai-sdk/mcp@2.0.96'
+  - '@ai-sdk/provider-utils@5.0.79'

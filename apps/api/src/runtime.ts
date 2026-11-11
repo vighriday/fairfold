@@ -1,6 +1,6 @@
 import { createDatabase } from '@fairfold/db';
 import { decodeEncryptionKey } from '@fairfold/contracts';
-import { computeBuyerSignal } from '@fairfold/intelligence';
+import { computeBuyerSignal, searchCatalog, buildStoreReport } from '@fairfold/intelligence';
 import { createJobs } from '@fairfold/jobs';
 import {
   createPayPalClientFactory,
@@ -45,7 +45,7 @@ export async function createRuntime(config: Config, options: { recording?: Order
     const inspection = createInspectionService({ database, jobs });
     const actionApproval = createSharedCauseActionApproval({ database, jobs });
     const alertReads = createAlertReads(database.db);
-    const mcpService = createMcpService(database);
+    const mcpService = createMcpService(database, { jobs, searchCatalog, buildStoreReport });
     const app = await createApi({
       config,
       phase: 'H5',

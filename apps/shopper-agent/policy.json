@@ -1,0 +1,7 @@
+{
+  "sandbox": true,
+  "neverPayBands": ["caution"],
+  "confirmNonVerified": true,
+  "confirmPayPalApproval": true,
+  "maximumQuantity": 1
+}

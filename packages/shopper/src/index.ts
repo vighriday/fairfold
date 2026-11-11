@@ -51,6 +51,7 @@ export function createMcpShopperTools(options: {
       headers: {
         authorization: `Bearer ${options.bearerToken}`,
         'content-type': 'application/json',
+        accept: 'application/json, text/event-stream',
       },
       body: JSON.stringify({
         jsonrpc: '2.0',
@@ -150,6 +151,8 @@ export async function beginShopperRun(
   checkout: CheckoutAdapter,
   input: { query: string; maxPrice: string },
 ): Promise<ShopperRun> {
+  if (!/^\d{1,8}(?:\.\d{1,2})?$/.test(input.maxPrice) || Number(input.maxPrice) <= 0)
+    throw new Error('A positive USD budget is required');
   const transcript: ShopperTranscriptEvent[] = [];
   const rawItems = await tools('search_catalog', input);
   const items = Array.isArray(rawItems)
@@ -159,10 +162,13 @@ export async function beginShopperRun(
   const reports = new Map<string, StoreReport>();
   for (const merchantId of [...new Set(items.map((item) => item.merchantId))]) {
     const report = StoreReportSchema.parse(await tools('get_store_report', { merchantId }));
+    if (report.merchantId !== merchantId) throw new Error('Store report merchant does not match');
     reports.set(merchantId, report);
     transcript.push({ type: 'store_report', merchantId, band: report.band });
   }
   const eligible = items.filter((item) => {
+    if (item.price.currency_code !== 'USD' || Number(item.price.value) > Number(input.maxPrice))
+      return false;
     const band = reports.get(item.merchantId)?.band ?? item.storeBand;
     if (band === 'caution') {
       transcript.push({ type: 'skip_store', merchantId: item.merchantId, reason: 'caution' });
@@ -170,7 +176,9 @@ export async function beginShopperRun(
     }
     return true;
   });
-  const item = choose(eligible);
+  const item = choose(
+    eligible.map((item) => ({ ...item, storeBand: reports.get(item.merchantId)!.band })),
+  );
   if (!item) return { status: 'no_match', transcript };
   const reportBand = reports.get(item.merchantId)?.band ?? item.storeBand;
   if (reportBand !== 'verified') {
@@ -206,6 +214,8 @@ export async function completeShopperRun(
   if (!approvals.includes('paypal-approved'))
     throw new Error('Human PayPal approval is required before capture');
   const result = await checkout.capture({ orderId: run.orderId, context: { sandbox: true } });
+  if (result.status !== 'COMPLETED' && result.status !== 'captured')
+    throw new Error('PayPal capture has not completed');
   const transcript = [
     ...run.transcript,
     { type: 'captured' as const, orderId: run.orderId, status: result.status },
@@ -220,5 +230,32 @@ export async function completeShopperRun(
 }
 
 export function sanitizeTranscript(transcript: readonly ShopperTranscriptEvent[]) {
-  return transcript.map((event) => ({ ...event }));
+  return transcript.map((event) =>
+    event.type === 'approval_required'
+      ? { ...event, approvalUrl: '[PAYPAL_SANDBOX_APPROVAL_LINK]' }
+      : { ...event },
+  );
 }
+
+export async function confirmShopperStore(
+  checkout: CheckoutAdapter,
+  run: Extract<ShopperRun, { status: 'awaiting_store_confirmation' }>,
+  approvals: readonly Approval[],
+): Promise<Extract<ShopperRun, { status: 'awaiting_paypal_approval' }>> {
+  if (!approvals.includes('store-confirmed') || run.item.storeBand === 'caution')
+    throw new Error('Human store confirmation is required');
+  const created = await checkout.createOrder({
+    merchantId: run.merchantId,
+    sku: run.item.sku,
+    quantity: 1,
+    context: { sandbox: true },
+  });
+  return {
+    ...run,
+    ...created,
+    status: 'awaiting_paypal_approval',
+    transcript: [...run.transcript, { type: 'approval_required', ...created }],
+  };
+}
+
+export { connectMcpShopperTools } from './mcp.js';

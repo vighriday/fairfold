@@ -33,6 +33,7 @@ export { createActionHandler } from './action-execution.js';
 export { validateActionPayload } from './action-policy.js';
 export { createProvideDisputeEvidenceTool } from './dispute-tool.js';
 export { provideDisputeEvidenceTool } from './agentTools.js';
+export { createSandboxShopperCheckout } from './shopper-toolkit.js';
 export { createWebhookOperations } from './webhooks.js';
 export { createCheckoutClientFactory, type CheckoutClient } from './checkout.js';
 export {

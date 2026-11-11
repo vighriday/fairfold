@@ -7,6 +7,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
+    "@ai-sdk/mcp": "2.0.96",
     "@fairfold/contracts": "workspace:*"
   }
 }

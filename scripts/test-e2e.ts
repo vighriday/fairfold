@@ -2,6 +2,7 @@ import { config as loadEnv } from 'dotenv';
 import { createDatabase, migrateDatabase } from '@fairfold/db';
 import { createRuntime } from '../apps/api/src/runtime.js';
 import { readConfig } from '../apps/api/src/config.js';
+import {connectMcpShopperTools} from '../packages/shopper/src/index.js';
 
 loadEnv({ path: new URL('../.env', import.meta.url), quiet: true });
 
@@ -70,57 +71,15 @@ if (!databaseUrl) {
     if (!login.ok) throw new Error(`demo login returned ${login.status}`);
     const loginBody = (await login.json()) as { token?: string };
     if (!loginBody.token) throw new Error('demo login did not return a token');
-    const mcpHeaders = {
-      authorization: `Bearer ${loginBody.token}`,
-      'content-type': 'application/json',
-    };
-    const initialize = await fetch(`${configuration.appBaseUrl}/mcp`, {
-      method: 'POST',
-      headers: mcpHeaders,
-      body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'initialize' }),
-    });
-    if (!initialize.ok)
-      throw new Error(`authenticated MCP initialize returned ${initialize.status}`);
-    const initializeBody = (await initialize.json()) as {
-      result?: { protocolVersion?: string; capabilities?: unknown };
-    };
-    if (initializeBody.result?.protocolVersion !== '2025-03-26')
-      throw new Error('MCP initialize returned an unexpected protocol version');
-
-    const toolsList = await fetch(`${configuration.appBaseUrl}/mcp`, {
-      method: 'POST',
-      headers: mcpHeaders,
-      body: JSON.stringify({ jsonrpc: '2.0', id: 3, method: 'tools/list' }),
-    });
-    if (!toolsList.ok) throw new Error(`authenticated MCP tools/list returned ${toolsList.status}`);
-    const toolsBody = (await toolsList.json()) as {
-      result?: { tools?: Array<{ name?: string }> };
-    };
-    const toolNames = new Set(toolsBody.result?.tools?.map((tool) => tool.name));
-    for (const name of [
-      'search_catalog',
-      'get_store_report',
-      'get_order_proof',
-      'provide_dispute_evidence',
-    ])
-      if (!toolNames.has(name)) throw new Error(`MCP tools/list is missing ${name}`);
-    const search = await fetch(`${configuration.appBaseUrl}/mcp`, {
-      method: 'POST',
-      headers: mcpHeaders,
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 4,
-        method: 'tools/call',
-        params: { name: 'search_catalog', arguments: { query: 'navy hoodie', maxPrice: '45.00' } },
-      }),
-    });
-    if (!search.ok) throw new Error(`authenticated MCP tools/call returned ${search.status}`);
-    const searchBody = (await search.json()) as {
-      result?: { content?: Array<{ type?: string; text?: string }> };
-    };
-    const searchText = searchBody.result?.content?.find((entry) => entry.type === 'text')?.text;
-    if (searchText === undefined) throw new Error('MCP tools/call returned no text content');
-    JSON.parse(searchText);
+    const mcp=await connectMcpShopperTools(configuration.appBaseUrl+'/mcp',loginBody.token);
+    try {
+      const list=await mcp.client.listTools();
+      const names=list.tools.map(tool=>tool.name);
+      for(const name of ['search_catalog','get_store_report','get_order_proof']) if(!names.includes(name))throw new Error('MCP required tool is missing');
+      if(names.includes('provide_dispute_evidence'))throw new Error('Merchant evidence tool was exposed to an agent');
+      const search=await mcp.tools('search_catalog',{query:'navy hoodie',maxPrice:'45.00'});
+      if(!Array.isArray(search))throw new Error('MCP search result is not an array');
+    }finally{await mcp.close();}
 
     console.log(
       JSON.stringify({

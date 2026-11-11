@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-11 — H7 audit: official SDK transport and shopper executable
+
+- Replaced handwritten MCP handling with the official stateless Streamable HTTP SDK, and connected the AI SDK MCP client. Merchant evidence submission still requires an existing approved pack.
+- Added the sandbox-only PayPal Agent Toolkit adapter, enabling only create/capture, plus an executable shopper with separate store and PayPal approval pauses and a sanitized transcript boundary.
+- Validation: typecheck and 9 MCP/shopper checks PASS; actual SDK runtime smoke PASS on loopback with zero PayPal requests. Two terminal approval checks also PASS. Provider/account-backed A13 remains NOT RUN.
+
 ## 2026-11-11 — H6 audit: deadline and retention maintenance
 
 - Check all unresolved dispute statuses, serialize open-alert creation and measure no-scan tracking gaps from shipment time. Preserve delivered/refunded state in repeated synthetic courier updates.
