@@ -1,5 +1,7 @@
 # Manual Render deployment attempt — 12 November 2026
 
+**Later outcome:** the user added the card privately and the approved manual deployment succeeded. See the [13 November IST live receipt](2026-11-13-render-live.md). Blocked observations below retain their original scope.
+
 ## Scope and authority
 
 The user confirmed Blueprint capacity remains blocked and requested manual deployment. Re-read the relevant original D18 and H1 passages directly from the protected architecture document: web service + background worker + PostgreSQL and actual first-deployment readiness. The [manual deployment plan](../manual-render-deployment.md) keeps this topology and the existing `render.yaml` compute choices. Internal sources and credentials are not published.

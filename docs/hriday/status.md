@@ -1,6 +1,6 @@
-# Fairfold current status — 12 November 2026
+# Fairfold current status — 13 November 2026 IST
 
-**Integrated website and local verification PASS on `main`; external acceptance remains pending.** The combined branch includes both reviewed histories. The supplied frontend is routed and API-backed without redesign; it no longer waits for Figma or a separate frontend host. Start with the [website/Render guide](website-deployment.md) and [12 November evidence](evidence/2026-11-12-website.md). The [earlier backend closeout](local-closeout.md) retains the real-account acceptance runbook.
+**The website, API, worker and private PostgreSQL are live on Render.** [Open Fairfold](https://fairfold-api.onrender.com) · [Console](https://fairfold-api.onrender.com/console/orders) · [API docs](https://fairfold-api.onrender.com/docs) · [deployment evidence](evidence/2026-11-13-render-live.md). Remote main `d23ee86` passed hosted health, migrations, seed, 16-handler worker startup, official MCP and desktop/mobile read-only checks. Real PayPal, provider/photo and full hosted A1–A14 acceptance remain pending. The supplied frontend remains intact and API-backed on the same origin; no Vercel setup is needed. The [earlier backend closeout](local-closeout.md) retains the real-account runbook.
 
 ## What is now present
 
@@ -10,7 +10,7 @@ Hriday explicitly approved source-preserving surgical integration fixes and the 
 
 | Task | Local implementation                                                                                                                             | Remaining source acceptance                                                                             |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| H1   | Workspace, PostgreSQL 16/schema, auth, OpenAPI, queue, ledger/blob store and Blueprint                                                           | First actual Render deployment and hosted readiness                                                     |
+| H1   | Foundation plus first Render deploy, hosted readiness, Swagger and worker startup verified                                                       | First hosting gate satisfied; original real pre-H1 spike / CP0 evidence remains pending                 |
 | H2   | Full sandbox client, guarded checkout/capture, SDK harness, recording/import and scoped reads                                                    | Neel/Maya accounts, real purchase/capture, A4 and the deferred spike                                    |
 | H3   | Raw-body verification, durable event/job transactions, dedupe, reconciliation and one-minute poll                                                | Real signature/delivery/redelivery and hosted observation                                               |
 | H4   | Canonical dispute/detail/approval APIs, bounded retention, exact approved packs, fresh guards and durable execution claims                       | Real dispute fixture, current allowed actions and exact human-approved PayPal outcomes; Q2 remains open |
@@ -29,7 +29,7 @@ Hriday explicitly approved source-preserving surgical integration fixes and the 
 
 ## Still needed from the team
 
-Accounts, secrets and billing details belong in private setup/provider surfaces, never chat or Git. The selected Render workspace remains **My Workspace**; the earlier capacity/billing issue has not been assumed resolved. D18 hosting remains Render, with an API, worker and PostgreSQL. No Vercel architecture change is authorized.
+Accounts and secrets belong in private setup/provider surfaces, never chat or Git. The user added the card privately after approving the exact plan; My Workspace now hosts the API/site, worker and PostgreSQL 16. Blueprint capacity is bypassed through authorized direct provisioning, with the same topology. Billing is no longer the observed provisioning blocker. Preserve existing resources and encryption keys.
 
 The supplied frontend is integrated into the routed website under the 12 November authorization. Backend REST/MCP and the unstyled `/dev` harness remain available. Real packing photos, model access, Q2 joint review and real sandbox/hosted evidence are also pending. These are listed concretely in the [handoff](local-closeout.md#remaining-work-requiring-accounts-assets-or-human-decisions).
 
@@ -57,7 +57,7 @@ The first two README commits were published to `origin/main` at `677d364` under 
 
 `docs:check` PASS for 135 local references, 14 SVGs, seven unchanged captures and production-checked proof illustrations. Chromium light/dark/mobile rendering, native keyboard navigation, gallery links, nested proof states, all-disclosure layouts and new SVG text bounds PASS with no page overflow, browser errors or external requests. Typecheck/lint/format and stable regeneration PASS. The additional commits are local; actual published GitHub rendering remains unobserved. Application, PayPal/provider and hosted acceptance status is unchanged.
 
-## Manual Render deployment attempt — 12 November
+## Manual Render deployment attempt — 12 November (historical)
 
 The visual README pair was published at `d23ee86`. The user subsequently requested direct Render deployment because Blueprint capacity is still blocked. The [manual plan](manual-render-deployment.md) preserves the web service + worker + PostgreSQL 16 topology, existing compute plans and sandbox/approval boundaries.
 
@@ -69,4 +69,10 @@ The user then explicitly **declined paid resources** and confirmed billing remai
 
 The user subsequently supplied a screenshot showing a $50 promotional credit balance and said to continue. The code is not retained in repository files. A fresh authenticated platform validation still returns `need_payment_info` for all three resources. Credit redemption alone has not cleared that prerequisite. Payment-method completion and explicit clarification that the earlier no-paid restriction is superseded have been requested; no creation was retried.
 
-**Latest:** the user explicitly authorized the exact setup and billing risk, superseding his earlier refusal, but cannot add a payment method. The direct CLI PostgreSQL creation request was then executed and rejected by **Render HTTP 402: Payment information is required to complete this request**. This is now a provider account gate, not an unresolved user cost approval or merely Blueprint validation. Follow-up inventory confirmed no PostgreSQL instances and no Fairfold services. Do not repeat creation until the account prerequisite changes. A [Render sponsor support draft](render-credit-support-draft.md) is prepared locally; nothing has been sent. H1 and hosted acceptance remain pending.
+**At that attempt:** the approved direct creation reached Render and returned HTTP 402 because payment information was absent. No resource existed then. The user subsequently added the card; the successful run below supersedes this blocker. The [support draft](render-credit-support-draft.md) remains unsent and is no longer needed for this gate.
+
+## First live deployment — 13 November IST / 12 November UTC
+
+API `srv-dbr099on74is73b3i420`, worker `srv-dbr0c2m7bikc73c2vgkg` and database `dpg-dbr08m59fdbs73du07p0-a` match the approved plans, Oregon region and `main` source. The database external allow-list is empty; 1 GB growth and automatic deploys are off. Migrations passed; the one-time seed job succeeded with 393 synthetic orders, 16 complaints, 85 reviews and zero PayPal requests. The worker is live and reports 16 registered handlers, with zero credential-backed merchant polls configured.
+
+Hosted HTTPS health, Swagger (49 paths), 344-order Neel pagination, demo auth, official agent-scoped MCP catalogue call, six pages at 1440/390 px, selected-order routing, history/reload, mobile controls and seal-review cancellation PASS. No browser/API errors or PayPal writes were observed. Missing provider configuration truthfully leaves the hypothesis empty. The [full deployment receipt](evidence/2026-11-13-render-live.md) records actual IDs/timestamps and limits. Periodic operations, real sandbox/model/photo acceptance and hosted A1–A14 remain pending; startup is not proof of those outcomes.

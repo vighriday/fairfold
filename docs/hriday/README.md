@@ -1,6 +1,6 @@
 # Hriday research and execution guide
 
-**Current entry point, 12 November 2026:** [website/Render guide](website-deployment.md), [current status](status.md), [website evidence](evidence/2026-11-12-website.md) and [README presentation evidence](evidence/2026-11-12-readme.md). Integrated main includes both reviewed histories and the routed frontend; older task guides retain their historical scope. The remaining gates are account/model/photo/hosting acceptance and joint review.
+**Current entry point, 13 November 2026 IST:** [live website](https://fairfold-api.onrender.com), [verified deployment](evidence/2026-11-13-render-live.md), [website/Render guide](website-deployment.md) and [current status](status.md). Integrated main includes both reviewed histories and the routed frontend. The API/site, worker and private PostgreSQL are deployed; remaining gates are real PayPal/model/photo, recurring operational and complete hosted acceptance plus joint review. Older task guides retain their historical scope.
 
 This guide turns the existing Fairfold documents into an ordered work queue for Hriday. It preserves the idea, the chosen architecture and the PayPal-only payment integration. The user first selected research and documents, then authorized building H1 around the absent sandbox accounts on 9 November 2026.
 

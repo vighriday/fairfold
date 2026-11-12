@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-13 — First live manual Render deployment
+
+- After the user added the card privately, deployed the approved API/site, separate worker and private PostgreSQL 16 in My Workspace from remote main `d23ee86`. Preserved Oregon plans, 1 GB storage, empty external database allow-list, stable shared encryption and automatic deploy/growth off.
+- Observed migrations, terminal one-time synthetic seed success and 16-handler worker startup. Hosted health/Swagger, scoped official MCP, 344-order pagination, six desktop/mobile pages, deep links/history/reload and review cancellation PASS with no browser/API errors or PayPal writes.
+- Added actual resource/deploy/job receipts and reconciled active billing/hosting instructions. Real PayPal/provider/photo, recurring operations and full hosted A1–A14 acceptance remain pending; the prior unsent support draft is superseded.
+
 ## 2026-11-12 — Authorized direct creation rejected by Render billing
 
 - Recorded the user's explicit approval of the exact billable setup and billing risk, superseding the earlier refusal; payment-method setup remains unavailable.

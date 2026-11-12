@@ -1,5 +1,7 @@
 # Render hackathon credit support — unsent draft
 
+**Superseded, 13 November 2026 IST:** the user added the payment method privately and the approved deployment succeeded. This historical draft was never sent. See the [live receipt](evidence/2026-11-13-render-live.md); do not send this obsolete request.
+
 12 November 2026. This message is prepared for the account owner to review and send. **Nothing has been sent.** Render's official [credit documentation](https://render.com/docs/credits) lists `devrel@render.com` for credit/balance help. The hackathon's [Render sponsor page](https://paypalaihackathon.devpost.com/details/render) also links the sponsor support community.
 
 Subject: PayPal AI Hackathon — $50 credit present, provisioning blocked by HTTP 402

@@ -86,6 +86,8 @@ The API rejects a live PAYPAL_API_BASE before boot. The current foundation perfo
 
 ## First Render deployment gate
 
+**Current outcome, 13 November IST:** the first actual deployment, hosted `/docs`, database readiness and worker startup are verified in [the live receipt](evidence/2026-11-13-render-live.md). Integrated `main` and the authorized manual provisioning route supersede the historical Hriday/Blueprint-only instructions below. Real pre-H1 sandbox evidence and later account/provider acceptance remain pending. No handoff message was sent.
+
 `render.yaml` declares the selected web service, background worker and PostgreSQL 16. Both services explicitly use the repository's `Hriday` branch with automatic deployment disabled. It uses the current small database plan identifier, blocks external database access and applies migrations as the API pre-deploy command. The declared service plans require billing; no service or purchase has been made. These fields follow the [Render Blueprint specification](https://render.com/docs/blueprint-spec).
 
 Before deployment, establish the intended Render workspace/project and repository branch access. The initial API now uses Render's assigned public URL when APP_BASE_URL is omitted, and uses the same URL for FRONTEND_ORIGIN while the frontend is served from the API origin. Explicit URL variables still take precedence; set the real Figma frontend origin when it exists. Supply only the canonical-base64 32-byte APP_ENCRYPTION_KEY manually; Render generates the signing secret. Keep secret values out of commits and logs. Later PayPal/model credentials must be configured for the processes that use them when their tasks arrive.
