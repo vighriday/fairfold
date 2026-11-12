@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-13 — README shields, diagrams and live illustration screenshots
+
+- Added five README shields (PayPal AI Hackathon 2026 entry, PayPal sandbox only, Render live demo, TypeScript/Node 22/PostgreSQL 16, MIT) and five Mermaid diagrams: order journey, Shared Cause proposal flow, AI/code/human responsibilities, verified webhook handling and the Render deploy path. Existing sections and screenshots are unchanged.
+- Added five new screenshots in `docs/media/live/`, captured from the redeployed Render site, showing the product illustrations. Marked the redeploy done in Changes and uploads. README integrity check PASS (205 links); all seven Mermaid blocks parse.
+
 ## 2026-11-13 — Landing parcel and Pack Station illustrations
 
 - Replaced the striped placeholders in the landing page's 3D parcel cards (item, size, batch) and its Pack Station preview tiles (item, size_label, batch_label, sealed_parcel) with the drawn hoodie illustration and a new sealed-parcel drawing. Build-time bindings only; `standalone/` stays unchanged. The landing scene remains an illustrated example, not stored evidence.

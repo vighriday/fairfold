@@ -7,6 +7,14 @@
 
 # Fairfold
 
+<p align="center">
+  <a href="https://paypalaihackathon.devpost.com/"><img src="https://img.shields.io/badge/PayPal%20AI%20Hackathon-2026%20entry-6a3fe0?style=for-the-badge&logo=paypal&logoColor=white" alt="PayPal AI Hackathon 2026 entry"></a>
+  <a href="#paypal-is-the-payment-layer"><img src="https://img.shields.io/badge/PayPal-Sandbox%20only-003087?style=for-the-badge&logo=paypal&logoColor=white" alt="PayPal sandbox only"></a>
+  <a href="https://fairfold-api.onrender.com"><img src="https://img.shields.io/badge/Render-Live%20demo-46e3b7?style=for-the-badge&logo=render&logoColor=black" alt="Live demo on Render"></a>
+  <a href="#architecture-you-can-trace"><img src="https://img.shields.io/badge/TypeScript-Node%2022%20%C2%B7%20PostgreSQL%2016-3178c6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript, Node 22 and PostgreSQL 16"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-15131d?style=for-the-badge" alt="MIT licence"></a>
+</p>
+
 **One side’s proof becomes the other side’s trust.**
 
 Fairfold records packing proof, connects repeated complaints and prepares grounded dispute responses around a PayPal payment. Buyers and merchants see the context; **humans approve actions, and PayPal decides disputes.**
@@ -82,6 +90,19 @@ Captured **13 November 2026 IST**, deployed source **`d23ee86`**. The website's 
 
 </details>
 
+### Product illustrations on the live site
+
+Captured from [fairfold-api.onrender.com](https://fairfold-api.onrender.com) on **13 November 2026 IST**, after the redeploy that includes `05048c1`. The hoodie, T-shirt and parcel are drawn catalogue artwork for the fictional store, never packing photos or attestation evidence; real packing photos come only from the in-app camera.
+
+<p align="center">
+  <a href="docs/media/live/landing-parcel.png"><img src="docs/media/live/landing-parcel.png" alt="Live landing page: the opened 3D parcel with illustrated item, size and batch photo cards" width="440" loading="lazy"></a>
+  <a href="docs/media/live/landing-pack-preview.png"><img src="docs/media/live/landing-pack-preview.png" alt="Live landing page: Pack Station preview with illustrated item, size_label, batch_label and sealed_parcel tiles" width="400" loading="lazy"></a>
+  <a href="docs/media/live/console-orders.png"><img src="docs/media/live/console-orders.png" alt="Live console Orders table with a product illustration beside every item; synthetic seeded orders" width="440" loading="lazy"></a>
+  <a href="docs/media/live/console-pack.png"><img src="docs/media/live/console-pack.png" alt="Live Pack Station line-item card with the hoodie illustration, before any photo capture" width="440" loading="lazy"></a>
+</p>
+
+[Landing parcel](docs/media/live/landing-parcel.png) · [Landing Pack Station preview](docs/media/live/landing-pack-preview.png) · [Landing buyer card](docs/media/live/landing-buyer-card.png) · [Console orders](docs/media/live/console-orders.png) · [Console Pack Station](docs/media/live/console-pack.png)
+
 ## See the website
 
 [![Actual Fairfold Orders console beside its mobile Pack Station, framed as desktop and phone views. Local synthetic data; no PayPal transaction.](docs/media/product-overview.svg)](docs/media/captures/orders.png)
@@ -136,6 +157,48 @@ A small exporter ships a carefully packed order. A buyer receives a torn seam. P
 
 We build for small merchants, including Indian exporters selling to overseas PayPal buyers. The same record helps an honest merchant show what happened and helps an honest buyer receive a remedy when the evidence points to a real fault.
 
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Buyer
+    participant Site as Store page + Store Report
+    participant PP as PayPal sandbox
+    participant FF as Fairfold API
+    actor Merchant
+    participant W as Worker
+    Buyer->>Site: Reads cited fulfilment facts and verified reviews
+    Buyer->>PP: Approves the order in PayPal's own window
+    PP-->>FF: Capture result and seller-protection context
+    FF->>Merchant: Buyer Signal (advice, never a verdict)
+    Merchant->>FF: Pack Station photos and batch tag
+    FF->>W: Queue attestation (model reads, code checks)
+    W-->>FF: Match or blockers, ledger entry hashed
+    Merchant->>FF: Review and seal
+    FF->>PP: Tracking (queued until PayPal accepts)
+    PP-->>FF: Signed webhook: dispute opened
+    FF->>Merchant: Dispute Room draft and exact review
+    Merchant->>FF: Explicit approval
+    FF->>PP: Approved response only
+    Note over PP: PayPal decides the dispute
+```
+
+When several complaints share a cause, Shared Cause turns them into a reviewable proposal rather than a verdict:
+
+```mermaid
+flowchart LR
+    C[Buyer complaints] -->|model extracts and clusters text| K[Complaint cluster]
+    K -->|code: exact conditional test per exposure-day, BH q across tested values| S{Strong and significant?}
+    S -- no --> N[No hypothesis shown]
+    S -- yes --> H[Hypothesis, e.g. batch B17]
+    H --> A1[Proposed hold on unshipped orders]
+    H --> A2[Proposed inspection rule]
+    H --> A3[Drafted buyer notes]
+    A1 --> M((Merchant approval, one action at a time))
+    A2 --> M
+    A3 --> M
+    M -->|inspected stock photos| CF[Confirm or dismiss]
+```
+
 <details>
 <summary><strong>Expand each moment and its control</strong> · the complete product flow</summary>
 
@@ -182,11 +245,51 @@ The payment, capture, seller-protection context, tracking and dispute lifecycle 
 
 </details>
 
+```mermaid
+sequenceDiagram
+    participant PP as PayPal sandbox
+    participant In as Webhook endpoint per merchant
+    participant DB as PostgreSQL
+    participant W as Worker
+    PP->>In: Event (raw bytes kept unchanged)
+    In->>PP: Verify signature with the original body
+    alt verified
+        In->>DB: Durable event and job, deduplicated in one transaction
+        W->>DB: Claim job
+        W->>PP: Re-fetch current state (read)
+        W->>DB: Update order and dispute records
+    else not verified
+        In-->>PP: Rejected, never processed
+    end
+    Note over W,PP: A one-minute reconciliation poll covers missed deliveries
+```
+
 The Toolkit adapter explicitly sets `context.sandbox = true`. All PayPal calls stay inside `packages/paypal`. The buyer opens a sandbox claim through PayPal’s own interface; Fairfold does not pretend a public dispute-creation endpoint exists. [Actual sandbox rehearsal →](docs/hriday/sandbox-rehearsal.md)
 
 ## AI describes. Code decides. Humans approve.
 
 ![Architecture illustration: payment context leads to shared evidence and a grounded draft. Motion stops at merchant approval; only an approved action proceeds to PayPal.](docs/media/approval-boundary.svg)
+
+```mermaid
+flowchart LR
+    subgraph AI[Models via packages/ai]
+        D1[Describe photos]
+        D2[Extract and cluster complaints]
+        D3[Draft replies and notes]
+    end
+    subgraph Code[Deterministic code]
+        C1[Compare attestation to the PayPal order]
+        C2[Signals, rates, intervals, q-values]
+        C3[Blockers, guards, hash-chain ledger]
+    end
+    subgraph Human[Merchant]
+        H1[Review the exact payload]
+        H2[Approve or cancel]
+    end
+    AI --> Code --> Human
+    H2 -->|approved only| P[packages/paypal to PayPal sandbox]
+    P --> PD[PayPal decides disputes]
+```
 
 <details>
 <summary><strong>Inspect the AI, code and human responsibilities</strong> · full rules and implementation links</summary>
@@ -387,6 +490,18 @@ pnpm --filter shopper-agent start --check
 
 [`render.yaml`](render.yaml) retains **web service + worker + PostgreSQL 16**, all from `main`. The web service builds the site and applies migrations before startup. Its Blueprint first-deploy hook seeds the labelled world; this actual manual deployment used one successful `pnpm seed` job because Blueprint capacity was blocked. Secrets stay private; site and API share the assigned origin.
 
+```mermaid
+flowchart LR
+    G[GitHub main] -->|manual deploy| B[Build: pnpm install and pnpm build]
+    B --> M[Pre-deploy: database migrations]
+    M --> API[Web service: website, API and MCP]
+    B --> WK[Background worker: queue, webhooks, polls, watchdog]
+    API <--> PG[(Private PostgreSQL 16)]
+    WK <--> PG
+    S[Private environment variables] -.-> API
+    S -.-> WK
+```
+
 **[Open the complete deployment guide →](docs/hriday/website-deployment.md#render-deployment)**
 
 The approved manual deployment is verified at `d23ee86`: API/site and worker on Starter, PostgreSQL 16 with 1 GB, all in Oregon. Automatic deploys and storage growth are off; PostgreSQL's external allow-list is empty. Reuse existing resources and preserve the encryption key. Provider and PayPal secrets still need private setup. [Exact configuration and release steps](docs/hriday/manual-render-deployment.md) · [Observed deployment receipt](docs/hriday/evidence/2026-11-13-render-live.md). No alternate hosting architecture was introduced.
@@ -397,15 +512,16 @@ Next, configure the existing model gateway privately on **both** code services a
 
 **Recently merged to `main`:**
 
-| Change                                                                                                                                                                                                                         | Commit               | Live on Render?                 |
-| :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------- | :------------------------------ |
-| Drawn illustrations of the two fictional products (HD-IND-01 hoodie, TS-IND-02 T-shirt) on the landing buyer card, the console order rows and the Pack Station line items. They are catalogue artwork, never packing evidence. | `c45d887`            | **No: needs a manual redeploy** |
-| Bounded `setup:sandbox:render` command that attaches the sandbox Business app to the existing hosted merchant, with service/database/sandbox guards. It makes no PayPal call.                                                  | `2ba9753`            | Deployed                        |
-| Live demo links, hosted screenshot tour and deployment receipts in this README.                                                                                                                                                | `1ddb204`, `24abdf6` | Documentation only              |
+| Change                                                                                                                                                                                                                         | Commit               | Live on Render?          |
+| :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------- | :----------------------- |
+| Drawn illustrations of the two fictional products (HD-IND-01 hoodie, TS-IND-02 T-shirt) on the landing buyer card, the console order rows and the Pack Station line items. They are catalogue artwork, never packing evidence. | `c45d887`            | **Yes**, verified 13 Nov |
+| Illustrated landing parcel cards and Pack Station preview tiles (item, size and batch views of the hoodie, plus a sealed-parcel drawing).                                                                                      | `05048c1`            | **Yes**, verified 13 Nov |
+| Bounded `setup:sandbox:render` command that attaches the sandbox Business app to the existing hosted merchant, with service/database/sandbox guards. It makes no PayPal call.                                                  | `2ba9753`            | Deployed                 |
+| Live demo links, hosted screenshot tour and deployment receipts in this README.                                                                                                                                                | `1ddb204`, `24abdf6` | Documentation only       |
 
-**Still to upload or run.** These are done privately by the team; none of them is complete yet:
+**Still to upload or run.** These are done privately by the team; items not struck through are still pending:
 
-1. **Redeploy the API service on Render** from the latest `main`, so the website serves the product illustrations. Automatic deploys are off.
+1. ~~**Redeploy the API service on Render** from the latest `main`.~~ **Done 13 Nov 2026 IST:** the live site serves the illustrations (see the [live screenshots](#product-illustrations-on-the-live-site)).
 2. **Activate the PayPal sandbox app** using the reviewed [hosted PayPal setup](docs/hriday/hosted-paypal-setup.md):
    1. ~~Run sandbox OAuth and the read-only app and dispute checks.~~ **Done 13 Nov 2026 IST:** OAuth, webhook-list read and dispute-list read PASS with GET requests only (0 webhooks registered, 0 disputes visible).
    2. Set `PAYPAL_CLIENT_ID` and `PAYPAL_CLIENT_SECRET` temporarily on the API service, one key at a time. Never upload the whole `.env`.
