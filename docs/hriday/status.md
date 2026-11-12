@@ -1,6 +1,6 @@
-# Hriday current status — 11 November 2026
+# Fairfold current status — 12 November 2026
 
-**Integrated local implementation; local verification PASS. External acceptance remains pending.** The user now requires integrated `main` (12 November); it contains both reviewed histories. Read [local completion handoff](local-closeout.md) for the run sequence and every remaining dependency, and [audit evidence](evidence/2026-11-11-audit.md) for observed checks.
+**Integrated website and local verification PASS on `main`; external acceptance remains pending.** The combined branch includes both reviewed histories. The supplied frontend is routed and API-backed without redesign; it no longer waits for Figma or a separate frontend host. Start with the [website/Render guide](website-deployment.md) and [12 November evidence](evidence/2026-11-12-website.md). The [earlier backend closeout](local-closeout.md) retains the real-account acceptance runbook.
 
 ## What is now present
 
@@ -8,16 +8,16 @@ Fresh Git ancestry verification confirmed Ishaan already merged published Hriday
 
 Hriday explicitly approved source-preserving surgical integration fixes and the bounded [buyer-note policy extension](ishaan-integration-review.md). Source points, Alex's single earlier refund and the 0.80 threshold are restored. Automatic runtime hash-embedding fallback is inactive. Q9 remains visible; Q2 return-address operations remain blocked before OAuth.
 
-| Task | Local implementation                                                                                                                             | Remaining source acceptance                                                                              |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
-| H1   | Workspace, PostgreSQL 16/schema, auth, OpenAPI, queue, ledger/blob store and Blueprint                                                           | First actual Render deployment and hosted readiness                                                      |
-| H2   | Full sandbox client, guarded checkout/capture, SDK harness, recording/import and scoped reads                                                    | Neel/Maya accounts, real purchase/capture, A4 and the deferred spike                                     |
-| H3   | Raw-body verification, durable event/job transactions, dedupe, reconciliation and one-minute poll                                                | Real signature/delivery/redelivery and hosted observation                                                |
-| H4   | Canonical dispute/detail/approval APIs, bounded retention, exact approved packs, fresh guards and durable execution claims                       | Real dispute fixture, current allowed actions and exact human-approved PayPal outcomes; Q2 remains open  |
-| H5   | Integrated photo attestation, current-proof checks, all fixed blockers, inspection, inventory/seal, tracking, approved actions and retention     | Real photo evaluation and account-backed tracking/message/refund effects                                 |
-| H6   | 15-minute watchdog, 72h/48h thresholds, concurrent alert dedupe, stable reads/acknowledgement and labelled demo courier updates                  | Hosted schedule/operational observation                                                                  |
-| H7   | Official MCP Streamable HTTP server, AI SDK MCP client, real intelligence tools, sandbox-only Toolkit adapter and executable human-gated shopper | Configured provider and actual sandbox shopper purchase/transcript; A13                                  |
-| H8   | Full source B17 seed, real scan/report composition, demo admin seed route, README/license, tests and deployment/handoff materials                | Provider-backed seed/evals, routed product frontend verification, hosted A1–A14 and submission artifacts |
+| Task | Local implementation                                                                                                                             | Remaining source acceptance                                                                             |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| H1   | Workspace, PostgreSQL 16/schema, auth, OpenAPI, queue, ledger/blob store and Blueprint                                                           | First actual Render deployment and hosted readiness                                                     |
+| H2   | Full sandbox client, guarded checkout/capture, SDK harness, recording/import and scoped reads                                                    | Neel/Maya accounts, real purchase/capture, A4 and the deferred spike                                    |
+| H3   | Raw-body verification, durable event/job transactions, dedupe, reconciliation and one-minute poll                                                | Real signature/delivery/redelivery and hosted observation                                               |
+| H4   | Canonical dispute/detail/approval APIs, bounded retention, exact approved packs, fresh guards and durable execution claims                       | Real dispute fixture, current allowed actions and exact human-approved PayPal outcomes; Q2 remains open |
+| H5   | Integrated photo attestation, current-proof checks, all fixed blockers, inspection, inventory/seal, tracking, approved actions and retention     | Real photo evaluation and account-backed tracking/message/refund effects                                |
+| H6   | 15-minute watchdog, 72h/48h thresholds, concurrent alert dedupe, stable reads/acknowledgement and labelled demo courier updates                  | Hosted schedule/operational observation                                                                 |
+| H7   | Official MCP Streamable HTTP server, AI SDK MCP client, real intelligence tools, sandbox-only Toolkit adapter and executable human-gated shopper | Configured provider and actual sandbox shopper purchase/transcript; A13                                 |
+| H8   | Full source B17 seed, scan/report composition, routed website, camera/review action bindings, MCP, README/license and Render handoff             | Provider-backed seed/evals, real photo/camera checks, hosted A1–A14 and submission artifacts            |
 
 ## Observed integration evidence
 
@@ -35,14 +35,12 @@ The Figma product frontend is absent and needs its approved design/implementatio
 
 No outbound message, billing entry, actual PayPal action, Devpost/YouTube submission or judging outcome is claimed. CP0, CP1 and CP2 remain unverified; the original checkpoints have not been moved. Historical closeout/evidence documents retain their original scope and do not override this status.
 
-## 12 November website integration (in progress)
+## 12 November website closeout
 
-Local `main` tracks the combined remote. The supplied landing/console are being connected without visual redesign. Original exports remain unchanged; prior backend evidence is historical until this checkout is checked. Render discovery found no Fairfold services in My Workspace.
-
-Website read/navigation unit: PASS for typecheck/lint and nine focused routing, transport and serving tests. Mutation bindings and browser/hosted verification remain pending. Standalone originals are unchanged.
-
-Website action unit: local camera/multipart/seal/approval/inspection bindings implemented; 15 focused tests, typecheck and lint PASS. Review dialogs reuse the supplied visual language. Real provider, camera, PayPal, browser and Render acceptance are not claimed by these tests.
-
-Browser reliability: native fetch and asset-budget issues found by Chromium are fixed. Seventeen focused tests, typecheck and lint PASS. First desktop/mobile navigation run passed; final restored dock/tab verification and database regression remain in progress.
-
-PostgreSQL regression: 575/575 checks PASS. Selected-order tab continuity and decoded legacy links now pass all 17 focused checks with typecheck. Final browser/MCP and whole-suite confirmation are running.
+- `main` is checked out locally and includes both reviewed histories. The entire supplied `standalone/` reference remains unchanged. Browser build preserves both original CSS blocks and the font, animation and template-runtime assets.
+- Landing plus five console views use real REST records, record-specific deep links, back/forward/refresh, keyboard selection and the original mobile tab/dock behavior. Simulated console handlers are excluded from the deployed build.
+- Camera capture, batch/tracking seal inputs, explicit override review, exact pack/PDF approval, action/message review and stock inspection/confirm/dismiss are wired to the existing guarded APIs. Tests and browser cancellation do not authorize or perform a PayPal action.
+- Final offline suite: **657 PASS, 0 FAIL, 319 SKIPPED** (database/account-gated cases). Separate PostgreSQL suite: **575 PASS, 0 FAIL**. Focused website checks: **17 PASS**. Actual local API/official MCP smoke: PASS, zero PayPal requests.
+- Chromium: all six pages at 1440 and 390 px, deep-link reload, history, keyboard order selection, selected packing route, active mobile tab, dock folding and seal-review cancellation PASS; no page overflow, JavaScript exceptions or failed API responses. Real camera permission/capture and provider evaluation remain NOT RUN.
+- Typecheck, build, lint, formatting, frozen install and current Render JSON Schema PASS. The Blueprint uses `main`, keeps D18, and adds the synthetic first-deploy seed hook. CLI platform validation requires separate CLI authentication; no infrastructure was applied.
+- Remaining human setup: Render account/billing/secrets and actual deployment/observation; model credentials/access and real photo tests; PayPal business/personal accounts, dispute spike, real checkout/webhook/dispute/approval outcomes and shopper transcript; Q2/joint review, hosted A1–A14 and submission recording. No successful real acceptance is manufactured.

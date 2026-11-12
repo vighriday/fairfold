@@ -1,6 +1,6 @@
 # Fairfold local completion handoff — 11 November 2026
 
-Branch: exact `Hriday`. Source: the protected submission and architecture originals, indexed in [source-contract.md](source-contract.md). No source document, secret or private inspection output is published.
+Current working branch: `main` (user instruction, 12 November). The [website/Render guide](website-deployment.md) supersedes earlier frontend and hosting steps; this document retains the backend acceptance handoff. Source: the protected submission and architecture originals, indexed in [source-contract.md](source-contract.md). No source document, secret or private inspection output is published.
 
 ## Integrated work
 

@@ -519,7 +519,6 @@ Hriday approved surgical source-preserving integration and the bounded buyer-not
 - I-D34 release rule IDs and I-D10 draft metadata are retained within strict action payload allowlists. Releases disable only the owning hypothesis's inspection rules; recorded merchant approval, ownership and durable side-effect claims remain required.
 - The original D18 Render topology remains unchanged. No Vercel deployment, billing entry, account action, outbound message or actual PayPal action was performed.
 
-
 ## H8 website integration — 12 November 2026
 
 - The user designated `main` as the single integrated working branch and authorized connecting the supplied frontend without redesign. Verified `origin/main` at eb0174c contains both Hriday e90cb6d and origin/ishaan. Local main tracks origin/main; no history is rewritten. Older branch/frontend ownership instructions are superseded for this work.

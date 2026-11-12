@@ -4,7 +4,7 @@ Fairfold is a neutral witness for both sides of a PayPal payment. It records pac
 
 Built by Hriday and Ishaan for the PayPal AI Hackathon. The source idea and D1–D18 remain unchanged. All PayPal integration is sandbox only.
 
-**11 November 2026: integrated local implementation; external acceptance pending.** `Hriday` contains Ishaan's existing merge of the platform and his intelligence/fixture work, plus the focused audit repairs. The full B17 seed exists. Account-backed PayPal checks, provider/photo evaluations, Render deployment and the Figma product frontend are still required. See the [current status](docs/hriday/status.md), [completion handoff](docs/hriday/local-closeout.md) and [audit evidence](docs/hriday/evidence/2026-11-11-audit.md).
+**12 November 2026: integrated website on `main`; external acceptance pending.** The combined branch includes both reviewed histories. The supplied landing page and merchant console now form one routed website with real API reads, camera capture and explicitly reviewed actions. Its original components, styles, fonts and animations are preserved. See the [website and Render guide](docs/hriday/website-deployment.md) for routes, deployment and remaining human setup.
 
 ## Run locally
 
@@ -20,7 +20,7 @@ pnpm seed
 pnpm dev
 ```
 
-The API serves `/docs`, `/healthz` and the unstyled `/dev` sandbox harness. This repository does not contain a Figma product frontend. The API and worker use the same database and pg-boss queue. No account credentials are required for the local catalogue, deterministic logic or fixture tests.
+Open `http://localhost:3000/` (or your configured `PORT`) for the landing page and `/console/orders` for the merchant console. The same API serves the website, `/docs`, `/healthz`, `/mcp` and the unstyled `/dev` sandbox checkout harness. Demo access requires `DEMO_MODE=true`; the console obtains the documented short-lived Neel role token in memory. The API and worker use the same database and pg-boss queue. No account credentials are required for the local catalogue, deterministic logic or fixture tests.
 
 ## Configure models
 
@@ -61,9 +61,9 @@ The resulting sanitized `docs/agent-run.txt` must come from an actual run; none 
 
 ## Layout and remaining work
 
-`apps/api` hosts REST/OpenAPI/MCP and demo routes; `apps/worker` runs the 16 job handlers. `packages/paypal` owns PayPal access; `packages/ai` owns model access; `packages/intelligence` computes signals, reports, evidence and shared causes. Contracts, database, jobs, ledger and shopper boundaries remain separate packages. `apps/shopper-agent` is the executable shopper.
+`apps/web` builds the supplied design into browser assets served by `apps/api`; `standalone/` remains the unchanged visual reference. `apps/api` hosts the website, REST/OpenAPI/MCP and demo routes; `apps/worker` runs the 16 job handlers. `packages/paypal` owns PayPal access; `packages/ai` owns model access; `packages/intelligence` computes signals, reports, evidence and shared causes. Contracts, database, jobs, ledger and shopper boundaries remain separate packages. `apps/shopper-agent` is the executable shopper.
 
-[Completion handoff](docs/hriday/local-closeout.md) lists every remaining account, deployment, Figma and real-evidence dependency. Render remains the source hosting architecture; the Blueprint explicitly selects `Hriday` and disables automatic deployment. No billing details, deployment, outbound message or submission was performed by this audit.
+[Website/Render handoff](docs/hriday/website-deployment.md) is the current website deployment guide; [earlier backend closeout](docs/hriday/local-closeout.md) retains the account-backed acceptance steps. Render remains the source hosting architecture: one web service for site/API, one worker and PostgreSQL. The Blueprint selects `main`, builds the website, migrates before API start and seeds the labelled demo world after the first API deployment. Automatic deployment stays disabled. Actual hosting, provider/camera evaluations, sandbox acceptance and submission evidence remain pending; no billing details were entered.
 
 Earlier provider measurements remain in [Ishaan's acceptance record](docs/evidence/2026-11-11-intelligence-local-acceptance.md) and [AI usage write-up](docs/ai-tools.md). They are historical measurements with their recorded settings, not newly verified results for the restored source defaults.
 

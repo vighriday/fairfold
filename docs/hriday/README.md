@@ -4,6 +4,8 @@
 
 This guide turns the existing Fairfold documents into an ordered work queue for Hriday. It preserves the idea, the chosen architecture and the PayPal-only payment integration. The user first selected research and documents, then authorized building H1 around the absent sandbox accounts on 9 November 2026.
 
+For the integrated `main` website, start with the [website and Render guide](website-deployment.md). It supersedes older branch/frontend handoff instructions for the work authorized on 12 November.
+
 Read and act in this order:
 
 1. [Current status](status.md): what exists, what remains untested, and the immediate action.

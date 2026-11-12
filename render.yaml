@@ -12,10 +12,11 @@ services:
     runtime: node
     plan: starter
     repo: https://github.com/vighriday/fairfold
-    branch: Hriday
+    branch: main
     autoDeployTrigger: off
     buildCommand: pnpm install --frozen-lockfile --prod=false && pnpm build
     preDeployCommand: pnpm db:migrate
+    initialDeployHook: pnpm seed
     startCommand: pnpm --filter @fairfold/api start
     healthCheckPath: /healthz
     envVars:
@@ -60,7 +61,7 @@ services:
     runtime: node
     plan: starter
     repo: https://github.com/vighriday/fairfold
-    branch: Hriday
+    branch: main
     autoDeployTrigger: off
     buildCommand: pnpm install --frozen-lockfile --prod=false && pnpm build
     startCommand: pnpm --filter @fairfold/worker start

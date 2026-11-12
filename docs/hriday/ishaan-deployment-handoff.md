@@ -1,5 +1,7 @@
 # Conditional H1 deployment handoff for Ishaan
 
+**12 November update:** the current deployment uses integrated `main` and the [website/Render guide](website-deployment.md), including the browser build, model configuration and first-deploy seed. The H1-only procedure below is historical; its Hriday branch/Figma/secrets instructions are superseded. No handoff has been sent.
+
 Prepared on 9 November 2026 IST. This is ready if Hriday decides deployment should move to Ishaan. It has not been sent, accepted or assigned. Keep all source changes and deploys on `Hriday`.
 
 ## What is blocking hosting

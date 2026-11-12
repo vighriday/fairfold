@@ -1,5 +1,7 @@
 # First H1 Render deployment
 
+**12 November update:** the current deployment uses integrated `main` and the [website/Render guide](website-deployment.md), including the browser build, model configuration and first-deploy seed. The H1-only procedure below is historical; its Hriday branch/Figma/secrets instructions are superseded. No handoff has been sent.
+
 The source-prescribed deployment is one Blueprint containing the API, worker and PostgreSQL 16. Use the published `Hriday` branch. H1 remains IN PROGRESS until the actual hosted checks below pass.
 
 The user's latest Dashboard screenshot shows **Payment Information Required** for these paid services. They also report deleting a stale Blueprint; any quota reset or synchronization delay is unverified. Recheck capacity once in the Dashboard after the user's wait, but do not assume it removes the separate billing gate. If deployment moves to Ishaan's workspace, use the [conditional handoff](ishaan-deployment-handoff.md). No service plans or architecture have been changed.

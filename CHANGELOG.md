@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-12 — H8 main-branch Render deployment preparation
+
+- Pointed API and worker at main, retained the source Render topology/plans, and added the idempotent synthetic seed as the API first-deploy hook. The existing build now produces the site on the API origin. Updated local origin/auth examples and reconciled active deployment handoffs.
+- Added the complete website route/interaction/deployment guide and current human setup boundary.
+- Validation: frozen install, build/typecheck/lint/format and current official Render JSON Schema PASS. CLI platform validation requires separate CLI login; no resource, billing or PayPal action was performed. Final local acceptance: 657 offline PASS (319 gated SKIP), 575 PostgreSQL-suite PASS, 17 focused website PASS, Chromium desktop/mobile/history/review cancellation PASS, official API/MCP smoke PASS with zero PayPal requests.
+
 ## 2026-11-12 — H8 selected-order and legacy navigation
 
 - Pack Station navigation now preserves the selected order. Corrected the decoded legacy console URL redirect, found by expanding the route acceptance checks.
