@@ -4,6 +4,8 @@ All artwork is self-hosted. The graphics add presentation around the existing we
 
 **Every record shown is synthetic. No PayPal purchase, signature verification, dispute submission, offer, message or refund was performed to make these assets.** Shared Cause is visibly empty because the local embedding provider is not configured. A seeded resolved dispute is not a real sandbox dispute fixture. The mockup and tour do not replace the required functioning demo video.
 
+Market figures in the supplied landing-page design are presentation copy, not measured Fairfold results. This README does not use them as evidence of impact or performance.
+
 | Asset                                                                         | Source and meaning                                                                                                                                                                                                                               |
 | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | [Light cover](fairfold-hero-light.svg) · [dark cover](fairfold-hero-dark.svg) | Independently authored, code-native SVGs using Fairfold’s existing ink/paper/violet palette; product positioning, not acceptance evidence                                                                                                        |

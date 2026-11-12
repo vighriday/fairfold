@@ -31,7 +31,7 @@ Hriday explicitly approved source-preserving surgical integration fixes and the 
 
 Accounts, secrets and billing details belong in private setup/provider surfaces, never chat or Git. The selected Render workspace remains **My Workspace**; the earlier capacity/billing issue has not been assumed resolved. D18 hosting remains Render, with an API, worker and PostgreSQL. No Vercel architecture change is authorized.
 
-The Figma product frontend is absent and needs its approved design/implementation/export. Backend REST/MCP and the unstyled `/dev` harness are available for integration. Real packing photos, model access, Q2 joint review and real sandbox/hosted evidence are also pending. These are listed concretely in the [handoff](local-closeout.md#remaining-work-requiring-accounts-assets-or-human-decisions).
+The supplied frontend is integrated into the routed website under the 12 November authorization. Backend REST/MCP and the unstyled `/dev` harness remain available. Real packing photos, model access, Q2 joint review and real sandbox/hosted evidence are also pending. These are listed concretely in the [handoff](local-closeout.md#remaining-work-requiring-accounts-assets-or-human-decisions).
 
 No outbound message, billing entry, actual PayPal action, Devpost/YouTube submission or judging outcome is claimed. CP0, CP1 and CP2 remain unverified; the original checkpoints have not been moved. Historical closeout/evidence documents retain their original scope and do not override this status.
 
@@ -47,4 +47,6 @@ No outbound message, billing entry, actual PayPal action, Devpost/YouTube submis
 
 ## README presentation — 12 November
 
-Self-hosted product media and the executable documentation/proof check are ready. Seven fresh local API-bound captures use synthetic records at website commit 6e0268c. The six-frame GIF is 19.2 seconds; covers have light/dark variants and animations have reduced-motion handling. No PayPal action was performed. README narrative/layout review and publication remain in progress; external product acceptance is unchanged.
+The submission README is ready locally: PayPal-first product narrative, direct implementation/evidence links, two Mermaid diagrams, expandable technical sections, light/dark SVG covers, actual desktop/phone mockup, a 19.2-second optional GIF and reduced-motion still. Seven synthetic-data local captures carry explicit provenance. The `pnpm docs:check` command verifies 94 local links/anchors, four described self-contained SVGs, seven capture hashes and the synthetic proof/tamper demonstration, with zero PayPal requests.
+
+Local Chromium light/dark/mobile previews and explicit Mermaid 11 parsing/rendering PASS with no diagram errors, broken images, JavaScript exceptions or page overflow. Typecheck/lint/format PASS. The application, original website and D1–D18 are unchanged; previous application test counts retain their recorded date/commit. See [README evidence](evidence/2026-11-12-readme.md). Publication of the new README commits and the actual published GitHub render remain pending; external product acceptance is unchanged.

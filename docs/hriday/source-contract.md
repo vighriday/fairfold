@@ -12,7 +12,7 @@ The file names in the last two rows are relative to `docs/internal/`. That folde
 
 ## Authority and reading map
 
-The user's instructions govern: exact branch `Hriday`, no changes to the idea or architecture, PayPal integration only, research and documents first. The idea document defines the experience. Architecture sections 3, 5, 7–11, 14 and 15 define how to implement it. A factual conflict with a current vendor interface is recorded for review; it does not permit an unannounced contract change.
+The 9 November baseline required exact branch `Hriday`, PayPal-only integration and research first. The user's 12 November instruction supersedes the branch/frontend restrictions: work on integrated `main` and connect the supplied website without redesign. The idea and architecture remain fixed. The idea document defines the experience. Architecture sections 3, 5, 7–11, 14 and 15 define how to implement it. A factual conflict with a current vendor interface is recorded for review; it does not permit an unannounced contract change.
 
 | Architecture sections | Use                                                                                  |
 | --------------------- | ------------------------------------------------------------------------------------ |

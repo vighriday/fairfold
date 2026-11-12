@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-12 — PayPal submission README
+
+- Rebuilt the README around the two-sided proof/trust story, actual product visuals, native disclosures, two Mermaid diagrams, a PayPal-to-source map, a runnable setup and an evidence table with remaining account/provider/hosting gates. Added the executable proof-specimen affordance, light/dark artwork and reduced-motion media sources.
+- Reconciled stale main/frontend statements in active guides without changing the original contracts or website.
+- Validation: 94 local references, SVG/capture/proof checks, explicit Mermaid 11 parsing/rendering, light/dark/mobile previews, typecheck/lint/format PASS. A diagram syntax issue was found and repaired during visual review. New README publication and GitHub-hosted rendering remain pending; prior application results keep their original attribution.
+
 ## 2026-11-12 — README visual assets and executable proof specimen
 
 - Added self-hosted light/dark SVG covers, an animated approval-boundary illustration, actual desktop/phone website mockup, seven original local captures and a 19.2-second captioned GIF with a reduced-motion still. Media provenance identifies synthetic data and the captured website commit; no PayPal effect was performed.

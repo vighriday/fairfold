@@ -1,6 +1,6 @@
 # Hriday research and execution guide
 
-**Current entry point, 11 November 2026:** [integrated local completion handoff](local-closeout.md), [current status](status.md) and [audit evidence](evidence/2026-11-11-audit.md). Ishaan's existing platform merge, intelligence and complete B17 seed are integrated with the focused repairs. Older task guides below are historical execution records; the current handoff names the remaining account, Figma, model and hosted acceptance work.
+**Current entry point, 12 November 2026:** [website/Render guide](website-deployment.md), [current status](status.md), [website evidence](evidence/2026-11-12-website.md) and [README presentation evidence](evidence/2026-11-12-readme.md). Integrated main includes both reviewed histories and the routed frontend; older task guides retain their historical scope. The remaining gates are account/model/photo/hosting acceptance and joint review.
 
 This guide turns the existing Fairfold documents into an ordered work queue for Hriday. It preserves the idea, the chosen architecture and the PayPal-only payment integration. The user first selected research and documents, then authorized building H1 around the absent sandbox accounts on 9 November 2026.
 
