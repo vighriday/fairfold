@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-12 — README visual assets and executable proof specimen
+
+- Added self-hosted light/dark SVG covers, an animated approval-boundary illustration, actual desktop/phone website mockup, seven original local captures and a 19.2-second captioned GIF with a reduced-motion still. Media provenance identifies synthetic data and the captured website commit; no PayPal effect was performed.
+- Added an optional reproducible media generator and `pnpm docs:check`, which verifies local links/assets, capture hashes and a clearly synthetic hash-format specimen using production canonical JSON/SHA-256; an in-memory payload change is detected.
+- Validation: media generation/XML/GIF checks PASS, typecheck/lint PASS, local Chromium light/dark/mobile image checks and Mermaid rendering PASS. README content and its final publication review are in progress.
+
 ## 2026-11-12 — H8 main-branch Render deployment preparation
 
 - Pointed API and worker at main, retained the source Render topology/plans, and added the idempotent synthetic seed as the API first-deploy hook. The existing build now produces the site on the API origin. Updated local origin/auth examples and reconciled active deployment handoffs.

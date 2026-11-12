@@ -24,7 +24,8 @@
     "setup:local": "tsx scripts/setup-local.ts",
     "setup:sandbox": "tsx scripts/setup-sandbox.ts",
     "seed": "tsx scripts/seed.ts",
-    "build:web": "tsx scripts/build-web.ts"
+    "build:web": "tsx scripts/build-web.ts",
+    "docs:check": "tsx scripts/check-readme.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

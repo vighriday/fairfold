@@ -1,0 +1,16 @@
+{
+  "source_commit": "6e0268c",
+  "captured_on": "2026-11-12",
+  "mode": "actual-local-api-bound-website",
+  "records": "synthetic-seeded-data",
+  "paypal_actions": "none",
+  "capture_sha256": {
+    "disputes.png": "c1703371c67773cf33f6773f9e75da5dbe2fd91af496bf238b2b64ea99f97e13",
+    "landing.png": "45ce712316c46612354f139b2b2567f38a4bfc9a18dc34d6770a57af0f7aca4d",
+    "orders.png": "5e55594b3ff111f00fc9a01a0e05b815aeecfebddaa4786ff75c787b6e9dbc72",
+    "pack-mobile.png": "c0dd86201752c6c1a1693369699e1cc652720f7633549d6c0076c4211f2a85a3",
+    "pack.png": "838369968a5f8ba5810f657494395e0d75c5a6fb5e517dfefcfde0d30e5862a9",
+    "report.png": "19bfe34f82eff77dce77873b44a95bdf6b8c22fdb08f2b7fd52ccb6a385e64f1",
+    "shared-cause.png": "34b3c5f84e3ff41850520c982b947af0e9bc36dc40d22562c4a80d532bab69ed"
+  }
+}

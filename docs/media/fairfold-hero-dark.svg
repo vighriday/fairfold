@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="480" viewBox="0 0 1280 480" role="img" aria-labelledby="title desc">
+<title id="title">Fairfold — proof before dispatch, trust before payment</title><desc id="desc">A neutral witness for both sides of a PayPal payment. Record evidence, connect patterns, review before acting. Sandbox hackathon prototype.</desc>
+<defs><pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".7" fill="#aba5bc" opacity=".22"/></pattern></defs>
+<rect width="1280" height="480" rx="28" fill="#15131d"/>
+<rect x="760" width="520" height="480" fill="url(#grid)"/>
+<path d="M868 0 690 480M1100 0 920 480M1280 120 1140 480" stroke="#bba0ff" stroke-opacity=".15" fill="none"/>
+<g transform="translate(50 38)"><rect width="29" height="29" rx="7" fill="#f3f1f6"/><path d="M0 0 29 29V13L16 0Z" fill="#8b44fa"/><text x="42" y="23" font-family="Arial,sans-serif" font-size="29" font-weight="600" fill="#f3f1f6">Fairfold</text></g>
+<rect x="872" y="38" width="358" height="32" rx="16" fill="#24202f" stroke="#3a3249"/>
+<text x="1051" y="59" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" letter-spacing="1.3" fill="#aba5bc">PAYPAL AI HACKATHON  /  SANDBOX</text>
+<text x="50" y="160" font-family="Arial,sans-serif" font-size="58" font-weight="600" letter-spacing="-2.5" fill="#f3f1f6">Proof before dispatch.</text>
+<text x="50" y="226" font-family="Georgia,serif" font-size="62" font-style="italic" letter-spacing="-1.5" fill="#bba0ff">Trust before payment.</text>
+<text x="52" y="271" font-family="Arial,sans-serif" font-size="19" fill="#aba5bc">A neutral witness for both sides of a PayPal payment.</text>
+<g transform="translate(890 115) rotate(7 145 100)">
+ <rect x="-8" y="12" width="278" height="204" rx="20" fill="#7435e8" opacity=".25"/>
+ <path d="M0 0H216L268 52V194H0Z" fill="#24202f" stroke="#3a3249" stroke-width="2"/>
+ <path d="M216 0V52H268" fill="#c9b2ff" stroke="#3a3249" stroke-width="2"/>
+ <text x="24" y="44" font-family="monospace" font-size="12" letter-spacing="1.4" fill="#aba5bc">PROOF LEDGER</text>
+ <path d="M24 65H192M24 124H236M24 158H236" stroke="#3a3249"/>
+ <text x="24" y="101" font-family="Georgia,serif" font-size="29" fill="#f3f1f6">One shared record.</text>
+ <text x="24" y="146" font-family="monospace" font-size="12" fill="#bba0ff">CAPTURE → PACK → SEAL</text>
+ <text x="24" y="180" font-family="monospace" font-size="12" fill="#aba5bc">Human approval before action.</text>
+</g>
+<path d="M54 325H1226" stroke="#3a3249"/>
+<text x="52" y="371" font-family="monospace" font-size="14" fill="#bba0ff">01 / RECORD</text><text x="52" y="410" font-family="Arial,sans-serif" font-size="23" fill="#f3f1f6">Evidence before conflict</text>
+<text x="470" y="371" font-family="monospace" font-size="14" fill="#bba0ff">02 / CONNECT</text><text x="470" y="410" font-family="Arial,sans-serif" font-size="23" fill="#f3f1f6">Patterns across orders</text>
+<text x="885" y="371" font-family="monospace" font-size="14" fill="#bba0ff">03 / REVIEW</text><text x="885" y="410" font-family="Arial,sans-serif" font-size="23" fill="#f3f1f6">A human before action</text>
+
+</svg>

@@ -44,3 +44,7 @@ No outbound message, billing entry, actual PayPal action, Devpost/YouTube submis
 - Chromium: all six pages at 1440 and 390 px, deep-link reload, history, keyboard order selection, selected packing route, active mobile tab, dock folding and seal-review cancellation PASS; no page overflow, JavaScript exceptions or failed API responses. Real camera permission/capture and provider evaluation remain NOT RUN.
 - Typecheck, build, lint, formatting, frozen install and current Render JSON Schema PASS. The Blueprint uses `main`, keeps D18, and adds the synthetic first-deploy seed hook. CLI platform validation requires separate CLI authentication; no infrastructure was applied.
 - Remaining human setup: Render account/billing/secrets and actual deployment/observation; model credentials/access and real photo tests; PayPal business/personal accounts, dispute spike, real checkout/webhook/dispute/approval outcomes and shopper transcript; Q2/joint review, hosted A1–A14 and submission recording. No successful real acceptance is manufactured.
+
+## README presentation — 12 November
+
+Self-hosted product media and the executable documentation/proof check are ready. Seven fresh local API-bound captures use synthetic records at website commit 6e0268c. The six-frame GIF is 19.2 seconds; covers have light/dark variants and animations have reduced-motion handling. No PayPal action was performed. README narrative/layout review and publication remain in progress; external product acceptance is unchanged.
