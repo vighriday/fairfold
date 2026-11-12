@@ -40,3 +40,5 @@ No outbound message, billing entry, actual PayPal action, Devpost/YouTube submis
 Local `main` tracks the combined remote. The supplied landing/console are being connected without visual redesign. Original exports remain unchanged; prior backend evidence is historical until this checkout is checked. Render discovery found no Fairfold services in My Workspace.
 
 Website read/navigation unit: PASS for typecheck/lint and nine focused routing, transport and serving tests. Mutation bindings and browser/hosted verification remain pending. Standalone originals are unchanged.
+
+Website action unit: local camera/multipart/seal/approval/inspection bindings implemented; 15 focused tests, typecheck and lint PASS. Review dialogs reuse the supplied visual language. Real provider, camera, PayPal, browser and Render acceptance are not claimed by these tests.

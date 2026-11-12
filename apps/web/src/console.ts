@@ -12,6 +12,7 @@ import type {
 } from '@fairfold/contracts';
 import { DemoSubjects } from '@fairfold/contracts/common';
 import { ApiClient, ApiError, type Activity } from './api.js';
+import { createActions } from './actions.js';
 import { parseRoute, routePath, type Route } from './router.js';
 import {
   money,
@@ -74,6 +75,8 @@ class Console extends window.DCLogic {
   timer?: ReturnType<typeof setTimeout>;
   generation = 0;
   poll?: ReturnType<typeof setTimeout>;
+  pollRemaining = 0;
+  actions = createActions(this);
   selectedOffer = '';
   api = new ApiClient(document.documentElement.dataset.demo === 'true', (entry) => {
     this.logs = [entry, ...this.logs].slice(0, 7);
@@ -92,6 +95,7 @@ class Console extends window.DCLogic {
   }
   componentDidMount() {
     addEventListener('popstate', () => {
+      document.querySelectorAll('dialog').forEach((dialog) => dialog.close());
       this.route = parseRoute(location.pathname) ?? { view: 'orders' };
       void this.loadView();
     });
@@ -137,7 +141,7 @@ class Console extends window.DCLogic {
     this.error = '';
     this.redraw();
     const jobs = [
-      this.api.list<OrderRow>('/api/orders').then((data) => {
+      this.api.list<OrderRow>('/api/merchant/orders').then((data) => {
         this.orders = data;
       }),
       this.api.list<DisputeRow>('/api/merchant/disputes').then((data) => {
@@ -241,6 +245,12 @@ class Console extends window.DCLogic {
       if (generation === this.generation) {
         this.loading = false;
         this.redraw();
+        if (this.pollRemaining > 0) {
+          this.pollRemaining--;
+          this.poll = setTimeout(() => {
+            if (!this.busy) void this.loadView();
+          }, 12_000);
+        }
       }
     }
   }
@@ -259,15 +269,6 @@ class Console extends window.DCLogic {
       this.redraw();
     }
   }
-  // Mutating controls are connected in the next focused integration unit.
-  actionPending = () =>
-    this.fail(
-      new ApiError(
-        'ACTION_NOT_READY',
-        'This control is awaiting its reviewed action binding.',
-        409,
-      ),
-    );
   renderVals() {
     const o = this.order,
       s = o?.buyerSignal,
@@ -369,7 +370,7 @@ class Console extends window.DCLogic {
           sub: photo ? `${photo.sha256.slice(0, 12)} · ${photo.createdAt}` : 'Tap to capture',
           bg: photo ? 'oklch(0.95 0.028 295)' : 'transparent',
           bd: photo ? '1px solid rgba(21,19,29,.12)' : '1.5px dashed rgba(21,19,29,.3)',
-          shoot: this.actionPending,
+          shoot: () => this.actions.shootPack(label),
         };
       }),
       attPill: p?.attestation
@@ -378,7 +379,7 @@ class Console extends window.DCLogic {
       attBg: 'oklch(0.95 0.028 295)',
       attFg: INK,
       attNote: p?.attestation
-        ? 'Server attestation for the current photos. Missing verification remains a blocker.'
+        ? 'Server attestation for the current photos. Missing verification remains a blocker; review an explicit override only when permitted.'
         : 'Capture the required photos. A configured vision provider and worker must attest them before sealing.',
       attLines: p?.attestation
         ? [
@@ -402,12 +403,14 @@ class Console extends window.DCLogic {
         code,
         text: 'Resolve this server check before sealing.',
       })) ?? [{ code: 'NOT_LOADED', text: 'Select a captured order.' }],
-      seal: this.actionPending,
+      seal: () => this.actions.seal(),
       sealLabel: o?.shipment
         ? `Shipment ${o.shipment.status}`
         : this.busy
           ? 'Saving…'
-          : 'Review and seal order',
+          : p?.attestation && p.attestation.status !== 'match'
+            ? 'Review attestation / override'
+            : 'Review and seal order',
       sealBg: p?.canSeal ? VIOLET : 'rgba(21,19,29,.08)',
       sealFg: p?.canSeal ? '#fff' : '#625e70',
       ledger:
@@ -450,10 +453,10 @@ class Console extends window.DCLogic {
         : pack?.status === 'draft'
           ? 'Review evidence pack →'
           : pack
-            ? `Pack ${pack.status} · rebuild draft`
+            ? `Pack ${pack.status} · view status`
             : 'Build evidence pack',
       btnBg: VIOLET,
-      act: this.actionPending,
+      act: () => this.actions.dispute(),
       note: 'Every action requires your approval. PayPal decides disputes. Sandbox acceptance remains pending.',
     };
     const primary = h?.stats.primary;
@@ -527,24 +530,27 @@ class Console extends window.DCLogic {
           btn: a.status === 'proposed' ? 'Review and approve' : a.status,
           bg: INK,
           fg: PAPER,
-          go: this.actionPending,
+          go: () => this.actions.approve(a),
         })) ?? [],
-      inspCount: 'Server attestations required',
+      inspCount: `${h ? (this.actions.submittedInspections[h.id]?.length ?? 0) : 0} photos submitted this session`,
       units: [0, 1, 2].map((i) => ({
         label: `unit ${i + 1}`,
-        sub: 'Tap to capture',
+        sub:
+          h && this.actions.submittedInspections[h.id]?.[i]
+            ? 'Submitted � server verification pending'
+            : 'Tap to capture',
         fg: '#625e70',
         bg: 'transparent',
         bd: '1.5px dashed rgba(21,19,29,.3)',
-        shoot: this.actionPending,
+        shoot: () => this.actions.inspect(),
       })),
       inspNote:
         'Capture distinct stock units. Confirmation checks actual server attestations; local clicks never count as inspections.',
       confLabel: h?.status === 'confirmed' ? 'Confirmed' : 'Confirm shared cause',
       confBg: VIOLET,
       confFg: '#fff',
-      confirm: this.actionPending,
-      dismiss: this.actionPending,
+      confirm: () => this.actions.decide('confirm'),
+      dismiss: () => this.actions.decide('dismiss'),
     };
     const f = this.report?.fulfilment;
     return {

@@ -481,3 +481,9 @@ At the user's request, the unpublished H1 commit `d1f3055` was replaced by focus
 - Rechecked both original DOCX SHA-256 digests; both unchanged. Confirmed `Hriday`, private-directory/credential exclusions and absence of application scaffolding.
 - Prepared the local baseline commit `DOCS: establish Hriday research and execution baseline`; Git history is the authoritative commit identifier. No H task is marked complete.
 - Application tests, sandbox actions, AI evaluations and deployments: NOT RUN. No application or dependency installation was created. No outbound team message, remote push, video upload or hackathon submission was performed.
+
+## 2026-11-12 — H8 reviewed website actions
+
+- Connected fresh camera capture, labelled multipart uploads, actual batch/tracking seal inputs, explicit attestation overrides, exact evidence-pack review/PDF download, shared-cause action review, stock inspection and confirm/dismiss controls. Reused the supplied console card/button styling for functional review dialogs.
+- Added cancellation, duplicate-click and stale-view guards; an unknown POST outcome is never retried automatically. Approval and sealing are labelled separately from PayPal execution. Corrected the merchant order-list binding to the canonical endpoint.
+- Validation: typecheck/lint PASS; 15 focused route/transport/action/server tests PASS. Real camera/provider/PayPal and browser/hosted acceptance are still pending.

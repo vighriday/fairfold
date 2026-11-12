@@ -146,6 +146,7 @@ export function bindTemplate(source: string): string {
   replace('4 “never arrived” complaints older than 72 hours with no reply.', '{{ quickNote }}');
   replace('AI shopping agent · MCP', 'AI shopping agent · MCP · example workflow');
   replace('search_catalog → 2 stores', 'search_catalog → compare returned stores');
+  replace('Inspect B17 stock · seam_closeup', 'Inspect stock · {{ sc.value }}');
   replace('PayPal sandbox calls', 'Fairfold activity');
   replace(
     '<div style="margin-top:10px;max-height:min(46vh,320px);',
