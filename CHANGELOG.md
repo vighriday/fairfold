@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-12 — Main branch website authority
+
+- Verified main includes both reviewed branch histories and checked it out locally. Recorded the user’s authorization to connect the existing frontend without redesign and retain the Render API/worker/PostgreSQL architecture.
+- Read-only Render discovery found no Fairfold service in My Workspace; hosting and account/provider acceptance remain pending.
+
 ## 2026-11-12 — Standalone browser build of the landing page and console
 
 - Added `standalone/`: a static browser build of the Claude Design landing page and merchant console. It opens straight from disk or any static server, without the export's in-page unpacking runtime. The original exports are kept unchanged in `standalone/design-export/`. It shows the design's fixed demo data and is not connected to the API.

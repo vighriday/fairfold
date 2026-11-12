@@ -1,6 +1,6 @@
 # Hriday current status — 11 November 2026
 
-**Integrated local implementation; local verification PASS. External acceptance remains pending.** Work stays on exact branch `Hriday`. Read [local completion handoff](local-closeout.md) for the run sequence and every remaining dependency, and [audit evidence](evidence/2026-11-11-audit.md) for observed checks.
+**Integrated local implementation; local verification PASS. External acceptance remains pending.** The user now requires integrated `main` (12 November); it contains both reviewed histories. Read [local completion handoff](local-closeout.md) for the run sequence and every remaining dependency, and [audit evidence](evidence/2026-11-11-audit.md) for observed checks.
 
 ## What is now present
 
@@ -17,7 +17,7 @@ Hriday explicitly approved source-preserving surgical integration fixes and the 
 | H5   | Integrated photo attestation, current-proof checks, all fixed blockers, inspection, inventory/seal, tracking, approved actions and retention     | Real photo evaluation and account-backed tracking/message/refund effects                                |
 | H6   | 15-minute watchdog, 72h/48h thresholds, concurrent alert dedupe, stable reads/acknowledgement and labelled demo courier updates                  | Hosted schedule/operational observation                                                                 |
 | H7   | Official MCP Streamable HTTP server, AI SDK MCP client, real intelligence tools, sandbox-only Toolkit adapter and executable human-gated shopper | Configured provider and actual sandbox shopper purchase/transcript; A13                                 |
-| H8   | Full source B17 seed, real scan/report composition, demo admin seed route, README/license, tests and deployment/handoff materials                | Provider-backed seed/evals, Figma product frontend, hosted A1–A14 and submission artifacts              |
+| H8   | Full source B17 seed, real scan/report composition, demo admin seed route, README/license, tests and deployment/handoff materials                | Provider-backed seed/evals, routed product frontend verification, hosted A1–A14 and submission artifacts              |
 
 ## Observed integration evidence
 
@@ -34,3 +34,7 @@ Accounts, secrets and billing details belong in private setup/provider surfaces,
 The Figma product frontend is absent and needs its approved design/implementation/export. Backend REST/MCP and the unstyled `/dev` harness are available for integration. Real packing photos, model access, Q2 joint review and real sandbox/hosted evidence are also pending. These are listed concretely in the [handoff](local-closeout.md#remaining-work-requiring-accounts-assets-or-human-decisions).
 
 No outbound message, billing entry, actual PayPal action, Devpost/YouTube submission or judging outcome is claimed. CP0, CP1 and CP2 remain unverified; the original checkpoints have not been moved. Historical closeout/evidence documents retain their original scope and do not override this status.
+
+## 12 November website integration (in progress)
+
+Local `main` tracks the combined remote. The supplied landing/console are being connected without visual redesign. Original exports remain unchanged; prior backend evidence is historical until this checkout is checked. Render discovery found no Fairfold services in My Workspace.

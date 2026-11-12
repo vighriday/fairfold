@@ -518,3 +518,11 @@ Hriday approved surgical source-preserving integration and the bounded buyer-not
 - I-D40 is approved only for the exact leaves, list/text budgets and redaction failure boundary in the review. Unmarked messages never become buyer-authored. Seller/arbiter notes remain excluded.
 - I-D34 release rule IDs and I-D10 draft metadata are retained within strict action payload allowlists. Releases disable only the owning hypothesis's inspection rules; recorded merchant approval, ownership and durable side-effect claims remain required.
 - The original D18 Render topology remains unchanged. No Vercel deployment, billing entry, account action, outbound message or actual PayPal action was performed.
+
+
+## H8 website integration — 12 November 2026
+
+- The user designated `main` as the single integrated working branch and authorized connecting the supplied frontend without redesign. Verified `origin/main` at eb0174c contains both Hriday e90cb6d and origin/ishaan. Local main tracks origin/main; no history is rewritten. Older branch/frontend ownership instructions are superseded for this work.
+- Keep `standalone/` as the unchanged visual reference. Build the website from its existing HTML, CSS, fonts and animations, replacing only navigation, data bindings and simulated handlers. The deployed console must never manufacture hashes, photos, signatures or PayPal results.
+- Serve the website on the existing Fastify Render web service with same-origin REST and deep links, preserving D16/D17/D18 and the worker/PostgreSQL topology. Demo tokens remain memory-only and available only under the existing DEMO_MODE gate. No new provider, production login or hosting platform is introduced.
+- Render read-only discovery on 12 November found no Fairfold service in the confirmed My Workspace. Prior billing/capacity remains unresolved; do not claim a hosted deployment. Model/provider and actual sandbox acceptance remain separate external gates.
