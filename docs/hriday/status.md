@@ -42,3 +42,5 @@ Local `main` tracks the combined remote. The supplied landing/console are being 
 Website read/navigation unit: PASS for typecheck/lint and nine focused routing, transport and serving tests. Mutation bindings and browser/hosted verification remain pending. Standalone originals are unchanged.
 
 Website action unit: local camera/multipart/seal/approval/inspection bindings implemented; 15 focused tests, typecheck and lint PASS. Review dialogs reuse the supplied visual language. Real provider, camera, PayPal, browser and Render acceptance are not claimed by these tests.
+
+Browser reliability: native fetch and asset-budget issues found by Chromium are fixed. Seventeen focused tests, typecheck and lint PASS. First desktop/mobile navigation run passed; final restored dock/tab verification and database regression remain in progress.

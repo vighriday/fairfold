@@ -15,6 +15,7 @@ const assets = new Map([
 /** Explicit public files only. Never expose the repository or use a catch-all SPA rewrite. */
 export function websiteRoutes(demoMode: boolean): FastifyPluginAsync {
   return async (app) => {
+    const publicPage = { schema: { hide: true }, config: { rateLimit: false as const } };
     const files = new Map<string, { body: Buffer; etag: string }>();
     const load = async (file: string) => {
       let cached = files.get(file);
@@ -42,27 +43,19 @@ export function websiteRoutes(demoMode: boolean): FastifyPluginAsync {
       reply.header('x-frame-options', 'DENY');
     });
     const serve = (file: string, type: string): void => {
-      app.get(
-        file === 'index.html' ? '/' : '/assets/' + file,
-        { schema: { hide: true } },
-        async (req, reply) => {
-          const resource = await load(file === 'index.html' ? file : 'assets/' + file);
-          reply.type(type).header('cache-control', 'no-cache').header('etag', resource.etag);
-          if (req.headers['if-none-match'] === resource.etag) return reply.code(304).send();
-          return reply.send(resource.body);
-        },
-      );
+      app.get(file === 'index.html' ? '/' : '/assets/' + file, publicPage, async (req, reply) => {
+        const resource = await load(file === 'index.html' ? file : 'assets/' + file);
+        reply.type(type).header('cache-control', 'no-cache').header('etag', resource.etag);
+        if (req.headers['if-none-match'] === resource.etag) return reply.code(304).send();
+        return reply.send(resource.body);
+      });
     };
     serve('index.html', 'text/html; charset=utf-8');
     for (const [name, type] of assets) serve(name, type);
-    app.get('/console', { schema: { hide: true } }, (_req, reply) =>
-      reply.redirect('/console/orders'),
-    );
-    app.get('/console/', { schema: { hide: true } }, (_req, reply) =>
-      reply.redirect('/console/orders'),
-    );
+    app.get('/console', publicPage, (_req, reply) => reply.redirect('/console/orders'));
+    app.get('/console/', publicPage, (_req, reply) => reply.redirect('/console/orders'));
     for (const path of ['/console/:view', '/console/:view/:id'])
-      app.get(path, { schema: { hide: true } }, async (req, reply) => {
+      app.get(path, publicPage, async (req, reply) => {
         if (!parseRoute(req.url.split('?')[0]!)) return reply.callNotFound();
         const resource = await load('console.html');
         return reply
@@ -70,10 +63,8 @@ export function websiteRoutes(demoMode: boolean): FastifyPluginAsync {
           .header('cache-control', 'no-store')
           .send(resource.body);
       });
-    app.get('/Fairfold.html', { schema: { hide: true } }, (_req, reply) =>
-      reply.redirect('/', 301),
-    );
-    app.get('/Fairfold%20Console.html', { schema: { hide: true } }, (_req, reply) =>
+    app.get('/Fairfold.html', publicPage, (_req, reply) => reply.redirect('/', 301));
+    app.get('/Fairfold%20Console.html', publicPage, (_req, reply) =>
       reply.redirect('/console/orders', 301),
     );
   };

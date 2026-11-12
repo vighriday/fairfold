@@ -34,6 +34,14 @@ describe('website routes and unchanged design', () => {
   });
 });
 describe('console transport', () => {
+  it('calls native browser fetch with the global receiver', async () => {
+    const native = vi.spyOn(globalThis, 'fetch').mockImplementation(async function (this: unknown) {
+      expect(this).toBe(globalThis);
+      return Response.json({ band: 'new' });
+    });
+    await new ApiClient(false, vi.fn()).request('/api/stores/store/report', undefined, true);
+    expect(native).toHaveBeenCalledOnce();
+  });
   it('shares sign-in across concurrent reads without persisting or logging the token', async () => {
     const activity = vi.fn();
     const send = vi

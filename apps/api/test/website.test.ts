@@ -28,6 +28,12 @@ async function fixture(demoMode = true) {
   return app;
 }
 describe('same-origin website deployment', () => {
+  it('keeps public asset reloads outside the API budget while preserving API throttling', async () => {
+    const app = await fixture();
+    for (let i = 0; i < 65; i++) expect((await app.inject('/assets/site.js')).statusCode).toBe(200);
+    for (let i = 0; i < 60; i++) expect((await app.inject('/healthz')).statusCode).toBe(200);
+    expect((await app.inject('/healthz')).statusCode).toBe(429);
+  });
   it('serves every deep link independently of client navigation', async () => {
     const app = await fixture();
     const landing = await app.inject('/');

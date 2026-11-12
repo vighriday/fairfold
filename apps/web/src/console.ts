@@ -78,10 +78,19 @@ class Console extends window.DCLogic {
   pollRemaining = 0;
   actions = createActions(this);
   selectedOffer = '';
+  shownView = '';
   api = new ApiClient(document.documentElement.dataset.demo === 'true', (entry) => {
     this.logs = [entry, ...this.logs].slice(0, 7);
+    if (entry.m === 'POST') this.dock = true;
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => this.foldDock(), 5000);
     this.redraw();
   });
+  foldDock() {
+    if (this.hover || this.pinned || this.error) return;
+    this.dock = false;
+    this.redraw();
+  }
   redraw() {
     this.setState({});
   }
@@ -106,6 +115,8 @@ class Console extends window.DCLogic {
     });
     dock?.addEventListener('pointerleave', () => {
       this.hover = false;
+      clearTimeout(this.timer);
+      this.timer = setTimeout(() => this.foldDock(), 1500);
     });
     if (dock && typeof ResizeObserver !== 'undefined')
       new ResizeObserver(() => {
@@ -129,6 +140,32 @@ class Console extends window.DCLogic {
           : 'false',
       );
     }
+    if (this.shownView !== this.route.view) {
+      this.shownView = this.route.view;
+      const active = nav.querySelector('[aria-current="page"]');
+      if (active && nav.scrollWidth > nav.clientWidth) {
+        const a = active.getBoundingClientRect(),
+          n = nav.getBoundingClientRect();
+        nav.scrollTo({
+          left: Math.max(0, a.left - n.left + nav.scrollLeft - (nav.clientWidth - a.width) / 2),
+          behavior: 'smooth',
+        });
+      }
+    }
+    document
+      .querySelectorAll<HTMLElement>(
+        'main div[style*="grid-template-columns:78px"][style*="cursor:pointer"]',
+      )
+      .forEach((row) => {
+        row.tabIndex = 0;
+        row.setAttribute('role', 'button');
+        row.onkeydown = (event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            row.click();
+          }
+        };
+      });
   }
   navigate(route: Route) {
     if (this.busy) return;
@@ -353,6 +390,13 @@ class Console extends window.DCLogic {
       ]),
     ];
     const packView = {
+      signalBg: {
+        grey: 'oklch(0.93 0.02 290)',
+        green: 'oklch(0.9 0.08 155)',
+        yellow: 'oklch(0.95 0.06 85)',
+        red: 'oklch(0.95 0.035 25)',
+      }[s?.band ?? 'grey'],
+      signalColour: colours[s?.band ?? 'grey'],
       itemName: o?.items.map((i) => i.name).join(', ') ?? 'Select an order',
       sku: o?.items.map((i) => i.sku).join(', ') ?? '—',
       colour: 'See ordered item',

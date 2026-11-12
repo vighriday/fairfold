@@ -18,7 +18,7 @@ export class ApiClient {
   constructor(
     private demo: boolean,
     private activity: (entry: Activity) => void,
-    private send: typeof fetch = fetch,
+    private send: typeof fetch = (input, init) => globalThis.fetch(input, init),
   ) {}
   private async authenticate() {
     if (this.token && Date.now() < this.expiresAt) return;

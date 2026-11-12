@@ -34,6 +34,14 @@ export function bindTemplate(source: string): string {
   );
   replace('>v1</span>', '>{{ p.listing }}</span>');
   replace('Buyer signal · yellow', 'Buyer signal · {{ o.band }}');
+  replace(
+    'border-radius:20px;background:oklch(0.95 0.06 85);padding:18px 20px',
+    'border-radius:20px;background:{{ p.signalBg }};padding:18px 20px',
+  );
+  replace(
+    'width:9px;height:9px;border-radius:50%;background:oklch(0.8 0.15 85)',
+    'width:9px;height:9px;border-radius:50%;background:{{ p.signalColour }}',
+  );
   replace('Capture extra packing evidence and ship tracked.', '{{ o.rec }}');
   replace(
     'Batch B17: photograph the left sleeve seam before sealing. Label the photo <span style="font-family:\'Geist Mono\',monospace;font-size:13px">seam_closeup</span>.',

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-12 — H8 browser reliability fixes
+
+- Real Chromium exposed native fetch receiver binding and public page/asset requests consuming the API rate budget. Fixed the browser transport and exempted only the explicit website routes; API and upload throttles remain enforced.
+- Restored the supplied mobile active-tab scrolling and activity-dock auto-fold; added keyboard activation for order rows. Signal colours now follow the actual band. Clean-clone test commands build the website first.
+- Validation: typecheck/lint and 17 focused tests PASS. Chromium checked 12 desktop/mobile page states, history and reload with no page overflow, JavaScript exceptions or failed API responses before the final navigation-behavior restoration. Database and final browser confirmation remain in progress.
+
 ## 2026-11-12 — H8 routed website and live reads
 
 - Added a browser build using the supplied landing/console, fonts and animations; kept standalone originals unchanged. Same-origin Fastify routes support direct links, record selection, refresh and browser history. Private files and unknown API paths retain their existing boundaries.
