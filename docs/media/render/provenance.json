@@ -1,0 +1,26 @@
+{
+  "source_commit": "d23ee86adc2adfd4e38f3b001689327cde2791d6",
+  "deployment_id": "dep-dbr09a8n74is73b3i4q0",
+  "capture_started_at_utc": "2026-11-12T18:41:31.738Z",
+  "captured_on_ist": "2026-11-13",
+  "origin": "https://fairfold-api.onrender.com",
+  "mode": "actual-render-api-bound-website",
+  "records": "synthetic-seeded-data",
+  "paypal_actions": "none",
+  "provider_configured": false,
+  "capture_sha256": {
+    "disputes.png": "7836afb17db02a41690220047069fbfdfced62879cf76add27f2766dbcdf1edc",
+    "landing.png": "c3fd09d5e5f5c8baeab96aea66203e50a3d52e887f660cdfc9667006db5f0682",
+    "orders.png": "5e55594b3ff111f00fc9a01a0e05b815aeecfebddaa4786ff75c787b6e9dbc72",
+    "pack-mobile.png": "c0dd86201752c6c1a1693369699e1cc652720f7633549d6c0076c4211f2a85a3",
+    "pack.png": "b7b08a56f39f189116480cd645f25edff0dc04096c428d7a61e1fc54ba732967",
+    "report.png": "19bfe34f82eff77dce77873b44a95bdf6b8c22fdb08f2b7fd52ccb6a385e64f1",
+    "shared-cause.png": "34b3c5f84e3ff41850520c982b947af0e9bc36dc40d22562c4a80d532bab69ed"
+  },
+  "derived_sha256": {
+    "overview.svg": "c8208b876f8e911a0cd187e35d0cf95921a1e8bda3dbc7e6ef041670969859ec",
+    "overview-mobile.svg": "a78d686441c34c62dab2af15a873cd205ef94ad72d1b1813ffd59ba8fd00eaaa",
+    "tour.gif": "6df548a024dd5d6f798336f476acdead984533b8d00c2bfbcfcf3f6a9d2f1ca5",
+    "tour-still.png": "9909732ef58c7cb686ddbf15c24d2064bd8a566f8bbd822b059209db0df711a1"
+  }
+}

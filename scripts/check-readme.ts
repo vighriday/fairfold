@@ -16,7 +16,7 @@ const cleanHeading = (text: string) =>
     .replace(/\s/g, '-');
 
 let links = 0;
-for (const name of ['README.md', 'docs/media/README.md']) {
+for (const name of ['README.md', 'docs/media/README.md', 'docs/media/render/README.md']) {
   const file = resolve(root, name),
     markdown = await readFile(file, 'utf8');
   assert(
@@ -51,7 +51,9 @@ for (const name of ['README.md', 'docs/media/README.md']) {
   );
 }
 
-const svgNames = (await readdir(media)).filter((name) => name.endsWith('.svg'));
+const svgNames = (await readdir(media, { recursive: true })).filter((name) =>
+  name.endsWith('.svg'),
+);
 for (const name of svgNames) {
   const svg = await readFile(resolve(media, name), 'utf8');
   assert(
@@ -73,6 +75,34 @@ for (const [name, hash] of Object.entries(manifest.capture_sha256))
     hash,
     `Capture changed: ${name}`,
   );
+
+const hosted = JSON.parse(await readFile(resolve(media, 'render/provenance.json'), 'utf8')) as {
+  records: string;
+  mode: string;
+  origin: string;
+  source_commit: string;
+  paypal_actions: string;
+  capture_sha256: Record<string, string>;
+  derived_sha256: Record<string, string>;
+};
+assert.equal(hosted.records, 'synthetic-seeded-data');
+assert.equal(hosted.mode, 'actual-render-api-bound-website');
+assert.equal(hosted.origin, 'https://fairfold-api.onrender.com');
+assert.match(hosted.source_commit, /^[a-f0-9]{40}$/);
+assert.equal(hosted.paypal_actions, 'none');
+for (const [folder, hashes] of [
+  ['render/captures', hosted.capture_sha256],
+  ['render', hosted.derived_sha256],
+] as const) {
+  for (const [name, hash] of Object.entries(hashes)) {
+    assert.match(name, /^[a-z0-9-]+\.(?:png|svg|gif)$/);
+    assert.equal(
+      sha256(await readFile(resolve(media, folder, name))),
+      hash,
+      `Hosted asset changed: ${name}`,
+    );
+  }
+}
 
 interface Entry {
   order_id: string;
@@ -133,6 +163,8 @@ console.log(
     localLinks: links,
     describedSelfContainedSvgs: svgNames.length,
     unchangedCaptures: Object.keys(manifest.capture_sha256).length,
+    hostedCaptures: Object.keys(hosted.capture_sha256).length,
+    hostedDerivedAssets: Object.keys(hosted.derived_sha256).length,
     syntheticChain: 'verified',
     tamperCheck: 'detected',
     proofIllustrations: 'verified',

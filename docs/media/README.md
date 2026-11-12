@@ -1,6 +1,6 @@
 # README media and provenance
 
-All artwork is self-hosted. The graphics add presentation around the existing website; they do not redesign its components. Screenshots show actual local API-bound pages at website commit `6e0268c`, captured on 12 November 2026 with Chromium at 1440 and 390 px. The existing activity-dock control was used to fold the dock before capture. The source run reported no JavaScript exceptions or failed API responses.
+All artwork is self-hosted. The graphics add presentation around the existing website; they do not redesign its components. The original gallery shows local API-bound pages at `6e0268c`, captured on 12 November 2026. The additional [Render series](render/README.md) shows the actually deployed website at `d23ee86`, captured on 13 November IST. Both use Chromium at 1440 and 390 px and the existing activity-dock control. Both source runs reported no JavaScript exceptions or failed API responses. Original local assets and provenance are preserved.
 
 **Every record shown is synthetic. No PayPal purchase, signature verification, dispute submission, offer, message or refund was performed to make these assets.** Shared Cause is visibly empty because the local embedding provider is not configured. A seeded resolved dispute is not a real sandbox dispute fixture. The mockup and tour do not replace the required functioning demo video.
 
@@ -29,6 +29,8 @@ These independently authored SVGs explain the existing product; they are not scr
 | [Verification board](verification-board.svg)                                                | Static summary of recorded local results at `6e0268c`, alongside pending account/model/hosted acceptance. Counts overlap; this is not a live dashboard          |
 
 ## Rebuild or verify
+
+The [hosted media guide](render/README.md) records seven new unaltered Render screenshots, responsive desktop/phone SVG frames, a 20.4-second captioned GIF, reduced-motion still and a separate hash manifest. Its offline rebuild is `python scripts/readme_hosted_media.py`. `pnpm docs:check` verifies both capture sets, generated hosted assets and nested SVGs. The original generator below continues to own only the earlier local series.
 
 The application does not depend on Python or Pillow. These are optional documentation tools:
 

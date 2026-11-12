@@ -13,15 +13,67 @@ Fairfold records packing proof, connects repeated complaints and prepares ground
 
 Built by **Hriday and Ishaan** for the [PayPal AI Hackathon](https://paypalaihackathon.devpost.com/). **[MIT](LICENSE)** · PayPal sandbox only.
 
-**[Visual tour ↓](#see-the-website)** · **[PayPal + AI](#paypal-is-the-payment-layer)** · **[Run locally](#run-locally)** · **[Evidence](#evidence-you-can-inspect)**
+**[Open live demo ↗](https://fairfold-api.onrender.com)** · **[Merchant console ↗](https://fairfold-api.onrender.com/console/orders)** · **[API docs ↗](https://fairfold-api.onrender.com/docs)**
 
-> **Local build ready · external acceptance pending.** All screens use labelled synthetic data. Real PayPal, provider/photo and first-deployment acceptance remain pending. [Exact evidence →](docs/hriday/evidence/2026-11-12-website.md)
+**[Live tour ↓](#explore-the-live-demo)** · **[Original visual tour ↓](#see-the-website)** · **[PayPal + AI](#paypal-is-the-payment-layer)** · **[Run locally](#run-locally)** · **[Evidence](#evidence-you-can-inspect)**
+
+> **Live on Render · synthetic demo.** Website, API, worker and private PostgreSQL are deployed. Hosted desktop/mobile and MCP checks passed. Real PayPal, provider/photo and complete hosted A1–A14 acceptance remain pending. [Deployment receipt →](docs/hriday/evidence/2026-11-13-render-live.md) · [Earlier local evidence →](docs/hriday/evidence/2026-11-12-website.md)
 
 <p align="center">
   <a href="#follow-one-order"><img src="docs/media/path-merchant.svg" alt="Merchant path: follow the parcel through packing proof, patterns and review" width="280" height="183"></a>
   <a href="docs/media/captures/report.png"><img src="docs/media/path-buyer.svg" alt="Buyer path: open the actual local Store Report screenshot, with synthetic data" width="280" height="183"></a>
   <a href="#architecture-you-can-trace"><img src="docs/media/path-builder.svg" alt="Builder path: trace architecture, contracts, code and verification" width="280" height="183"></a>
 </p>
+
+## Explore the live demo
+
+<a href="https://fairfold-api.onrender.com/console/orders">
+  <picture>
+    <source media="(max-width: 600px)" srcset="docs/media/render/overview-mobile.svg">
+    <img src="docs/media/render/overview.svg" alt="Actual Render-hosted Orders console and mobile Pack Station, captured 13 November 2026 IST. 393 synthetic orders across three stores, 85 seeded reviews and 16 complaints; no PayPal transaction performed." width="1440" height="1040">
+  </picture>
+</a>
+
+**Click the image to open the working console.** No account sign-up is needed for the seeded merchant demo; its token stays in browser memory. All records shown are synthetic. The interface, fonts and components are the existing website, captured from its real Render API.
+
+| Explore                                                                                                                                                                      | What is actually there                                                                                              |
+| :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------ |
+| [Orders →](https://fairfold-api.onrender.com/console/orders)                                                                                                                 | **344 Neel orders**, filters, Buyer Signal reasons and verified ledger reads                                        |
+| [Pack Station →](https://fairfold-api.onrender.com/console/pack)                                                                                                             | Selected-order state, required photo slots, batch choices and review gates; real camera/model checks remain pending |
+| [Dispute Room →](https://fairfold-api.onrender.com/console/disputes)                                                                                                         | One explicitly seeded, resolved dispute; real sandbox acceptance is separate                                        |
+| [Shared Cause →](https://fairfold-api.onrender.com/console/shared-causes)                                                                                                    | An honest empty state until a provider-backed complaint scan runs                                                   |
+| [Store Report →](https://fairfold-api.onrender.com/console/store-report)                                                                                                     | Computed fulfilment facts, retained reviews and comparison-store bands                                              |
+| [API explorer →](https://fairfold-api.onrender.com/docs) · [OpenAPI JSON](https://fairfold-api.onrender.com/docs/json) · [Health](https://fairfold-api.onrender.com/healthz) | Same-origin REST/OpenAPI and actual database readiness; authenticated MCP is mounted at `/mcp`                      |
+
+The complete seeded world contains **393 orders, 85 reviews and 16 complaints across three stores**. Store bands are **verified / verified / caution**. These are fixture counts and computed fixture results, not customers, traction or successful sandbox payments. The missing provider does not produce a substitute hypothesis. Public demo sign-in is demo access control; use synthetic data only and review every action before approval.
+
+<details>
+<summary><strong>Play the hosted tour</strong> · six real Render screens, 20.4 seconds</summary>
+
+<picture>
+  <source media="(prefers-reduced-motion: reduce)" srcset="docs/media/render/tour-still.png">
+  <img src="docs/media/render/tour.gif" alt="Six captioned screenshots from the deployed Fairfold website: landing, 344-order console, packing state, seeded resolved dispute, truthful empty Shared Cause and computed Store Report. No payment or approval was performed." width="1024" height="780" loading="lazy">
+</picture>
+
+This is a sequence of actual hosted captures, not a continuous transaction recording. [Still frame](docs/media/render/tour-still.png) · [Capture provenance and hashes](docs/media/render/README.md) · [Live deployment evidence](docs/hriday/evidence/2026-11-13-render-live.md).
+
+</details>
+
+<details>
+<summary><strong>Inspect the hosted originals</strong> · full-resolution screens and mobile capture</summary>
+
+<p align="center">
+  <a href="docs/media/render/captures/orders.png"><img src="docs/media/render/captures/orders.png" alt="Actual hosted Orders page with 344 labelled synthetic Neel orders" width="440" height="306" loading="lazy"></a>
+  <a href="docs/media/render/captures/report.png"><img src="docs/media/render/captures/report.png" alt="Actual hosted Store Report with computed facts from synthetic data and seeded reviews" width="440" height="306" loading="lazy"></a>
+  <a href="docs/media/render/captures/pack.png"><img src="docs/media/render/captures/pack.png" alt="Actual hosted Pack Station before photo capture or sealing" width="440" height="306" loading="lazy"></a>
+  <a href="docs/media/render/captures/disputes.png"><img src="docs/media/render/captures/disputes.png" alt="Actual hosted Dispute Room showing a clearly seeded resolved dispute" width="440" height="306" loading="lazy"></a>
+</p>
+
+[Landing](docs/media/render/captures/landing.png) · [Orders](docs/media/render/captures/orders.png) · [Packing](docs/media/render/captures/pack.png) · [Mobile packing](docs/media/render/captures/pack-mobile.png) · [Disputes](docs/media/render/captures/disputes.png) · [Shared Cause empty state](docs/media/render/captures/shared-cause.png) · [Store Report](docs/media/render/captures/report.png).
+
+Captured **13 November 2026 IST**, deployed source **`d23ee86`**. The website's own control folds the activity dock; original screenshots are otherwise unaltered. Presentation frames and tour captions sit outside the UI. The earlier local gallery and its provenance are preserved below.
+
+</details>
 
 ## See the website
 
@@ -225,7 +277,7 @@ flowchart TB
     AI --> Models
 ```
 
-One origin serves the website, REST/OpenAPI and MCP. One long-running worker handles queue jobs. PostgreSQL stores records, the pg-boss queue and content-addressed evidence. This is the intended topology, not a claim that Render resources are live.
+One origin serves the website, REST/OpenAPI and MCP. One long-running worker handles queue jobs. PostgreSQL stores records, the pg-boss queue and content-addressed evidence. All three are now live in Oregon, with the database restricted to private connections. [Actual resource/deploy receipts](docs/hriday/evidence/2026-11-13-render-live.md).
 
 <details>
 <summary><strong>Find a package or contract</strong></summary>
@@ -284,6 +336,8 @@ The shopper skips caution stores, asks before a non-verified store, and pauses s
 
 [![Static verification board: local checks passed at 6e0268c; accounts, model/photo work and hosted acceptance remain pending. Offline, database and website test counts overlap and are not additive.](docs/media/verification-board.svg)](docs/media/verification-board.svg)
 
+The illustration preserves the earlier local snapshot. **New hosted receipt:** migrations, synthetic seed, 16-handler worker startup, HTTPS health/docs, 344-order pagination, official scoped MCP and 12 desktop/mobile page states passed at `d23ee86`. [Inspect the dated Render evidence](docs/hriday/evidence/2026-11-13-render-live.md). Full account/provider/photo/A1–A14 acceptance is still separate.
+
 <details>
 <summary><strong>Open the full validation receipts</strong> · commands, scope and remaining acceptance</summary>
 
@@ -322,11 +376,15 @@ pnpm --filter shopper-agent start --check
 
 ## Deploy on Render
 
-[`render.yaml`](render.yaml) retains **web service + worker + PostgreSQL 16**, all from `main`. The web service builds the site, applies migrations before startup and seeds the labelled world after its first deployment. Secrets stay private; site and API share the assigned origin.
+**Deployed:** [Website](https://fairfold-api.onrender.com) · [Console](https://fairfold-api.onrender.com/console/orders) · [API docs](https://fairfold-api.onrender.com/docs) · [Health](https://fairfold-api.onrender.com/healthz).
+
+[`render.yaml`](render.yaml) retains **web service + worker + PostgreSQL 16**, all from `main`. The web service builds the site and applies migrations before startup. Its Blueprint first-deploy hook seeds the labelled world; this actual manual deployment used one successful `pnpm seed` job because Blueprint capacity was blocked. Secrets stay private; site and API share the assigned origin.
 
 **[Open the complete deployment guide →](docs/hriday/website-deployment.md#render-deployment)**
 
-The current schema check passes. No Fairfold service or live URL is claimed. Render account/billing/secrets and actual deployment still need completion; CLI platform validation also needs its own login. No alternate hosting architecture is introduced.
+The approved manual deployment is verified at `d23ee86`: API/site and worker on Starter, PostgreSQL 16 with 1 GB, all in Oregon. Automatic deploys and storage growth are off; PostgreSQL's external allow-list is empty. Reuse existing resources and preserve the encryption key. Provider and PayPal secrets still need private setup. [Exact configuration and release steps](docs/hriday/manual-render-deployment.md) · [Observed deployment receipt](docs/hriday/evidence/2026-11-13-render-live.md). No alternate hosting architecture was introduced.
+
+Next, configure the existing model gateway privately on **both** code services and verify access to the candidate models. Follow the [sandbox rehearsal](docs/hriday/sandbox-rehearsal.md) for the account-backed work: its operator scripts deliberately accept only a local demo database, so do not point them at hosted PostgreSQL or weaken that guard. Hosted merchant credential provisioning and real sandbox acceptance remain pending; adding environment variables alone is not evidence that checkout works.
 
 <details>
 <summary><strong>Submission readiness</strong> · remaining human steps</summary>
@@ -336,7 +394,8 @@ The current schema check passes. No Fairfold service or live URL is claimed. Ren
 - [ ] Configure model access; evaluate provider-backed B17 and real photos.
 - [ ] Complete Neel/Maya accounts, the spike, actual checkout/capture and verified sandbox webhook delivery.
 - [ ] Observe exact human-approved PayPal outcomes; resolve Q2 return-address review.
-- [ ] Deploy and observe Render; run hosted A1–A14 acceptance.
+- [x] Deploy and observe Render: website/API, private database, seed, worker startup and read-only browser/MCP smoke.
+- [ ] Run complete hosted A1–A14 acceptance, including the actual account/provider/photo gates and recurring worker operations.
 - [ ] Record the functioning project and add actual submission/video links.
 
 The [submission requirements](https://paypalaihackathon.devpost.com/#requirements) call for an interactable build or complete setup instructions and a functioning demo video under three minutes. Screenshots and mockups support that explanation; they do not replace the working demo. Nothing has been submitted or uploaded on the team’s behalf.
@@ -345,7 +404,7 @@ The [submission requirements](https://paypalaihackathon.devpost.com/#requirement
 
 ## Built by two people, for both sides
 
-**Hriday** — platform, PayPal integration, evidence ledger, workers, MCP/shopper, website integration and deployment preparation.
+**Hriday** — platform, PayPal integration, evidence ledger, workers, MCP/shopper, website integration and verified Render deployment.
 
 **Ishaan** — AI gateway, intelligence, Shared Cause Detection, reports/signals, fixtures and evaluation work.
 

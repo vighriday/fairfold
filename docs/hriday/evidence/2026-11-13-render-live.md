@@ -59,11 +59,15 @@ Sanitized machine summaries and screenshots are in ignored `.work/render-live-ap
 
 A read-only hosted MCP database query was refused because external connections are blocked. The allow-list was **not** opened to accommodate it. Database readiness, migration success, seed receipts and scoped API records supply the observations above; direct SQL table/queue inspection is not claimed.
 
+### First natural scheduled watchdog cycle
+
+The initial 18:34 smoke returned no alerts. After the first quarter-hour schedule, a separate read-only merchant API check returned one synthetic `tracking_gap` alert with `createdAt: 2026-11-12T18:45:20.238Z`. No job was manually enqueued and no alert was acknowledged. This verifies an observed scheduled queue-to-alert effect, beyond startup registration. Further cycles, retention/shared-cause schedules and credential-backed dispute polling remain unverified; it does not establish complete H6 or PayPal acceptance. The earlier gallery captures retain their pre-alert timestamp/state.
+
 ## Remaining acceptance and operations
 
 - H1's **first hosted deployment, health and Swagger gates are satisfied**. The original local foundation checks retain their earlier evidence. No message was sent to Ishaan; CP0/pre-H1 real sandbox evidence remains unverified.
 - H2–H5/H7 require actual sandbox accounts, provider/photo work where applicable, real checkout/capture, signature/delivery/redelivery, dispute fixtures, current allowed actions and exact human-approved PayPal outcomes. Q2 remains open.
-- Worker startup is verified. Periodic watchdog/retention/shared-cause execution and credential-backed poll behavior need operational observation; startup alone is not H6 acceptance. Full hosted **A1–A14 remains pending**.
+- Worker startup and the first scheduled watchdog alert are verified. Further periodic cycles, retention/shared-cause execution and credential-backed poll behavior still need observation. Full hosted **A1–A14 remains pending**.
 - Set provider and merchant secrets privately through the documented gateways/setup. Preserve the existing key and synthetic labels. Never paste secrets in README/chat or treat demo authentication as production access control.
 - Plans remain the approved approximately **$20.30/month base**, plus usage/taxes/one-off job; credits are not a spend cap. Automatic deploys and database growth are off. No other workspace resources were modified.
 - No outbound message, real PayPal action, Devpost/YouTube submission or judging outcome occurred. Reviewer: user review pending.
