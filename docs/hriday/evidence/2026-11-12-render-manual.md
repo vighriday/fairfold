@@ -50,3 +50,9 @@ The user selected **“Do not provision paid resources”** and **“Billing is 
 Read the official hackathon Render sponsor page, which advertises $50 of credits and links a claim portal. The portal returned no readable content to the browsing tool, so account-specific eligibility/payment requirements remain unverified. Read Render's credit instructions: credits offset eligible workspace charges at billing-period end, with excess potentially charged to the payment method. No credit claim, promo redemption, billing change, outbound contact or resource action was taken.
 
 Read the current Render free-tier reference. Background workers have no free instance; free web services also lack one-off jobs and shell access, and free PostgreSQL expires after 30 days. The current full deployment cannot be completed under the no-paid constraint while retaining the approved topology. No reduced preview or architecture replacement has been selected.
+
+## Credit screenshot and repeat prerequisite check
+
+The user provided a screenshot displaying $50 promotional credit and said “Go ON.” Its workspace identifier is not visible, so the screenshot is user-provided balance evidence rather than an independent API balance check. No promo code or screenshot is committed.
+
+Reverified the CLI's active My Workspace and ran authenticated `blueprints validate` again. It still returned `valid: false` with `need_payment_info` for `databases[0]`, `services[0]` and `services[1]`. No creation request was retried. Requested private payment-method completion and explicit clarification that proceeding permits the documented billable plans and possible charges beyond the credit, superseding the earlier refusal. These remain pending at this observation.

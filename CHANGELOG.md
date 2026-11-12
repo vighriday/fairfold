@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-12 — Credit balance and billing prerequisite recheck
+
+- Recorded the user's $50 promotional-credit screenshot without retaining the code or image. Reverified My Workspace through the authenticated CLI.
+- Render still returns `need_payment_info` for all three planned resources. Requested account-owner payment setup and clarification of the prior no-paid restriction before any creation retry. No resource or payment action occurred.
+
 ## 2026-11-12 — No-paid deployment decision and sponsor handoff
 
 - Recorded the user's explicit refusal of paid resources and unresolved billing in active instructions/status. Paid provisioning remains stopped; no partial deployment or architecture change is implied.
