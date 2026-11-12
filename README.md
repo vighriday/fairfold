@@ -17,6 +17,12 @@ Built by **Hriday and Ishaan** for the [PayPal AI Hackathon](https://paypalaihac
 
 > **Local build ready · external acceptance pending.** All screens use labelled synthetic data. Real PayPal, provider/photo and first-deployment acceptance remain pending. [Exact evidence →](docs/hriday/evidence/2026-11-12-website.md)
 
+<p align="center">
+  <a href="#follow-one-order"><img src="docs/media/path-merchant.svg" alt="Merchant path: follow the parcel through packing proof, patterns and review" width="280" height="183"></a>
+  <a href="docs/media/captures/report.png"><img src="docs/media/path-buyer.svg" alt="Buyer path: open the actual local Store Report screenshot, with synthetic data" width="280" height="183"></a>
+  <a href="#architecture-you-can-trace"><img src="docs/media/path-builder.svg" alt="Builder path: trace architecture, contracts, code and verification" width="280" height="183"></a>
+</p>
+
 ## See the website
 
 [![Actual Fairfold Orders console beside its mobile Pack Station, framed as desktop and phone views. Local synthetic data; no PayPal transaction.](docs/media/product-overview.svg)](docs/media/captures/orders.png)
@@ -38,6 +44,17 @@ This is a captioned sequence of real screen captures, not a recorded sandbox tra
 <details>
 <summary><strong>Inspect a screen</strong> · full-resolution, without animation</summary>
 
+Click any screen to inspect the original capture. The gallery shows the local website with synthetic records.
+
+<p align="center">
+  <a href="docs/media/captures/landing.png"><img src="docs/media/captures/landing.png" alt="Landing: the existing two-sided proof and trust presentation" width="440" height="306" loading="lazy"></a>
+  <a href="docs/media/captures/orders.png"><img src="docs/media/captures/orders.png" alt="Orders: actual API-backed records and Buyer Signal reasons" width="440" height="306" loading="lazy"></a>
+  <a href="docs/media/captures/pack.png"><img src="docs/media/captures/pack.png" alt="Pack Station: required photos and actual server blockers" width="440" height="306" loading="lazy"></a>
+  <a href="docs/media/captures/disputes.png"><img src="docs/media/captures/disputes.png" alt="Dispute Room: a seeded resolved dispute, not actual sandbox acceptance" width="440" height="306" loading="lazy"></a>
+  <a href="docs/media/captures/shared-cause.png"><img src="docs/media/captures/shared-cause.png" alt="Shared Cause: true empty state while embeddings are not configured" width="440" height="306" loading="lazy"></a>
+  <a href="docs/media/captures/report.png"><img src="docs/media/captures/report.png" alt="Store Report: computed fulfilment facts and retained synthetic reviews" width="440" height="306" loading="lazy"></a>
+</p>
+
 | Screen                                                                                       | What to look for                                                        |
 | :------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------- |
 | [Landing](docs/media/captures/landing.png)                                                   | The two-sided proof and trust loop                                      |
@@ -51,9 +68,17 @@ This is a captioned sequence of real screen captures, not a recorded sandbox tra
 
 ## Follow one order
 
+<picture>
+  <source media="(max-width: 600px)" srcset="docs/media/evidence-journey-mobile.svg">
+  <img src="docs/media/evidence-journey.svg" alt="Illustrated order journey: a buyer reads the store, a merchant captures and seals packing proof, code tests related complaints, and a human reviews an exact response. PayPal decides disputes. Product illustration, not actual sandbox acceptance." width="1120" height="740" loading="lazy">
+</picture>
+
 A small exporter ships a carefully packed order. A buyer receives a torn seam. PayPal sees a dispute. Fairfold connects what was packed, what was promised and whether other orders share the fault.
 
 We build for small merchants, including Indian exporters selling to overseas PayPal buyers. The same record helps an honest merchant show what happened and helps an honest buyer receive a remedy when the evidence points to a real fault.
+
+<details>
+<summary><strong>Expand each moment and its control</strong> · the complete product flow</summary>
 
 | Moment                     | Fairfold’s job                                                                                                               | Who stays in control                                                |
 | :------------------------- | :--------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------ |
@@ -62,8 +87,12 @@ We build for small merchants, including Indian exporters selling to overseas Pay
 | **When complaints repeat** | Shared Cause Detection tests for a common batch, courier, listing or packing context and proposes affected-order actions.    | The merchant reviews each hold, message, offer or refund.           |
 | **When a dispute opens**   | Fairfold joins the PayPal capture to order proof and builds an evidence pack with a recommended response or remedy.          | The merchant approves the exact action; PayPal decides the dispute. |
 
+</details>
+
 <details>
 <summary><strong>Unfold the B17 story</strong> · the intended climax, with evidence boundaries</summary>
+
+[![B17 investigation board: similar complaints lead to tests of batch, courier, listing and packing context. Inspect a hypothesis; if a fault is confirmed, recommend a remedy. Synthetic scenario; real provider/photo acceptance is pending.](docs/media/b17-investigation.svg)](docs/media/b17-investigation.svg)
 
 Maya’s damaged hoodie could be an isolated incident. Similar seam complaints may instead implicate one production batch. Fairfold reads the complaints, then code checks exposure, alternatives and statistical strength before selecting affected orders.
 
@@ -75,7 +104,12 @@ The repository includes the labelled synthetic B17 world. Missing embeddings lea
 
 ## PayPal is the payment layer
 
+[![PayPal sandbox owns payment and dispute authority. Fairfold maps orders, seals evidence, verifies events, drafts a response and records exact approval before permitted execution. Intended integration, not observed sandbox outcomes.](docs/media/paypal-lifecycle.svg)](docs/media/paypal-lifecycle.svg)
+
 The payment, capture, seller-protection context, tracking and dispute lifecycle belong to PayPal. Fairfold adds evidence and review around that lifecycle. There is no alternate payment provider and no change to Buyer Protection.
+
+<details>
+<summary><strong>Open the PayPal integration map</strong> · every surface linked to its code</summary>
 
 | PayPal surface                    | Where it matters in Fairfold                                                              | Inspect the implementation                                                                                          |
 | :-------------------------------- | :---------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------ |
@@ -87,17 +121,24 @@ The payment, capture, seller-protection context, tracking and dispute lifecycle 
 | **Payments v2 refunds**           | Approved remedies use capture-bound refunds and decimal-string money                      | [Payments](packages/paypal/src/payments.ts) · [Approved actions](packages/paypal/src/action-execution.ts)           |
 | **Agent Toolkit + Fairfold MCP**  | A shopper reads trust information, asks its human, then uses sandbox create/capture tools | [Sandbox adapter](packages/paypal/src/shopper-toolkit.ts) · [MCP](apps/api/src/mcp) · [Shopper](apps/shopper-agent) |
 
+</details>
+
 The Toolkit adapter explicitly sets `context.sandbox = true`. All PayPal calls stay inside `packages/paypal`. The buyer opens a sandbox claim through PayPal’s own interface; Fairfold does not pretend a public dispute-creation endpoint exists. [Actual sandbox rehearsal →](docs/hriday/sandbox-rehearsal.md)
 
 ## AI describes. Code decides. Humans approve.
 
 ![Architecture illustration: payment context leads to shared evidence and a grounded draft. Motion stops at merchant approval; only an approved action proceeds to PayPal.](docs/media/approval-boundary.svg)
 
+<details>
+<summary><strong>Inspect the AI, code and human responsibilities</strong> · full rules and implementation links</summary>
+
 | Models see, read and draft                                                           | Deterministic code computes                                                                                                                       | People authorize                                                                 |
 | :----------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------- |
 | Visible photo features; complaint taxonomy; narratives; message drafts; explanations | Buyer points and reason codes; match decisions; grouping; exposure-adjusted tests and multiple-testing correction; recommendations and statistics | Evidence submissions, holds, messages, offers, refunds and the shopper’s payment |
 
 Every model call goes through [`packages/ai`](packages/ai), built on the **Vercel AI SDK** for structured generation and embeddings. Third-party text is untrusted data, and outputs must match structured schemas. Extraction and drafting paths do not receive payment tools. Real buyer histories stay merchant-scoped; simulated network data is labelled. A new buyer with insufficient history gets **grey**, not a fraud verdict. [AI usage and measurement history](docs/ai-tools.md) · [Current decisions](DECISIONS.md).
+
+</details>
 
 <details>
 <summary><strong>Inspect the last guard before a dispute action</strong></summary>
@@ -125,6 +166,22 @@ sequenceDiagram
 ```
 
 Approval is a durable record, not a label attached to a research runbook. The worker rechecks stage and ownership before an external effect. Return-address remedies stay blocked pending Q2 review. [Approval API](apps/api/src/disputes/approve.ts) · [Execution guards](packages/paypal/src/dispute-execution.ts).
+
+</details>
+
+<details>
+<summary><strong>Flip the proof specimen</strong> · expand to see what changing one label does</summary>
+
+[![Original two-entry synthetic proof specimen. Entry one stores and recomputes the same hash; entry two carries that hash forward. The chain matches.](docs/media/proof-original.svg)](docs/media/proof-original.svg)
+
+<details>
+<summary><strong>Change <code>payload.label</code> → reveal the result</strong></summary>
+
+[![Only the synthetic payload label changes. Its recomputed SHA-256 differs from the retained hash; verification detects the mismatch.](docs/media/proof-changed.svg)](docs/media/proof-changed.svg)
+
+These are precomputed views of the same specimen, checked by `pnpm docs:check`. Opening this disclosure performs no application action.
+
+</details>
 
 </details>
 
@@ -225,6 +282,11 @@ The shopper skips caution stores, asks before a non-verified store, and pauses s
 
 ## Evidence you can inspect
 
+[![Static verification board: local checks passed at 6e0268c; accounts, model/photo work and hosted acceptance remain pending. Offline, database and website test counts overlap and are not additive.](docs/media/verification-board.svg)](docs/media/verification-board.svg)
+
+<details>
+<summary><strong>Open the full validation receipts</strong> · commands, scope and remaining acceptance</summary>
+
 Recorded on **12 November 2026** for the website integration at `6e0268c`.[^checks]
 
 | Verification                                   | Observed result                                                                             | Receipt                                                                                                                                   |
@@ -236,6 +298,8 @@ Recorded on **12 November 2026** for the website integration at `6e0268c`.[^chec
 | Chromium desktop + mobile                      | **12 page states passed**, plus history, reload, keyboard selection and review cancellation | [Browser observations](docs/hriday/evidence/2026-11-12-website.md)                                                                        |
 | Typecheck, build, lint, format, frozen install | **Passed**                                                                                  | [Recorded commands](docs/hriday/evidence/2026-11-12-website.md)                                                                           |
 | Actual PayPal / provider-photo / hosted A1–A14 | **Pending**                                                                                 | [Status](docs/hriday/status.md) · [Acceptance plan](docs/hriday/validation.md)                                                            |
+
+</details>
 
 <details>
 <summary><strong>Run the checks</strong> · local logic and external acceptance are separate</summary>

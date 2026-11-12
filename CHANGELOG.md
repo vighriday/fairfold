@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-12 — Visual README navigation and disclosures
+
+- Added clickable merchant/buyer/builder paths, a responsive four-scene order story, a six-screen linked gallery, a PayPal responsibility map, a B17 investigation board, nested proof-state reveals and a dated verification board. Longer original tables now sit inside labelled disclosures.
+- Preserved all 210 original nonblank README lines in their original order; no existing narrative, link, table, command, diagram or media asset was removed.
+- Validation: 135 local references, 14 SVGs, seven unchanged captures and production-computed proof illustrations PASS. Chromium light/dark/mobile checks PASS for native keyboard navigation, all six gallery images/links, both proof states, all 15 disclosures, mobile art direction and new SVG text bounds; no page overflow, browser errors or external requests. Typecheck/lint/format and stable media regeneration PASS. Actual published GitHub rendering remains unobserved.
+
 ## 2026-11-12 — Additional README visual explainers
 
 - Added ten original SVGs: merchant/buyer/builder path cards, desktop/mobile order story, PayPal responsibility map, B17 investigation, original/changed proof views and a dated verification board. Existing website captures and components are preserved.
