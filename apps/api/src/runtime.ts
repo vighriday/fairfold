@@ -24,6 +24,7 @@ import { createWebhookRoutes } from './routes/core/webhooks.js';
 import { createMcpService } from './mcp/service.js';
 import { createMcpRoutes } from './mcp/routes.js';
 import { seedWorld } from './seed/world.js';
+import { websiteRoutes } from './website.js';
 
 /** The normal server and local recorded rehearsal use the same application composition. */
 export async function createRuntime(config: Config, options: { recording?: OrderRecording } = {}) {
@@ -53,6 +54,7 @@ export async function createRuntime(config: Config, options: { recording?: Order
       config,
       phase: 'H8',
       routes: async (routes) => {
+        await routes.register(websiteRoutes(config.demoMode));
         await routes.register(
           createCoreRoutes({
             checkout,

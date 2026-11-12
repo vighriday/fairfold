@@ -184,6 +184,9 @@ importers:
       dotenv:
         specifier: 18.0.10
         version: 18.0.10
+      esbuild:
+        specifier: 0.28.2
+        version: 0.28.2
       eslint:
         specifier: 10.14.0
         version: 10.14.0(supports-color@10.2.2)
@@ -289,6 +292,12 @@ importers:
       zod:
         specifier: 4.6.7
         version: 4.6.7
+
+  apps/web:
+    dependencies:
+      '@fairfold/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
 
   apps/worker:
     dependencies:

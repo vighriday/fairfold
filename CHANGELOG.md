@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-12 — H8 routed website and live reads
+
+- Added a browser build using the supplied landing/console, fonts and animations; kept standalone originals unchanged. Same-origin Fastify routes support direct links, record selection, refresh and browser history. Private files and unknown API paths retain their existing boundaries.
+- Bound orders, packing state, server ledger verification, disputes, shared causes, alerts, reports and reviews to canonical REST reads. Removed the simulated console entrypoint from the website build; gated demo sign-in keeps tokens in memory. Mutation controls are explicitly pending the next focused unit.
+- Validation: typecheck and lint PASS; nine website routing/design/transport/server checks PASS. Both source CSS blocks remain unchanged.
+
 ## 2026-11-12 — Main branch website authority
 
 - Verified main includes both reviewed branch histories and checked it out locally. Recorded the user’s authorization to connect the existing frontend without redesign and retain the Render API/worker/PostgreSQL architecture.
