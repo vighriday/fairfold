@@ -87,5 +87,7 @@ describe('same-origin website deployment', () => {
     expect((await app.inject({ url: '/', method: 'HEAD' })).body).toBe('');
     expect((await app.inject('/console/orders')).body).toContain('data-demo="false"');
     expect((await app.inject('/console')).headers.location).toBe('/console/orders');
+    expect((await app.inject('/Fairfold.html')).headers.location).toBe('/');
+    expect((await app.inject('/Fairfold%20Console.html')).headers.location).toBe('/console/orders');
   });
 });

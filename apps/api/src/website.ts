@@ -64,7 +64,7 @@ export function websiteRoutes(demoMode: boolean): FastifyPluginAsync {
           .send(resource.body);
       });
     app.get('/Fairfold.html', publicPage, (_req, reply) => reply.redirect('/', 301));
-    app.get('/Fairfold%20Console.html', publicPage, (_req, reply) =>
+    app.get('/Fairfold Console.html', publicPage, (_req, reply) =>
       reply.redirect('/console/orders', 301),
     );
   };

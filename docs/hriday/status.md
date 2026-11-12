@@ -44,3 +44,5 @@ Website read/navigation unit: PASS for typecheck/lint and nine focused routing, 
 Website action unit: local camera/multipart/seal/approval/inspection bindings implemented; 15 focused tests, typecheck and lint PASS. Review dialogs reuse the supplied visual language. Real provider, camera, PayPal, browser and Render acceptance are not claimed by these tests.
 
 Browser reliability: native fetch and asset-budget issues found by Chromium are fixed. Seventeen focused tests, typecheck and lint PASS. First desktop/mobile navigation run passed; final restored dock/tab verification and database regression remain in progress.
+
+PostgreSQL regression: 575/575 checks PASS. Selected-order tab continuity and decoded legacy links now pass all 17 focused checks with typecheck. Final browser/MCP and whole-suite confirmation are running.

@@ -612,7 +612,11 @@ class Console extends window.DCLogic {
       ].map(([view, label, n]) => ({
         label,
         n: n || '',
-        go: () => this.navigate({ view: view as Route['view'] }),
+        go: () =>
+          this.navigate({
+            view: view as Route['view'],
+            ...(view === 'pack' && o ? { id: o.id } : {}),
+          }),
         bg: this.route.view === view ? INK : 'transparent',
         fg: this.route.view === view ? PAPER : INK,
       })),

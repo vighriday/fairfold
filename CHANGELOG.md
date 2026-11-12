@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-12 — H8 selected-order and legacy navigation
+
+- Pack Station navigation now preserves the selected order. Corrected the decoded legacy console URL redirect, found by expanding the route acceptance checks.
+- Validation: typecheck and all 17 focused website checks PASS after the redirect fix. The PostgreSQL regression suite also completed: 575 PASS, 0 FAIL.
+
 ## 2026-11-12 — H8 browser reliability fixes
 
 - Real Chromium exposed native fetch receiver binding and public page/asset requests consuming the API rate budget. Fixed the browser transport and exempted only the explicit website routes; API and upload throttles remain enforced.
