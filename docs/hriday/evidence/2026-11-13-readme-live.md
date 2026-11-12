@@ -31,4 +31,6 @@ The optional generator is `scripts/readme_hosted_media.py`; it rebuilds from the
 
 Final checks: **181 local references**, **16 SVGs**, both seven-capture sets and all four derived hosted hashes PASS. XML parsing and original PNG dimensions PASS; the GIF has six frames totalling exactly **20,400 ms**. Offline regeneration is byte-for-byte stable. Repository formatting PASS. The new hosted media occupies approximately 2.8 MB; original local assets were not changed.
 
-Actual GitHub-hosted Markdown rendering and final submission/video remain unobserved. Real provider/photo, PayPal and complete hosted A1–A14 acceptance remain pending. No prize, production readiness, successful sandbox action or new provider access is claimed.
+Published the six reviewed documentation commits through **`1ddb2040528b1fe185ebee2a75e4264b91b1cfa4`** to `origin/main` with a normal fast-forward push; local main was clean and synchronized. GitHub's rendered README API retained the actual hosted links, both responsive SVG sources, tour/still sources, `<picture>` and native `<details>`. This verifies the published renderer's HTML, while the full GitHub page's browser appearance remains unobserved. Both Render deploys remain live at the recorded application source; no documentation-only redeploy was triggered.
+
+Final submission/video, real provider/photo, PayPal and complete hosted A1–A14 acceptance remain pending. No prize, production readiness, successful sandbox action or new provider access is claimed.

@@ -5,6 +5,7 @@
 - Added verified live website/console/API/health links, route-by-route demo guidance and accurate deployment/setup boundaries. Preserved earlier narrative, local galleries, diagrams and media; replaced obsolete first-deployment-pending claims with observed receipts.
 - Added seven actual Render screenshots, responsive desktop/phone SVG frames, a 20.4-second captioned tour, reduced-motion still and separate capture/derived-asset hashes. Kept all data explicitly synthetic and missing provider results honest.
 - Extended documentation integrity checks to nested SVGs and hosted assets. Light/dark/mobile preview, native keyboard disclosures, linked galleries, reduced-motion fallback, original capture/proof checks, typecheck and lint PASS. Recorded the first natural scheduled synthetic watchdog alert separately from full acceptance.
+- Published the six reviewed deployment/README documentation commits to `origin/main` through `1ddb204`; GitHub's rendered README API preserves the hosted links, responsive media and native disclosures. Full GitHub browser appearance remains unobserved; application services remain live at the verified runtime commit.
 
 ## 2026-11-13 — First live manual Render deployment
 
