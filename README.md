@@ -15,7 +15,14 @@ Built by **Hriday and Ishaan** for the [PayPal AI Hackathon](https://paypalaihac
 
 **[Open live demo ↗](https://fairfold-api.onrender.com)** · **[Merchant console ↗](https://fairfold-api.onrender.com/console/orders)** · **[API docs ↗](https://fairfold-api.onrender.com/docs)**
 
-**[Live tour ↓](#explore-the-live-demo)** · **[Original visual tour ↓](#see-the-website)** · **[PayPal + AI](#paypal-is-the-payment-layer)** · **[Run locally](#run-locally)** · **[Evidence](#evidence-you-can-inspect)**
+**[Live tour ↓](#explore-the-live-demo)** · **[Original visual tour ↓](#see-the-website)** · **[PayPal + AI](#paypal-is-the-payment-layer)** · **[Run locally](#run-locally)** · **[Evidence](#evidence-you-can-inspect)** · **[Changes and uploads ↓](#changes-and-uploads)**
+
+### Built on PayPal and hosted on Render
+
+|                           | What Fairfold uses                                                                                                                                                                                                                                                                                                                                                                                 | State                                                                                                                                                                                                                                                           |
+| :------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **PayPal (sandbox only)** | JavaScript SDK v6 + Orders v2 checkout/capture, per-merchant OAuth, Webhooks, Orders tracking, Customer Disputes v1, Payments v2 refunds, Agent Toolkit (`context.sandbox = true`) and Fairfold's MCP server. Every call goes through [`packages/paypal`](packages/paypal); every evidence submission, hold, message, offer and refund needs explicit human approval, and PayPal decides disputes. | Code integrated and tested. A sandbox Business + Personal account pair exists and sandbox OAuth with read-only checks passed; hosted credential activation, webhook registration and a real purchase are **pending**. [Details ↓](#paypal-is-the-payment-layer) |
+| **Render**                | One web service serves the website and API on the same origin, a background worker runs webhook/reconciliation/watchdog jobs, and a private PostgreSQL 16 database holds the ledger, defined in [`render.yaml`](render.yaml). Deploys are manual.                                                                                                                                                  | **Live** at [fairfold-api.onrender.com](https://fairfold-api.onrender.com) with synthetic seeded data. [Details ↓](#deploy-on-render)                                                                                                                           |
 
 > **Live on Render · synthetic demo.** Website, API, worker and private PostgreSQL are deployed. Hosted desktop/mobile and MCP checks passed. Real PayPal, provider/photo and complete hosted A1–A14 acceptance remain pending. [Deployment receipt →](docs/hriday/evidence/2026-11-13-render-live.md) · [Earlier local evidence →](docs/hriday/evidence/2026-11-12-website.md)
 
@@ -385,6 +392,31 @@ pnpm --filter shopper-agent start --check
 The approved manual deployment is verified at `d23ee86`: API/site and worker on Starter, PostgreSQL 16 with 1 GB, all in Oregon. Automatic deploys and storage growth are off; PostgreSQL's external allow-list is empty. Reuse existing resources and preserve the encryption key. Provider and PayPal secrets still need private setup. [Exact configuration and release steps](docs/hriday/manual-render-deployment.md) · [Observed deployment receipt](docs/hriday/evidence/2026-11-13-render-live.md). No alternate hosting architecture was introduced.
 
 Next, configure the existing model gateway privately on **both** code services and verify access to the candidate models. Use the separate [hosted PayPal setup](docs/hriday/hosted-paypal-setup.md) to attach the sandbox Business app to the existing merchant. The [local sandbox rehearsal](docs/hriday/sandbox-rehearsal.md) keeps its local-database guard. Credential activation, real OAuth/webhook/purchase acceptance and human approvals remain pending; adding environment variables alone is not evidence that checkout works.
+
+## Changes and uploads
+
+**Recently merged to `main`:**
+
+| Change                                                                                                                                                                                                                         | Commit               | Live on Render?                 |
+| :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------- | :------------------------------ |
+| Drawn illustrations of the two fictional products (HD-IND-01 hoodie, TS-IND-02 T-shirt) on the landing buyer card, the console order rows and the Pack Station line items. They are catalogue artwork, never packing evidence. | `c45d887`            | **No: needs a manual redeploy** |
+| Bounded `setup:sandbox:render` command that attaches the sandbox Business app to the existing hosted merchant, with service/database/sandbox guards. It makes no PayPal call.                                                  | `2ba9753`            | Deployed                        |
+| Live demo links, hosted screenshot tour and deployment receipts in this README.                                                                                                                                                | `1ddb204`, `24abdf6` | Documentation only              |
+
+**Still to upload or run.** These are done privately by the team; none of them is complete yet:
+
+1. **Redeploy the API service on Render** from the latest `main`, so the website serves the product illustrations. Automatic deploys are off.
+2. **Activate the PayPal sandbox app** using the reviewed [hosted PayPal setup](docs/hriday/hosted-paypal-setup.md):
+   1. ~~Run sandbox OAuth and the read-only app and dispute checks.~~ **Done 13 Nov 2026 IST:** OAuth, webhook-list read and dispute-list read PASS with GET requests only (0 webhooks registered, 0 disputes visible).
+   2. Set `PAYPAL_CLIENT_ID` and `PAYPAL_CLIENT_SECRET` temporarily on the API service, one key at a time. Never upload the whole `.env`.
+   3. Run `pnpm setup:sandbox:render apply --confirm-service srv-dbr099on74is73b3i420` as a one-off job and confirm it prints `RENDER_SETUP_READY`.
+   4. Remove the temporary keys.
+   5. Run `pnpm exec tsx scripts/register-webhook.ts neel-block-prints` to register the seven-event sandbox webhook.
+3. **Configure model access** on both the API and worker services, then run the provider-backed complaint scan and real photo evaluation.
+4. **Make one real sandbox purchase** through [`/dev`](https://fairfold-api.onrender.com/dev) with the Personal sandbox account, then verify the capture, ledger and signed webhook delivery.
+5. **Upload the demo video** to YouTube (public, under three minutes), then add its link and the Devpost submission here.
+
+Credentials, tokens and buyer email addresses never go into Git, chat or logs. Purchases, refunds, offers, messages and evidence submissions each still need their own human approval.
 
 <details>
 <summary><strong>Submission readiness</strong> · remaining human steps</summary>

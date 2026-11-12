@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-13 — README PayPal/Render summary and sandbox read-only check
+
+- Added a top-of-README summary of the PayPal sandbox surfaces and Render services in use, and a "Changes and uploads" section listing recent merges and the remaining private steps (redeploy, credential activation, model access, real purchase, video upload).
+- Ran step 1 of the hosted PayPal setup after explicit approval: sandbox OAuth, webhook-list read and dispute-list read PASS (GET only; 0 webhooks, 0 disputes). Render credential transfer, `apply` job, cleanup and webhook registration remain NOT RUN pending private Render API access.
+- README integrity check PASS (untracked logo files outside this change were set aside for the check).
+
 ## 2026-11-13 — Product illustrations on the website
 
 - Added original drawn SVG illustrations of the two fictional catalogue products (HD-IND-01 navy block-print hoodie, TS-IND-02 hand-block T-shirt). They replace the striped placeholder on the landing buyer card and appear beside items in the console order rows and the Pack Station line-item card. Unknown SKUs keep the original placeholder.
