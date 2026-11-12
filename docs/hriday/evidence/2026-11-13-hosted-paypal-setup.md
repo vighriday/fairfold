@@ -18,3 +18,11 @@ Automatic approval review rejected the proposed `packages/paypal` OAuth plus rea
 The [concrete activation plan](../hosted-paypal-setup.md) specifies sandbox authentication/read-only capability checks, individual-key temporary credential transfer, one bounded private setup job and cleanup, existing read-only worker polling, and explicit seven-event webhook registration. This scope needs user authorization. It does not authorize a purchase/capture, tracking push, evidence, message, offer, refund, adjudication or return-address operation.
 
 Credential transfer/apply, actual OAuth, webhook registration and real checkout remain **NOT RUN**. The implementation can be deployed without activating credentials; record its actual deploy separately. Full PayPal/provider/photo/A1–A14 acceptance remains pending.
+
+## Published and deployed preparation
+
+- Implementation **`2ba9753d25d5227f10edfd23fe80ed420ae0bf1e`** was committed and pushed normally to `origin/main`; private-value/protected-path checks PASS and local main synchronized.
+- API deploy **`dep-dbr11vbtqb8s739l8r70`** started **2026-11-12T19:18:21Z / 13 November 00:48:21 IST** and became **live at 19:20:04 UTC / 00:50:04 IST**, at exactly that source. Pre-deploy migrations passed at 19:19:19 UTC. Existing API settings, database/key and automatic-deploy-off policy are preserved. No worker source/handler/contract changed; its prior live deploy was retained.
+- Hosted `/healthz` reports HTTP 200 and `database: ready`; `/dev` returns HTTP 200. Read-only checkout configuration returns expected **503 `PAYPAL_CREDENTIALS_MISSING`**, confirming activation has not occurred. This configuration endpoint does not call PayPal.
+- Direct local execution of the hosted command exited 1 with **`RENDER_SETUP_TARGET`**, before connecting to a database, as expected. The original local setup guard is unchanged.
+- Repository formatting PASS. No new resource, key rotation, credential transfer, hosted apply, PayPal request or registration ran. The next step is explicit authorization of the linked activation plan; deployed code alone does not close H2 acceptance.

@@ -6,6 +6,7 @@
 - Added focused wrong-target/live-API/external-DB/preview/key/credential guards and retained the real PostgreSQL setup-preservation tests. App credentials remain private; no buyer email is transferred or mapped.
 - Recorded existing sandbox account evidence and private-field presence. Automatic approval review rejected actual OAuth/read-only app verification under the standing no-PayPal-action instruction; no request ran. Hosted credential activation and registration remain pending explicit authorization.
 - Validation: 44 focused boundary/real PostgreSQL checks, build/typecheck, lint and documentation integrity PASS; `.env` remains ignored. Verified the existing internal database target/empty external allow-list without changing it.
+- Published implementation `2ba9753` and verified API deploy `dep-dbr11vbtqb8s739l8r70` live with successful migrations/health. Local execution refuses the hosted command as intended; hosted checkout still returns `PAYPAL_CREDENTIALS_MISSING`. Credential activation/OAuth/registration remain unrun pending explicit authorization; the prior worker deploy is unchanged.
 
 ## 2026-11-13 — Live README, hosted screenshots and tour
 
