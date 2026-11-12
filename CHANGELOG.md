@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-12 — Authorized direct creation rejected by Render billing
+
+- Recorded the user's explicit approval of the exact billable setup and billing risk, superseding the earlier refusal; payment-method setup remains unavailable.
+- Executed the approved direct PostgreSQL request. Render returned HTTP 402 requiring payment information. Follow-up inventory confirmed no PostgreSQL instances and no Fairfold services; API/worker creation and hosted verification were not attempted.
+- Prepared a reviewable sponsor-support message about a supported credit-only route; no message, billing entry or architecture change was performed. User approval is resolved; provider billing remains the blocker.
+
 ## 2026-11-12 — Credit balance and billing prerequisite recheck
 
 - Recorded the user's $50 promotional-credit screenshot without retaining the code or image. Reverified My Workspace through the authenticated CLI.

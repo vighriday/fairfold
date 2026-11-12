@@ -56,3 +56,18 @@ Read the current Render free-tier reference. Background workers have no free ins
 The user provided a screenshot displaying $50 promotional credit and said “Go ON.” Its workspace identifier is not visible, so the screenshot is user-provided balance evidence rather than an independent API balance check. No promo code or screenshot is committed.
 
 Reverified the CLI's active My Workspace and ran authenticated `blueprints validate` again. It still returned `valid: false` with `need_payment_info` for `databases[0]`, `services[0]` and `services[1]`. No creation request was retried. Requested private payment-method completion and explicit clarification that proceeding permits the documented billable plans and possible charges beyond the credit, superseding the earlier refusal. These remain pending at this observation.
+
+## Exact approval and direct provider rejection
+
+The user subsequently selected “Authorize this setup and billing risk” for the complete $20.30/month-base plan plus usage/taxes/seed job, credits while available and possible later charges. This supersedes the earlier refusal. He separately selected “I cannot add a payment method.”
+
+Verified active My Workspace and an empty PostgreSQL inventory. Executed CLI v2.36.0 `postgres create` for `fairfold-db`, database/user `fairfold`, PostgreSQL 16, `0.1c-256mb`, 1 GB, Oregon, with the planned restrictive loopback-only creation rule. The command passed automatic execution review and reached Render. Actual result:
+
+```text
+Error: received response code 402: Payment information is required to complete this request.
+To add a card, visit https://dashboard.render.com/billing
+```
+
+The line break is presentation-only. Follow-up connector inventory reported no PostgreSQL instances and no Fairfold services. Nothing reached the allow-list-clearing, API/worker creation, migrations, seed or hosted acceptance steps. No credentials or promo code were displayed/persisted, and no actual PayPal request occurred.
+
+The blocker is now Render's direct account requirement, independently observed after explicit cost approval and the credit screenshot. No further identical creation request was attempted. Prepared a sponsor-support draft, with the official developer-relations contact reverified from Render's credit documentation. No message was sent and no account exception is assumed.
