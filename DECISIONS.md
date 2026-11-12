@@ -533,3 +533,9 @@ The user requested a submission-quality README with interactive elements, diagra
 Keep application test results tied to their recorded commit/date and separate from documentation checks. A local Markdown/Mermaid preview is not a verified published GitHub render. Preserve the explicit sandbox/provider/hosting/Q2 gates.
 
 The user subsequently requested more illustrations and interactions without removing content. Preserve every existing README item; use visual reading paths, an actual capture gallery, responsive product illustrations and native disclosures for progressive detail. A proof-state reveal is a checked, precomputed illustration rather than a live application control. The original narrative and tables remain available in full. No website component or application contract changes are needed.
+
+## Direct Render provisioning — 12 November 2026
+
+Blueprint capacity remains blocked. After the distinction between a Blueprint and runtime services was explained, the user explicitly requested manual deployment. Provision the same D18 web service, worker and PostgreSQL 16 directly; retain `render.yaml` as the configuration reference. This overrides only the Blueprint provisioning route, not the hosting topology, shared contracts, paid-plan choices, privacy or PayPal acceptance gates.
+
+CLI authentication is now independently authorized and verified in My Workspace. Its first paid database creation request was rejected by automatic approval review before execution. The exact three-resource plan is in `docs/hriday/manual-render-deployment.md`; wait for explicit approval of its plan/cost/storage/region/network settings before repeating creation. Do not enter billing information or silently downgrade the topology to bypass this gate.

@@ -34,6 +34,8 @@ Missing provider configuration does not create fake shared causes, images or sig
 
 ## Render deployment
 
+**Current route:** the user confirmed Blueprint capacity is still blocked and requested manual creation. Use the [exact manual deployment plan](manual-render-deployment.md) for web service + worker + PostgreSQL in My Workspace. It preserves the same runtime topology and names the current access/approval gates. The Blueprint steps below remain the reproducible alternative when capacity is available.
+
 Use the confirmed **My Workspace** and the root `render.yaml` on **main**. [Open Render Blueprint setup](https://dashboard.render.com/select-repo?type=blueprint&repo=https%3A%2F%2Fgithub.com%2Fvighriday%2Ffairfold). Do not deploy the standalone directory as a static site: it is the original visual reference with fixed example data.
 
 The Blueprint retains the existing paid API/worker plans and PostgreSQL 16 plan; there is no hosting change. Inspect the displayed costs and resolve the earlier billing/capacity gate in your own Render account. No card details have been entered and no Fairfold resources were found in the workspace during this audit.

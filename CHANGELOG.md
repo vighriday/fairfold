@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-11-12 — Manual Render deployment preparation and access
+
+- Recorded the user-authorized direct provisioning route while Blueprint capacity remains blocked. Added an exact API/site + worker + PostgreSQL 16 deployment plan, current base-cost estimate, private networking/secrets rules, one-time seed execution and observable acceptance sequence.
+- Verified the connector workspace and empty Fairfold inventory. Dashboard/Windows control failed before an action; the user completed separate CLI authorization, and CLI identity/workspace checks passed.
+- Paid database creation was rejected before execution by automatic approval review pending explicit approval of the exact billable settings. No Fairfold resource, migration, seed, hosted URL or PayPal operation is claimed. Runtime code and architecture are unchanged.
+- Authenticated platform validation separately reports `need_payment_info` for all three resources. Local build/typecheck, documentation integrity and formatting PASS. Recorded both the cost-approval and account-billing prerequisites without entering payment information.
+
 ## 2026-11-12 — Visual README navigation and disclosures
 
 - Added clickable merchant/buyer/builder paths, a responsive four-scene order story, a six-screen linked gallery, a PayPal responsibility map, a B17 investigation board, nested proof-state reveals and a dated verification board. Longer original tables now sit inside labelled disclosures.
