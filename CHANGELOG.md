@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-11-13 — H2 bounded hosted sandbox setup
+
+- Added a separate confirmed Render-only provisioning command for the existing merchant/database, reusing encrypted idempotent setup and safe readiness checks. Local rehearsal restrictions, stored records, current encryption key and human action gates are preserved.
+- Added focused wrong-target/live-API/external-DB/preview/key/credential guards and retained the real PostgreSQL setup-preservation tests. App credentials remain private; no buyer email is transferred or mapped.
+- Recorded existing sandbox account evidence and private-field presence. Automatic approval review rejected actual OAuth/read-only app verification under the standing no-PayPal-action instruction; no request ran. Hosted credential activation and registration remain pending explicit authorization.
+- Validation: 44 focused boundary/real PostgreSQL checks, build/typecheck, lint and documentation integrity PASS; `.env` remains ignored. Verified the existing internal database target/empty external allow-list without changing it.
+
 ## 2026-11-13 — Live README, hosted screenshots and tour
 
 - Added verified live website/console/API/health links, route-by-route demo guidance and accurate deployment/setup boundaries. Preserved earlier narrative, local galleries, diagrams and media; replaced obsolete first-deployment-pending claims with observed receipts.

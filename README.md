@@ -384,7 +384,7 @@ pnpm --filter shopper-agent start --check
 
 The approved manual deployment is verified at `d23ee86`: API/site and worker on Starter, PostgreSQL 16 with 1 GB, all in Oregon. Automatic deploys and storage growth are off; PostgreSQL's external allow-list is empty. Reuse existing resources and preserve the encryption key. Provider and PayPal secrets still need private setup. [Exact configuration and release steps](docs/hriday/manual-render-deployment.md) · [Observed deployment receipt](docs/hriday/evidence/2026-11-13-render-live.md). No alternate hosting architecture was introduced.
 
-Next, configure the existing model gateway privately on **both** code services and verify access to the candidate models. Follow the [sandbox rehearsal](docs/hriday/sandbox-rehearsal.md) for the account-backed work: its operator scripts deliberately accept only a local demo database, so do not point them at hosted PostgreSQL or weaken that guard. Hosted merchant credential provisioning and real sandbox acceptance remain pending; adding environment variables alone is not evidence that checkout works.
+Next, configure the existing model gateway privately on **both** code services and verify access to the candidate models. Use the separate [hosted PayPal setup](docs/hriday/hosted-paypal-setup.md) to attach the sandbox Business app to the existing merchant. The [local sandbox rehearsal](docs/hriday/sandbox-rehearsal.md) keeps its local-database guard. Credential activation, real OAuth/webhook/purchase acceptance and human approvals remain pending; adding environment variables alone is not evidence that checkout works.
 
 <details>
 <summary><strong>Submission readiness</strong> · remaining human steps</summary>

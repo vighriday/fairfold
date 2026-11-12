@@ -11,7 +11,7 @@ Hriday explicitly approved source-preserving surgical integration fixes and the 
 | Task | Local implementation                                                                                                                             | Remaining source acceptance                                                                             |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
 | H1   | Foundation plus first Render deploy, hosted readiness, Swagger and worker startup verified                                                       | First hosting gate satisfied; original real pre-H1 spike / CP0 evidence remains pending                 |
-| H2   | Full sandbox client, guarded checkout/capture, SDK harness, recording/import and scoped reads                                                    | Neel/Maya accounts, real purchase/capture, A4 and the deferred spike                                    |
+| H2   | Full sandbox client/checkout plus separate bounded hosted credential-setup command; Business/Personal accounts shown                             | Authorized credential activation/OAuth, real purchase/capture, A4 and the deferred spike                |
 | H3   | Raw-body verification, durable event/job transactions, dedupe, reconciliation and one-minute poll                                                | Real signature/delivery/redelivery and hosted observation                                               |
 | H4   | Canonical dispute/detail/approval APIs, bounded retention, exact approved packs, fresh guards and durable execution claims                       | Real dispute fixture, current allowed actions and exact human-approved PayPal outcomes; Q2 remains open |
 | H5   | Integrated photo attestation, current-proof checks, all fixed blockers, inspection, inventory/seal, tracking, approved actions and retention     | Real photo evaluation and account-backed tracking/message/refund effects                                |
@@ -28,6 +28,8 @@ Hriday explicitly approved source-preserving surgical integration fixes and the 
 - Render Blueprint PASS against the freshly fetched official JSON Schema. CLI platform validation is unverified because the local CLI has no configured workspace; no infrastructure was created or applied.
 
 ## Still needed from the team
+
+The user has now shown the Business and Personal sandbox accounts and supplied the three expected fields in ignored local `.env`; only presence was checked. The [hosted PayPal setup](hosted-paypal-setup.md) specifies the separate command and exact activation sequence. Actual OAuth/read-only app verification was rejected by automatic approval review under the standing no-PayPal-action instruction. No credential transfer, hosted apply, webhook registration or PayPal request has run in this step; explicit sandbox activation authorization is pending. The cancelled name-removal request made no tracked changes.
 
 Accounts and secrets belong in private setup/provider surfaces, never chat or Git. The user added the card privately after approving the exact plan; My Workspace now hosts the API/site, worker and PostgreSQL 16. Blueprint capacity is bypassed through authorized direct provisioning, with the same topology. Billing is no longer the observed provisioning blocker. Preserve existing resources and encryption keys.
 
