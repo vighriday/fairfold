@@ -24,7 +24,14 @@ export function bindTemplate(source: string): string {
   );
   replace('Pack FF-3D90', 'Pack {{ o.id }}');
   replace('for Alex R.', 'for {{ o.buyer }}');
-  replace('Block-print cotton hoodie</div>', '{{ p.itemName }}</div>');
+  replace(
+    `<div style="margin-top:12px;font:500 20px/1.2 'Geist',sans-serif;letter-spacing:-.03em">Block-print cotton hoodie</div>`,
+    `<div style="margin-top:12px;display:flex;gap:12px;align-items:center"><div role="img" aria-label="Product illustration" style="width:56px;height:56px;flex:none;border-radius:12px;background:{{ p.thumb }}"></div><div style="min-width:0;font:500 20px/1.2 'Geist',sans-serif;letter-spacing:-.03em">{{ p.itemName }}</div></div>`,
+  );
+  replace(
+    '<span style="color:#625e70;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.item }}</span>',
+    '<span style="display:flex;align-items:center;gap:10px;min-width:0;color:#625e70"><span role="img" aria-label="Product illustration" style="width:28px;height:28px;flex:none;border-radius:8px;background:{{ r.thumb }}"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.item }}</span></span>',
+  );
   replace('>HD-IND-01</span>', '>{{ p.sku }}</span>');
   replace('>navy</span>', '>{{ p.colour }}</span>');
   replace('>M</span>', '>{{ p.size }}</span>');

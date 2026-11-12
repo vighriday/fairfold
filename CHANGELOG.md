@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-13 — Product illustrations on the website
+
+- Added original drawn SVG illustrations of the two fictional catalogue products (HD-IND-01 navy block-print hoodie, TS-IND-02 hand-block T-shirt). They replace the striped placeholder on the landing buyer card and appear beside items in the console order rows and the Pack Station line-item card. Unknown SKUs keep the original placeholder.
+- Bound at build time like the existing design bindings; `standalone/` stays unchanged. Served only through the explicit asset allow-list as `image/svg+xml`. They are catalogue artwork, never packing photos or attestation evidence; seeded pack records still hold hashes only.
+- Typecheck, lint, formatting and website suites (18 PASS, including a new asset/binding test) PASS. Local Chromium check of landing, orders and Pack Station PASS. Not yet deployed to Render.
+
 ## 2026-11-13 — H2 bounded hosted sandbox setup
 
 - Added a separate confirmed Render-only provisioning command for the existing merchant/database, reusing encrypted idempotent setup and safe readiness checks. Local rehearsal restrictions, stored records, current encryption key and human action gates are preserved.

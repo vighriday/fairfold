@@ -14,6 +14,7 @@ import { DemoSubjects } from '@fairfold/contracts/common';
 import { ApiClient, ApiError, type Activity } from './api.js';
 import { createActions } from './actions.js';
 import { parseRoute, routePath, type Route } from './router.js';
+import { productThumb } from './products.js';
 import {
   money,
   percent,
@@ -346,6 +347,7 @@ class Console extends window.DCLogic {
         id: shortId(order.id),
         buyer: order.buyerDisplayName ?? 'Unknown buyer',
         item: order.items.map((i) => `${i.name} × ${i.quantity}`).join(', '),
+        thumb: productThumb(order.items[0]?.sku),
         amt: money(order.amount),
         st: st(order) + (order.disputeOpen ? ' · dispute' : ''),
         stBg: order.hold ? INK : 'oklch(0.94 0.035 295)',
@@ -399,6 +401,7 @@ class Console extends window.DCLogic {
       signalColour: colours[s?.band ?? 'grey'],
       itemName: o?.items.map((i) => i.name).join(', ') ?? 'Select an order',
       sku: o?.items.map((i) => i.sku).join(', ') ?? '—',
+      thumb: productThumb(o?.items[0]?.sku),
       colour: 'See ordered item',
       size: 'See ordered item',
       quantity: o?.items.reduce((n, i) => n + i.quantity, 0) ?? '—',

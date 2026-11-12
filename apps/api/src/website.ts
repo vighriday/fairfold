@@ -10,6 +10,8 @@ const assets = new Map([
   ['landing.js', 'text/javascript; charset=utf-8'],
   ['dc-lite.js', 'text/javascript; charset=utf-8'],
   ['site.js', 'text/javascript; charset=utf-8'],
+  ['product-hd-ind-01.svg', 'image/svg+xml'],
+  ['product-ts-ind-02.svg', 'image/svg+xml'],
 ]);
 
 /** Explicit public files only. Never expose the repository or use a catch-all SPA rewrite. */

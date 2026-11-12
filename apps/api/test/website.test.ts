@@ -53,6 +53,19 @@ describe('same-origin website deployment', () => {
       expect(result.headers['cache-control']).toBe('no-store');
     }
   });
+  it('serves the fictional product illustrations and binds them to listings', async () => {
+    const app = await fixture();
+    for (const image of ['product-hd-ind-01.svg', 'product-ts-ind-02.svg']) {
+      const result = await app.inject('/assets/' + image);
+      expect(result.statusCode, image).toBe(200);
+      expect(result.headers['content-type']).toBe('image/svg+xml');
+      expect(result.body).toContain('Illustration of the fictional');
+    }
+    expect((await app.inject('/')).body).toContain('url(/assets/product-hd-ind-01.svg)');
+    const consoleHtml = (await app.inject('/console/orders')).body;
+    expect(consoleHtml).toContain('{{ r.thumb }}');
+    expect(consoleHtml).toContain('{{ p.thumb }}');
+  });
   it('never rewrites API errors or exposes repository files', async () => {
     const app = await fixture();
     for (const path of [

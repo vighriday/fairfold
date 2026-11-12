@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480" role="img" aria-labelledby="t">
+  <title id="t">Illustration of the fictional Block-print cotton hoodie (HD-IND-01), navy</title>
+  <defs>
+    <pattern id="print" width="44" height="44" patternUnits="userSpaceOnUse" patternTransform="rotate(0)">
+      <g fill="none" stroke="#c9d3f2" stroke-opacity=".55" stroke-width="1.6">
+        <circle cx="22" cy="22" r="7"/>
+        <path d="M22 9v6M22 29v6M9 22h6M29 22h6"/>
+        <circle cx="22" cy="22" r="2.2" fill="#c9d3f2" fill-opacity=".55" stroke="none"/>
+      </g>
+      <g fill="#c9d3f2" fill-opacity=".35">
+        <circle cx="0" cy="0" r="2"/><circle cx="44" cy="0" r="2"/><circle cx="0" cy="44" r="2"/><circle cx="44" cy="44" r="2"/>
+      </g>
+    </pattern>
+    <radialGradient id="bg" cx="50%" cy="42%" r="70%">
+      <stop offset="0" stop-color="#fbfafd"/>
+      <stop offset="1" stop-color="#ece9f3"/>
+    </radialGradient>
+    <linearGradient id="shade" x1="0" x2="1">
+      <stop offset="0" stop-color="#000" stop-opacity=".18"/>
+      <stop offset=".35" stop-color="#000" stop-opacity="0"/>
+      <stop offset=".7" stop-color="#000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity=".2"/>
+    </linearGradient>
+  </defs>
+  <rect width="480" height="480" fill="url(#bg)"/>
+  <ellipse cx="240" cy="432" rx="150" ry="14" fill="#15131d" opacity=".08"/>
+  <!-- sleeves -->
+  <path d="M150 150 L92 196 L58 352 Q57 366 72 368 L104 372 Q116 372 118 360 L146 236 Z" fill="#1d2747"/>
+  <path d="M330 150 L388 196 L422 352 Q423 366 408 368 L376 372 Q364 372 362 360 L334 236 Z" fill="#1d2747"/>
+  <path d="M150 150 L92 196 L58 352 Q57 366 72 368 L104 372 Q116 372 118 360 L146 236 Z" fill="url(#print)"/>
+  <path d="M330 150 L388 196 L422 352 Q423 366 408 368 L376 372 Q364 372 362 360 L334 236 Z" fill="url(#print)"/>
+  <!-- cuffs -->
+  <path d="M60 344 L118 352 L116 368 Q114 374 104 373 L70 369 Q57 367 58 356 Z" fill="#162039"/>
+  <path d="M420 344 L362 352 L364 368 Q366 374 376 373 L410 369 Q423 367 422 356 Z" fill="#162039"/>
+  <!-- body -->
+  <path d="M150 146 Q196 128 240 128 Q284 128 330 146 L340 396 Q340 410 326 410 L154 410 Q140 410 140 396 Z" fill="#1f2a4d"/>
+  <path d="M150 146 Q196 128 240 128 Q284 128 330 146 L340 396 Q340 410 326 410 L154 410 Q140 410 140 396 Z" fill="url(#print)"/>
+  <path d="M150 146 Q196 128 240 128 Q284 128 330 146 L340 396 Q340 410 326 410 L154 410 Q140 410 140 396 Z" fill="url(#shade)"/>
+  <!-- waistband -->
+  <path d="M141 382 L339 382 L340 398 Q340 410 326 410 L154 410 Q140 410 140 398 Z" fill="#162039"/>
+  <!-- pocket -->
+  <path d="M182 300 L298 300 L318 370 L162 370 Z" fill="#1a2443"/>
+  <path d="M182 300 L298 300 L318 370 L162 370 Z" fill="url(#print)" opacity=".7"/>
+  <path d="M182 300 L162 370 M298 300 L318 370" stroke="#121a33" stroke-width="3" fill="none"/>
+  <!-- hood -->
+  <path d="M172 150 Q170 72 240 64 Q310 72 308 150 Q290 132 240 130 Q190 132 172 150 Z" fill="#1b2546"/>
+  <path d="M172 150 Q170 72 240 64 Q310 72 308 150 Q290 132 240 130 Q190 132 172 150 Z" fill="url(#print)"/>
+  <path d="M196 148 Q200 100 240 96 Q280 100 284 148 Q262 160 240 196 Q218 160 196 148 Z" fill="#0f1730"/>
+  <!-- drawstrings -->
+  <path d="M226 180 Q222 214 226 246" stroke="#f3f1f6" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <path d="M254 180 Q258 214 254 246" stroke="#f3f1f6" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <rect x="221" y="244" width="10" height="14" rx="3" fill="#d9d4e6"/>
+  <rect x="249" y="244" width="10" height="14" rx="3" fill="#d9d4e6"/>
+  <!-- seams -->
+  <path d="M150 150 L146 236 M330 150 L334 236" stroke="#121a33" stroke-width="2" stroke-dasharray="4 4" fill="none" opacity=".8"/>
+  <!-- woven batch label hint -->
+  <rect x="306" y="388" width="22" height="12" rx="2" fill="#efe6c8"/>
+</svg>

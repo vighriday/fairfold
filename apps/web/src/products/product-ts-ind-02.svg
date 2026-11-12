@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480" role="img" aria-labelledby="t">
+  <title id="t">Illustration of the fictional Hand-block T-shirt (TS-IND-02), cream with indigo print</title>
+  <defs>
+    <pattern id="print" width="48" height="48" patternUnits="userSpaceOnUse">
+      <g fill="none" stroke="#3a4a8c" stroke-opacity=".75" stroke-width="1.8">
+        <path d="M24 10 Q31 17 24 24 Q17 17 24 10 Z"/>
+        <path d="M24 38 Q31 31 24 24 Q17 31 24 38 Z"/>
+        <path d="M10 24 Q17 17 24 24 Q17 31 10 24 Z"/>
+        <path d="M38 24 Q31 17 24 24 Q31 31 38 24 Z"/>
+      </g>
+      <circle cx="24" cy="24" r="2.4" fill="#3a4a8c" fill-opacity=".8"/>
+      <g fill="#3a4a8c" fill-opacity=".4">
+        <circle cx="0" cy="0" r="2"/><circle cx="48" cy="0" r="2"/><circle cx="0" cy="48" r="2"/><circle cx="48" cy="48" r="2"/>
+      </g>
+    </pattern>
+    <radialGradient id="bg" cx="50%" cy="42%" r="70%">
+      <stop offset="0" stop-color="#fbfafd"/>
+      <stop offset="1" stop-color="#ece9f3"/>
+    </radialGradient>
+    <linearGradient id="shade" x1="0" x2="1">
+      <stop offset="0" stop-color="#15131d" stop-opacity=".1"/>
+      <stop offset=".35" stop-color="#15131d" stop-opacity="0"/>
+      <stop offset=".7" stop-color="#15131d" stop-opacity="0"/>
+      <stop offset="1" stop-color="#15131d" stop-opacity=".12"/>
+    </linearGradient>
+  </defs>
+  <rect width="480" height="480" fill="url(#bg)"/>
+  <ellipse cx="240" cy="424" rx="140" ry="13" fill="#15131d" opacity=".08"/>
+  <path d="M172 92 L120 110 L58 176 L104 226 L144 194 L144 392 Q144 404 156 404 L324 404 Q336 404 336 392 L336 194 L376 226 L422 176 L360 110 L308 92 Q296 124 240 126 Q184 124 172 92 Z" fill="#f4ecdc"/>
+  <path d="M172 92 L120 110 L58 176 L104 226 L144 194 L144 392 Q144 404 156 404 L324 404 Q336 404 336 392 L336 194 L376 226 L422 176 L360 110 L308 92 Q296 124 240 126 Q184 124 172 92 Z" fill="url(#print)"/>
+  <path d="M172 92 L120 110 L58 176 L104 226 L144 194 L144 392 Q144 404 156 404 L324 404 Q336 404 336 392 L336 194 L376 226 L422 176 L360 110 L308 92 Q296 124 240 126 Q184 124 172 92 Z" fill="url(#shade)"/>
+  <!-- collar -->
+  <path d="M172 92 Q184 124 240 126 Q296 124 308 92 Q300 90 294 92 Q284 114 240 116 Q196 114 186 92 Q180 90 172 92 Z" fill="#2f3c74"/>
+  <!-- sleeve hems and seams -->
+  <path d="M62 172 L108 222" stroke="#2f3c74" stroke-width="6" stroke-linecap="round"/>
+  <path d="M418 172 L372 222" stroke="#2f3c74" stroke-width="6" stroke-linecap="round"/>
+  <path d="M144 194 L150 120 M336 194 L330 120" stroke="#cbbf9f" stroke-width="2" stroke-dasharray="4 4" fill="none"/>
+  <path d="M146 392 L334 392" stroke="#cbbf9f" stroke-width="2" stroke-dasharray="4 4"/>
+</svg>
