@@ -55,11 +55,15 @@ describe('same-origin website deployment', () => {
   });
   it('serves the fictional product illustrations and binds them to listings', async () => {
     const app = await fixture();
-    for (const image of ['product-hd-ind-01.svg', 'product-ts-ind-02.svg']) {
+    for (const image of [
+      'product-hd-ind-01.svg',
+      'product-ts-ind-02.svg',
+      'illustration-sealed-parcel.svg',
+    ]) {
       const result = await app.inject('/assets/' + image);
       expect(result.statusCode, image).toBe(200);
       expect(result.headers['content-type']).toBe('image/svg+xml');
-      expect(result.body).toContain('Illustration of the fictional');
+      expect(result.body).toContain('Illustration of');
     }
     expect((await app.inject('/')).body).toContain('url(/assets/product-hd-ind-01.svg)');
     const consoleHtml = (await app.inject('/console/orders')).body;

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-13 — Landing parcel and Pack Station illustrations
+
+- Replaced the striped placeholders in the landing page's 3D parcel cards (item, size, batch) and its Pack Station preview tiles (item, size_label, batch_label, sealed_parcel) with the drawn hoodie illustration and a new sealed-parcel drawing. Build-time bindings only; `standalone/` stays unchanged. The landing scene remains an illustrated example, not stored evidence.
+- Typecheck, lint, formatting and website suites (18 PASS) PASS; local Chromium check of the opened parcel and the preview tiles PASS with no page errors.
+
 ## 2026-11-13 — README PayPal/Render summary and sandbox read-only check
 
 - Added a top-of-README summary of the PayPal sandbox surfaces and Render services in use, and a "Changes and uploads" section listing recent merges and the remaining private steps (redeploy, credential activation, model access, real purchase, video upload).
