@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-12 — No-paid deployment decision and sponsor handoff
+
+- Recorded the user's explicit refusal of paid resources and unresolved billing in active instructions/status. Paid provisioning remains stopped; no partial deployment or architecture change is implied.
+- Located the official hackathon's $50 Render-credit offer and linked its claim/redemption instructions with the account/expiry/overage limits. No claim, billing change or resource creation was performed.
+- Reconfirmed that Render's free tiers exclude the required background worker. Retained the exact declined plan and actual attempt evidence for a future explicitly authorized route.
+
 ## 2026-11-12 — Manual Render deployment preparation and access
 
 - Recorded the user-authorized direct provisioning route while Blueprint capacity remains blocked. Added an exact API/site + worker + PostgreSQL 16 deployment plan, current base-cost estimate, private networking/secrets rules, one-time seed execution and observable acceptance sequence.

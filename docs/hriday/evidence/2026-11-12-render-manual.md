@@ -42,3 +42,11 @@ After authentication, `render blueprints validate render.yaml --output json` rea
 Line/column positions are omitted here; the reported error codes and paths are unchanged. This is an account billing prerequisite, not a successful deploy or a finding that manual service creation avoids compute billing. The earlier local/current-schema validation remains separate evidence.
 
 **NOT RUN:** resource creation, private connection verification, deployed migrations, seed job, actual API/worker builds, live URLs, HTTPS route/browser/MCP checks and hosted A1–A14. No PayPal action, outbound message, billing entry or submission occurred. Resume after explicit plan approval and private account-owner billing setup; reconcile resource inventory before attempting creation.
+
+## User decision and no-cost research
+
+The user selected **“Do not provision paid resources”** and **“Billing is still blocked.”** No paid request was retried. Connector inventory after the rejected creation again reported no PostgreSQL instances. Paid provisioning remains unauthorized, regardless of CLI authentication.
+
+Read the official hackathon Render sponsor page, which advertises $50 of credits and links a claim portal. The portal returned no readable content to the browsing tool, so account-specific eligibility/payment requirements remain unverified. Read Render's credit instructions: credits offset eligible workspace charges at billing-period end, with excess potentially charged to the payment method. No credit claim, promo redemption, billing change, outbound contact or resource action was taken.
+
+Read the current Render free-tier reference. Background workers have no free instance; free web services also lack one-off jobs and shell access, and free PostgreSQL expires after 30 days. The current full deployment cannot be completed under the no-paid constraint while retaining the approved topology. No reduced preview or architecture replacement has been selected.

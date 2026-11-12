@@ -2,7 +2,9 @@
 
 12 November 2026. Current source: integrated `main` at `d23ee86adc2adfd4e38f3b001689327cde2791d6`. Target: the already-confirmed **My Workspace** (`tea-d246s0ali9vc73cdjmig`). The user requested manual deployment because Blueprint capacity remains blocked. This changes provisioning only: preserve D18's web service, background worker and PostgreSQL, with settings grounded in the existing root `render.yaml`.
 
-## Exact billable resource plan — awaiting approval
+## Exact billable resource plan — declined
+
+**Current instruction:** the user selected **“Do not provision paid resources”** and **“Billing is still blocked.”** The plan below is retained as a review record, not authorization. Do not retry creation, change billing, or silently substitute a partial/free topology. CLI access remains authorized; paid provisioning does not.
 
 | Resource          | Type and compute plan                                             | Storage                                           | Region | Published monthly base     |
 | ----------------- | ----------------------------------------------------------------- | ------------------------------------------------- | ------ | -------------------------- |
@@ -65,3 +67,11 @@ If Render rejects paid provisioning for missing billing information, stop paid c
 - PASS: `pnpm docs:check`, local `pnpm build` (including typecheck and website build), and formatting. The deployment artifact remains ready; these checks do not establish hosted success.
 
 This is a concrete deployment plan, not evidence of a deployment. No PayPal operation, outbound message, billing entry or hackathon submission was performed.
+
+## Sponsor-credit option — not claimed or applied
+
+The official [hackathon Render page](https://paypalaihackathon.devpost.com/details/render) links an offer for **$50 in Render credits** and its [claim portal](https://credits-portal-mmdm.onrender.com/claim/paypal-ai-hackathon). Availability, eligibility and any payment-method requirement have not been verified for this account. The portal returned no readable text to the browsing tool; no claim form or account action was submitted.
+
+[Render's redemption instructions](https://render.com/docs/credits) say to select the intended workspace, open Billing and apply the promo code under Credit Balance. Credits are workspace-specific and apply at billing-period end; remaining charges can reach the workspace's payment method. They are not a spending cap, do not automatically change plans, and do not override the user's refusal of paid resources. The owner may investigate/redeem the offer privately; any later billable deployment requires fresh explicit authorization.
+
+The current [free-tier reference](https://render.com/docs/free) includes web services and PostgreSQL, but no background-worker instance. It also excludes one-off jobs and shell access on free web services, and its free database expires after 30 days. A full architecture-preserving Render deployment is therefore blocked under the present no-paid instruction. No free preview, worker relocation, workflow replacement or host migration has been authorized or performed.
