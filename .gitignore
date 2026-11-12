@@ -12,6 +12,7 @@ node_modules/
 dist/
 coverage/
 *.log
+__pycache__/
 
 # Private, internal documents and working notes: never commit.
 # The hackathon submission and architecture documents (.docx) are internal-only.

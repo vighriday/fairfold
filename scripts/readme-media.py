@@ -12,6 +12,7 @@ import json
 import shutil
 import subprocess
 from PIL import Image, ImageDraw, ImageFont
+from readme_illustrations import build_illustrations
 
 ROOT = Path(__file__).resolve().parent.parent
 MEDIA = ROOT / "docs/media"
@@ -157,7 +158,7 @@ def main():
         for name, source, _, _ in PAGES:
             shutil.copyfile(args.captures / source, CAPTURES / (name+".png"))
         shutil.copyfile(args.captures / "-console-pack-390.png", CAPTURES / "pack-mobile.png")
-    hero(False); hero(True); proof_flow(); overview(); make_tour(); receipt()
+    hero(False); hero(True); proof_flow(); overview(); make_tour(); receipt(); build_illustrations()
     manifest = {"source_commit": "6e0268c", "captured_on": "2026-11-12", "mode": "actual-local-api-bound-website", "records": "synthetic-seeded-data", "paypal_actions": "none", "capture_sha256": {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(CAPTURES.glob("*.png"))}}
     (MEDIA / "provenance.json").write_text(json.dumps(manifest, indent=2)+"\n", encoding="utf8")
     subprocess.run(["node", str(ROOT / "node_modules/prettier/bin/prettier.cjs"), "--write", "docs/media/proof-specimen.json", "docs/media/provenance.json"], cwd=ROOT, check=True, stdout=subprocess.DEVNULL, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))

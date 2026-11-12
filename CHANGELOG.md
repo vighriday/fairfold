@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-12 — Additional README visual explainers
+
+- Added ten original SVGs: merchant/buyer/builder path cards, desktop/mobile order story, PayPal responsibility map, B17 investigation, original/changed proof views and a dated verification board. Existing website captures and components are preserved.
+- Extended `docs:check` to verify the proof illustrations against the exact specimen and production hash functions after changing only its label. The optional generator rebuilds the new SVGs; Python bytecode output is ignored.
+- Validation: all 14 SVGs rendered in local Chromium; documentation integrity, proof mutation, typecheck and lint PASS. README placement and disclosure checks are the next focused unit. No PayPal/provider/deployment acceptance is implied.
+
 ## 2026-11-12 — PayPal submission README
 
 - Rebuilt the README around the two-sided proof/trust story, actual product visuals, native disclosures, two Mermaid diagrams, a PayPal-to-source map, a runnable setup and an evidence table with remaining account/provider/hosting gates. Added the executable proof-specimen affordance, light/dark artwork and reduced-motion media sources.

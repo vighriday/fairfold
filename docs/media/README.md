@@ -15,6 +15,19 @@ Market figures in the supplied landing-page design are presentation copy, not me
 | [Proof specimen](proof-specimen.json)                                         | Two synthetic hash-format examples, independently generated and checked against the production canonical JSON/SHA-256 functions; never inserted as order evidence                                                                                |
 | [Provenance manifest](provenance.json)                                        | Capture commit/date/mode and SHA-256 of each original PNG                                                                                                                                                                                        |
 
+### Additional visual explainers
+
+These independently authored SVGs explain the existing product; they are not screenshots of new functionality. They use the same ink/paper/violet palette and accessible titles/descriptions.
+
+| Asset                                                                                       | Meaning                                                                                                                                                         |
+| ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Merchant](path-merchant.svg) · [buyer](path-buyer.svg) · [builder](path-builder.svg) cards | Visual links to reading paths in the README; navigation is supplied by the surrounding Markdown/HTML link                                                       |
+| [Order story](evidence-journey.svg) · [mobile layout](evidence-journey-mobile.svg)          | Four illustrated moments, with the same content arranged for desktop and mobile: read, pack, connect, review                                                    |
+| [PayPal lifecycle](paypal-lifecycle.svg)                                                    | PayPal's payment/dispute authority beside Fairfold's evidence and review responsibilities; intended integration, not observed sandbox outcomes                  |
+| [B17 investigation](b17-investigation.svg)                                                  | Synthetic scenario: test alternatives, inspect a possible common fault, then recommend a remedy if confirmed; no statistical result or provider run is asserted |
+| [Original proof](proof-original.svg) · [changed proof](proof-changed.svg)                   | Views of the exact specimen and a change to only `payload.label`; stored/recomputed digests are checked against production hashing by `docs:check`              |
+| [Verification board](verification-board.svg)                                                | Static summary of recorded local results at `6e0268c`, alongside pending account/model/hosted acceptance. Counts overlap; this is not a live dashboard          |
+
 ## Rebuild or verify
 
 The application does not depend on Python or Pillow. These are optional documentation tools:
@@ -25,7 +38,7 @@ python scripts/readme-media.py
 pnpm docs:check
 ```
 
-The generator rebuilds the cover SVGs, mockup, GIF, proof specimen and manifest from the committed originals in `docs/media/captures`. To replace the captures, run the actual local website against synthetic data, verify each page is API-bound, and review the images for private information. The generator’s `--captures` import is deliberately pinned to the recorded website commit and successful local capture manifest; update that provenance deliberately for a future capture, not silently.
+The generator rebuilds the cover SVGs, mockup, GIF, proof specimen and manifest from the committed originals in `docs/media/captures`. It also calls the standard-library-only [illustration generator](../../scripts/readme_illustrations.py), which can be run separately with `python scripts/readme_illustrations.py`. To replace the captures, run the actual local website against synthetic data, verify each page is API-bound, and review the images for private information. The generator’s `--captures` import is deliberately pinned to the recorded website commit and successful local capture manifest; update that provenance deliberately for a future capture, not silently.
 
 `docs:check` verifies local links/anchors, descriptions and passive content in SVGs, capture hashes and the proof specimen, then changes a payload in memory to demonstrate a broken chain. It performs zero PayPal requests and does not connect to a database.
 

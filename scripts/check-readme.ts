@@ -115,8 +115,18 @@ function verifies(entries: Entry[]) {
 }
 assert(verifies(fixture.entries), 'Proof specimen does not verify');
 const changed = structuredClone(fixture.entries);
-changed[0]!.payload = { label: 'changed-in-memory' };
+changed[0]!.payload = {
+  ...(changed[0]!.payload as Record<string, unknown>),
+  label: 'changed-in-memory',
+};
 assert(!verifies(changed), 'Changed payload unexpectedly verifies');
+const { entry_hash: storedHash, prev_hash: previousHash, ...changedContent } = changed[0]!;
+const changedHash = sha256(previousHash + canonicalJson(changedContent));
+const originalGraphic = await readFile(resolve(media, 'proof-original.svg'), 'utf8');
+const changedGraphic = await readFile(resolve(media, 'proof-changed.svg'), 'utf8');
+assert(originalGraphic.includes(storedHash), 'Original proof graphic does not match the specimen');
+assert(changedGraphic.includes(changedHash), 'Changed proof graphic does not match recomputation');
+assert(changedGraphic.includes(storedHash), 'Changed proof graphic lost the stored hash');
 console.log(
   JSON.stringify({
     status: 'PASS',
@@ -125,6 +135,7 @@ console.log(
     unchangedCaptures: Object.keys(manifest.capture_sha256).length,
     syntheticChain: 'verified',
     tamperCheck: 'detected',
+    proofIllustrations: 'verified',
     paypalRequests: 0,
   }),
 );
